@@ -1,0 +1,45 @@
+flowchart TD
+    START["AppContainer.advanceOrRunAI<br/>或命令后 runAIIfNeeded"]:::input
+    CHECK{"当前 faction 应由 AI 控制?"}:::decision
+    STOP["不运行 AI"]:::stop
+    REFRESH["StrategicStateBootstrapper.refreshRuntimeState<br/>重新聚合/刷新 theater/front/deploy"]:::rules
+    TM["TurnManager.runAITurn<br/>pipelineMode = zoneDirective"]:::rules
+    POOL["TheaterCommanderPool<br/>遍历当前 faction 的 FrontZone"]:::ai
+    ZONE{"FrontZone 有 frontSegments?"}:::decision
+    SKIP["该 zone 不出 directive"]:::stop
+    AGENT["ZoneCommanderAgent<br/>读取 unitsFront / visibleEnemy / pressure"]:::ai
+    CLS["BinaryTacticClassifier<br/>strength ratio + style boost"]:::ai
+    ATK["standardAttack<br/>ZoneDirective.attack"]:::command
+    DEF["holdPosition<br/>ZoneDirective.defend"]:::command
+    ENV["DirectiveEnvelope<br/>directives[]"]:::command
+    WCE["WarCommandExecutor.execute"]:::command
+    BOTTOM["底层 Command<br/>attack / move / hold / allowRetreat"]:::command
+    RE["RuleEngine<br/>统一校验执行"]:::rules
+    RECORD["WarDirectiveRecord<br/>category / tactic / target / diagnostics"]:::ui
+    END["RuleEngine.execute(.endTurn)<br/>切换 activeFaction / phase"]:::rules
+
+    START --> CHECK
+    CHECK -->|否| STOP
+    CHECK -->|是| REFRESH --> TM --> POOL --> ZONE
+    ZONE -->|否| SKIP
+    ZONE -->|是| AGENT --> CLS
+    CLS -->|兵力优势 / 前沿存在 / 静态防御| ATK
+    CLS -->|劣势| DEF
+    ATK --> ENV
+    DEF --> ENV
+    ENV --> WCE --> BOTTOM --> RE --> RECORD --> END
+
+    LEGACY["Legacy Agent D<br/>只在 legacyAgentOrder 显式分支"]:::legacy
+    TM -.不走默认.-> LEGACY
+
+    MANUAL["手写合法 ZoneDirective<br/>v0.4 玩家命令可复用"]:::input
+    MANUAL --> WCE
+
+    classDef input fill:#fef3c7,stroke:#d97706,color:#1f1600
+    classDef decision fill:#fff7ed,stroke:#ea580c,color:#1f1300
+    classDef stop fill:#fee2e2,stroke:#b91c1c,color:#111827
+    classDef rules fill:#ccfbf1,stroke:#0f766e,color:#042f2e
+    classDef ai fill:#e0e7ff,stroke:#4f46e5,color:#111827
+    classDef command fill:#fae8ff,stroke:#a21caf,color:#2a0a2f
+    classDef ui fill:#e5e7eb,stroke:#4b5563,color:#111827
+    classDef legacy fill:#f3f4f6,stroke:#6b7280,stroke-dasharray:5 5,color:#111827
