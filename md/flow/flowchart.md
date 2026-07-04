@@ -35,7 +35,7 @@ v2.4 命名边界：
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
 - `CommandExecutor` 会把中文武将姓名、道路机动和攻防修正摘要写入移动、攻击和反击日志；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
-- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。
 
@@ -73,6 +73,7 @@ flowchart TD
     DIPLO["外交提案<br/>DiplomatAgent.plan<br/>同盟/停战/借道/称臣/讨伐檄文"]:::command
     DCMD["外交命令<br/>Command.proposeDiplomacy<br/>经规则层更新关系/紧张度"]:::command
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给审计"]:::command
+    ROAD["太守修路命令<br/>Command.improveRoad<br/>经规则层修缮道路和基础设施"]:::command
     GCMD["太守生产命令<br/>Command.queueProduction<br/>经规则层校验资源并排产"]:::command
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>重排目标 region，写 StrategistDecisionRecord"]:::command
     GENA["武将军令复核<br/>GeneralAgent.plan<br/>按武将分配复核投入，写 GeneralDecisionRecord"]:::command
@@ -84,7 +85,7 @@ flowchart TD
     SYNC["战略同步器<br/>StrategicStateSynchronizer<br/>占领后刷新省份、战区、前线、部署"]:::rules
     DIP["外交与君主审计<br/>DiplomacyState.rulerRecords + diplomatRecords<br/>保存姿态、提案、目标和理由"]:::state
     DREL["外交关系<br/>DiplomaticRelation.status / tension<br/>只由外交命令最小更新"]:::state
-    GOVREC["太守审计<br/>GameState.governorRecords<br/>保存内政重点和建议生产"]:::state
+    GOVREC["太守审计<br/>GameState.governorRecords<br/>保存内政重点、修路和生产结果"]:::state
     SREC["军师审计<br/>GameState.strategistRecords<br/>保存主防区、目标和理由"]:::state
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作和理由"]:::state
 
@@ -105,8 +106,9 @@ flowchart TD
     GS --> DIP
 
     PLAYER --> CMD
-    AI --> DEC --> COMP --> RULER --> DIPLO --> DCMD --> GOV --> GCMD --> STRAT --> GENA --> ZD --> WCE --> CMD
+    AI --> DEC --> COMP --> RULER --> DIPLO --> DCMD --> GOV --> ROAD --> GCMD --> STRAT --> GENA --> ZD --> WCE --> CMD
     DCMD --> CMD
+    ROAD --> CMD
     GCMD --> CMD
     GENA --> GINF
     GINF --> WCE
@@ -270,9 +272,9 @@ flowchart TD
 
 ## 4. AI / 元帅决策链：AI 怎么下命令
 
-这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，有效生产建议会转换为 `Command.queueProduction` 经规则层执行，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，移动、攻击、反击日志和命令拒绝原因会记录中文可审计摘要，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
+这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，修路焦点会转换为 `Command.improveRoad` 经规则层执行，有效生产建议会转换为 `Command.queueProduction` 经规则层执行，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，移动、攻击、反击日志和命令拒绝原因会记录中文可审计摘要，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
 
-当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> DiplomatAgent.plan -> Command.proposeDiplomacy -> GovernorAgent.plan -> Command.queueProduction -> StrategistAgent.plan -> GeneralAgent.plan -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过君主、外交、太守、军师和武将层。旧 Agent D 管线仍保留，但默认不走。
+当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> DiplomatAgent.plan -> Command.proposeDiplomacy -> GovernorAgent.plan -> Command.improveRoad / Command.queueProduction -> StrategistAgent.plan -> GeneralAgent.plan -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过君主、外交、太守、军师和武将层。旧 Agent D 管线仍保留，但默认不走。
 
 ```mermaid
 flowchart TD
@@ -293,6 +295,8 @@ flowchart TD
     DRE["外交规则执行<br/>RuleEngine.execute<br/>更新 DiplomaticRelation 状态/紧张度"]:::rules
     DREC["外交审计<br/>DiplomatDecisionRecord + CommandResultSummary<br/>记录提案、对象、中文执行结果"]:::ui
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给"]:::ai
+    RCMD["太守修路命令<br/>Command.improveRoad<br/>校验控制权/资源并修缮道路"]:::command
+    RRE["修路规则执行<br/>RuleEngine.execute<br/>补战术道路、提升基础设施、扣资源"]:::rules
     GCMD["太守生产命令<br/>Command.queueProduction<br/>校验资源并加入生产队列"]:::command
     GRE["生产规则执行<br/>RuleEngine.execute<br/>扣资源、追加 ProductionOrder"]:::rules
     GOVREC["太守审计<br/>GovernorDecisionRecord + CommandResultSummary<br/>记录内政重点、建议和中文执行结果"]:::ui
@@ -311,8 +315,9 @@ flowchart TD
     START --> CHECK
     CHECK -->|否| STOP
     CHECK -->|是| REFRESH --> TM --> SUM --> LLM --> DEC --> COMP --> ENV
-    ENV --> RULER --> DIPLO --> DCMD --> DRE --> GOV --> GCMD --> GRE --> STRAT --> GENA --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
+    ENV --> RULER --> DIPLO --> DCMD --> DRE --> GOV --> RCMD --> RRE --> GCMD --> GRE --> STRAT --> GENA --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
     DRE --> DREC
+    RRE --> GOVREC
     GRE --> GOVREC
     GENA --> GINF
     GINF --> WCE

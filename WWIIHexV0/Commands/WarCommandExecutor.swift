@@ -1264,6 +1264,7 @@ struct WarCommandExecutor {
         case .attack(let attackerId, _):
             return attackerId
         case .queueProduction,
+             .improveRoad,
              .proposeDiplomacy,
              .endTurn:
             return nil
@@ -1285,6 +1286,8 @@ struct WarCommandExecutor {
         switch command {
         case .move(_, let destination):
             return state.map.region(for: destination).map { [$0] } ?? []
+        case .improveRoad(let regionId):
+            return [regionId]
         default:
             return []
         }

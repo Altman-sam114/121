@@ -19,6 +19,7 @@ enum CommandValidationError: String, Codable, Equatable {
     case diplomaticRelationNotFound
     case invalidDiplomaticTarget
     case invalidDiplomaticProposal
+    case roadAlreadyImproved
 
     var displayName: String {
         switch self {
@@ -58,6 +59,8 @@ enum CommandValidationError: String, Codable, Equatable {
             return "外交对象不合法"
         case .invalidDiplomaticProposal:
             return "外交提案不合法"
+        case .roadAlreadyImproved:
+            return "郡县道路已无需修缮"
         }
     }
 }

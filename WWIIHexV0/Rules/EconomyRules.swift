@@ -5,6 +5,7 @@ struct EconomyRules {
     private let baseIndustryReserve = 160
     private let baseSupplyReserve = 180
     private let maxAutomaticReinforcementPerDivision = 2
+    let roadImprovementCost = EconomyResources(manpower: 20, industry: 30, supplies: 10)
 
     func makeInitialState(map: MapState, factions: [Faction], turn: Int) -> EconomyState {
         var state = EconomyState(lastResolvedTurn: turn)
@@ -70,6 +71,43 @@ struct EconomyRules {
         state.economyState.updateLedger(ledger)
         state.appendEvent(
             "\(faction.displayName) queued \(kind.displayName): cost \(resourceSummary(kind.cost)), \(kind.buildTurns) turn(s).",
+            category: .supply
+        )
+        return true
+    }
+
+    func roadImprovementNeeded(region: RegionNode, faction: Faction, map: MapState) -> Bool {
+        region.infrastructure < 5 || !roadImprovementTargets(in: region, faction: faction, map: map).isEmpty
+    }
+
+    func improveRoad(regionId: RegionId, faction: Faction, in state: inout GameState) -> Bool {
+        ensureLedger(for: faction, in: &state)
+        guard let region = state.map.region(id: regionId),
+              region.controller == faction,
+              hasControlledHex(in: region, faction: faction, map: state.map),
+              roadImprovementNeeded(region: region, faction: faction, map: state.map) else {
+            return false
+        }
+
+        var ledger = state.economyState.ledger(for: faction)
+        guard ledger.stockpile.canAfford(roadImprovementCost) else {
+            state.appendEvent(
+                "\(faction.displayName) 修缮道路资源不足：需要 \(resourceSummary(roadImprovementCost))。",
+                category: .supply
+            )
+            return false
+        }
+
+        let improvedHexes = applyRoadImprovement(to: region, faction: faction, map: &state.map)
+        ledger.stockpile.subtract(roadImprovementCost)
+        ledger.lastUpdatedTurn = state.turn
+        state.economyState.updateLedger(ledger)
+        let hexSummary = improvedHexes.isEmpty
+            ? "整修驿道与桥涵"
+            : improvedHexes.map { "\($0.q),\($0.r)" }.joined(separator: "；")
+        let infrastructure = state.map.region(id: regionId)?.infrastructure ?? region.infrastructure
+        state.appendEvent(
+            "\(faction.displayName) 修缮 \(region.name) 道路：\(hexSummary)，基础设施 \(infrastructure)，消耗 \(resourceSummary(roadImprovementCost))。",
             category: .supply
         )
         return true
@@ -399,10 +437,76 @@ struct EconomyRules {
         return nil
     }
 
-    private func hasControlledHex(in region: RegionNode, faction: Faction, map: MapState) -> Bool {
+    func hasControlledHex(in region: RegionNode, faction: Faction, map: MapState) -> Bool {
         regionHexes(for: region).contains { coord in
             map.tile(at: coord)?.controller == faction
         }
+    }
+
+    private func applyRoadImprovement(
+        to region: RegionNode,
+        faction: Faction,
+        map: inout MapState
+    ) -> [HexCoord] {
+        let targets = roadImprovementTargets(in: region, faction: faction, map: map)
+        var improvedHexes: [HexCoord] = []
+
+        for coord in targets.prefix(2) {
+            guard var tile = map.tile(at: coord) else {
+                continue
+            }
+            tile.hasRoad = true
+            map.setTile(tile)
+            improvedHexes.append(coord)
+        }
+
+        if var updatedRegion = map.regions[region.id] {
+            updatedRegion.infrastructure = min(5, updatedRegion.infrastructure + 1)
+            map.regions[region.id] = updatedRegion
+        }
+
+        return improvedHexes
+    }
+
+    private func roadImprovementTargets(
+        in region: RegionNode,
+        faction: Faction,
+        map: MapState
+    ) -> [HexCoord] {
+        regionHexes(for: region)
+            .filter { coord in
+                guard let tile = map.tile(at: coord) else {
+                    return false
+                }
+                return tile.isPassable &&
+                    tile.controller == faction &&
+                    !tile.hasRoad
+            }
+            .sorted {
+                let lhsScore = roadImprovementPriority($0, region: region, map: map)
+                let rhsScore = roadImprovementPriority($1, region: region, map: map)
+                if lhsScore != rhsScore {
+                    return lhsScore > rhsScore
+                }
+                return $0.q == $1.q ? $0.r < $1.r : $0.q < $1.q
+            }
+    }
+
+    private func roadImprovementPriority(_ coord: HexCoord, region: RegionNode, map: MapState) -> Int {
+        guard let tile = map.tile(at: coord) else {
+            return 0
+        }
+        var score = coord == region.representativeHex ? 8 : 0
+        if tile.baseTerrain == .city || tile.cityName != nil || tile.fortressName != nil {
+            score += 6
+        }
+        if map.supplySources.contains(where: { $0.coord == coord }) {
+            score += 5
+        }
+        if coord.neighbors.contains(where: { map.tile(at: $0)?.hasRoad == true }) {
+            score += 3
+        }
+        return score
     }
 
     private func regionHexes(for region: RegionNode) -> [HexCoord] {

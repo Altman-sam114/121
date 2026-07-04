@@ -492,7 +492,7 @@ struct TurnManager {
         let adjustment = governor.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
         nextState.appendGovernorRecord(adjustment.record)
-        let recommendation = adjustment.record.recommendedProductionKind?.displayName ?? "不新增队列"
+        let recommendation = governorRecommendationSummary(adjustment.record)
         nextState.appendEvent(
             "\(adjustment.record.governorAgentId) 建议 \(faction.displayName) \(adjustment.record.focus.displayName)：\(recommendation)",
             category: .supply,
@@ -503,17 +503,24 @@ struct TurnManager {
         var diagnostics = [
             "太守 \(adjustment.record.governorAgentId) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
         ]
-        if let command = productionCommand(for: adjustment.record) {
+        let commands = governorCommands(for: adjustment.record)
+        if commands.isEmpty {
+            diagnostics.append("太守未建议新增规则命令。")
+        }
+
+        for (commandIndex, command) in commands.enumerated() {
             let result = commandHandler.execute(command, in: nextState)
             nextState = result.state
-            commandResults.append(.governorCommand(record: adjustment.record, result: result))
+            commandResults.append(.governorCommand(
+                record: adjustment.record,
+                result: result,
+                commandIndex: commandIndex
+            ))
             if result.succeeded {
-                diagnostics.append("太守推荐已经规则层排产：\(command.displayName)。")
+                diagnostics.append("太守推荐已经规则层执行：\(command.displayName)。")
             } else {
                 diagnostics.append("太守推荐被规则层拒绝：\(result.validation.displayMessage)。")
             }
-        } else {
-            diagnostics.append("太守未建议新增生产，未生成内政命令。")
         }
 
         return (
@@ -525,12 +532,25 @@ struct TurnManager {
         )
     }
 
-    private func productionCommand(for record: GovernorDecisionRecord) -> Command? {
-        guard let kind = record.recommendedProductionKind else {
-            return nil
+    private func governorCommands(for record: GovernorDecisionRecord) -> [Command] {
+        var commands: [Command] = []
+        if record.focus == .roadRepair,
+           let regionId = record.focusRegionIds.first {
+            commands.append(.improveRoad(regionId: regionId))
         }
+        if let kind = record.recommendedProductionKind {
+            commands.append(.queueProduction(kind: kind))
+        }
+        return commands
+    }
 
-        return .queueProduction(kind: kind)
+    private func governorRecommendationSummary(_ record: GovernorDecisionRecord) -> String {
+        let production = record.recommendedProductionKind?.displayName ?? "不新增队列"
+        guard record.focus == .roadRepair,
+              let regionId = record.focusRegionIds.first else {
+            return production
+        }
+        return "修缮 \(regionId.rawValue)，辅以 \(production)"
     }
 
     private func applyGeneralPlanning(

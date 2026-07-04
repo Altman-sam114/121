@@ -2167,6 +2167,55 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不是全项目文案清零；region id、zone id、JSON id、旧测试、历史 prompt 和部分调试文本仍可能保留英文。
 - 未做运行时 UI 烟测，AI 面板实际换行和日志宽度仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 太守修路命令兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `Command.improveRoad(regionId:)`，把太守修路从审计建议推进为规则层最小命令。
+- `CommandValidator` 新增修路校验：必须处于可行动阶段、郡县存在、当前势力控制且有己方控制 hex、郡县仍需要修路、资源足够。
+- `EconomyRules.improveRoad` 消耗人口 20、军械 30、粮草 10，最多给目标郡县补两格战术道路，并提升郡县基础设施 1 点，上限 5。
+- `TurnManager.applyGovernorPlanning` 在太守焦点为 `roadRepair` 时把首个重点郡县转换为 `Command.improveRoad`；原有生产建议继续转换为 `Command.queueProduction`，两条命令结果都进入 `AgentDecisionRecord.commandResults`。
+- `WarCommandExecutor` 对新增命令补齐无 acting division 和受影响郡县处理，保持命令枚举 switch 完整。
+- 保持太守 Agent 本身不直接修改 `GameState`；修路仍必须经 `CommandValidator -> CommandExecutor -> RuleEngine`。
+
+关键系统：
+
+- `WWIIHexV0/Commands/Command.swift`
+- `WWIIHexV0/Commands/CommandValidation.swift`
+- `WWIIHexV0/Rules/CommandValidator.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_governor_road_executor.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- 修路旧口径扫描无旧残留。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只做最小道路修缮，不保证自动连成跨郡县主干路，也不实现玩家手动修路 UI。
+- 修路命令可能消耗资源导致同轮生产建议被拒绝；这会作为中文命令结果记录，属于当前兼容层预期行为。
+- 未做运行时 UI 烟测，AI 面板多条太守命令的实际换行和日志宽度仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

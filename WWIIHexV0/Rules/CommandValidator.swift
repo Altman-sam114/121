@@ -17,6 +17,8 @@ struct CommandValidator {
             return validateRecoveryCommand(divisionId: divisionId, in: state)
         case .queueProduction(let kind):
             return validateProduction(kind: kind, in: state)
+        case .improveRoad(let regionId):
+            return validateRoadImprovement(regionId: regionId, in: state)
         case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
             return validateDiplomacy(
                 sourceCountryId: sourceCountryId,
@@ -136,6 +138,35 @@ struct CommandValidator {
         }
 
         guard EconomyRules().canQueueProduction(kind: kind, faction: state.activeFaction, in: state) else {
+            return .invalid(.insufficientResources)
+        }
+
+        return .valid
+    }
+
+    private func validateRoadImprovement(regionId: RegionId, in state: GameState) -> CommandValidation {
+        guard phaseAllowsCommands(in: state) else {
+            return .invalid(.wrongPhase)
+        }
+
+        guard let region = state.map.region(id: regionId) else {
+            return .invalid(.regionNotFound)
+        }
+
+        let economyRules = EconomyRules()
+        guard region.controller == state.activeFaction,
+              economyRules.hasControlledHex(in: region, faction: state.activeFaction, map: state.map) else {
+            return .invalid(.wrongFaction)
+        }
+
+        guard economyRules.roadImprovementNeeded(region: region, faction: state.activeFaction, map: state.map) else {
+            return .invalid(.roadAlreadyImproved)
+        }
+
+        guard state.economyState
+            .ledger(for: state.activeFaction)
+            .stockpile
+            .canAfford(economyRules.roadImprovementCost) else {
             return .invalid(.insufficientResources)
         }
 

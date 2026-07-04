@@ -24,6 +24,8 @@ struct CommandExecutor {
             executeResupply(divisionId: divisionId, in: &nextState)
         case .queueProduction(let kind):
             executeQueueProduction(kind: kind, in: &nextState)
+        case .improveRoad(let regionId):
+            executeImproveRoad(regionId: regionId, in: &nextState)
         case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
             executeDiplomaticProposal(
                 sourceCountryId: sourceCountryId,
@@ -180,6 +182,10 @@ struct CommandExecutor {
 
     private func executeQueueProduction(kind: ProductionKind, in state: inout GameState) {
         _ = EconomyRules().queueProduction(kind: kind, faction: state.activeFaction, in: &state)
+    }
+
+    private func executeImproveRoad(regionId: RegionId, in state: inout GameState) {
+        _ = EconomyRules().improveRoad(regionId: regionId, faction: state.activeFaction, in: &state)
     }
 
     private func executeDiplomaticProposal(

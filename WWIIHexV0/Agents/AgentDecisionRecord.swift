@@ -107,10 +107,11 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
 
     static func governorCommand(
         record: GovernorDecisionRecord,
-        result: CommandResult
+        result: CommandResult,
+        commandIndex: Int = 0
     ) -> CommandResultSummary {
         CommandResultSummary(
-            id: "governor_\(record.id)_command",
+            id: "governor_\(record.id)_command_\(commandIndex)",
             orderIndex: nil,
             divisionId: nil,
             orderType: nil,
