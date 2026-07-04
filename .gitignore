@@ -50,3 +50,6 @@ fastlane/test_output
 *.gcno
 
 MapEditor/tiled-master
+
+# Local Git worktree sandboxes
+.worktrees/
