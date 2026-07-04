@@ -34,6 +34,7 @@ MapEditor / JSON 数据
   -> ZoneCommanderAgent fallback / 手写 ZoneDirective
   -> WarCommandExecutor
   -> RuleEngine
+  -> CommandResult / CommandValidationError 中文展示
   -> CommandExecutor
   -> StrategicStateSynchronizer
   -> UI overlay / 日志 / WarDirectiveRecord
@@ -57,13 +58,14 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
-- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；核心移动、攻击、反击、姿态、回合推进和动态方面事件日志已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战”。
+- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战、哪个命令为什么被拒绝”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `recommendedProductionKind` 转换为 `Command.queueProduction`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格和防区压力复核军令，写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
+- `CommandValidationError` 保留英文 rawValue 作为 Codable / 测试兼容身份，同时提供中文 `displayName`；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 使用中文展示值写入 `CommandResult`、事件日志、`WarDirectiveRecord.diagnostics` 和 AI 面板命令结果。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
 最关键的铁律：
@@ -1351,7 +1353,7 @@ GeneralAssignment(commandStyleRawValue / skills / loyalty / satisfaction)
   -> CommandValidator / RuleEngine
 ```
 
-最终战争指令执行仍由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段君主塑形、外交提案命令、太守生产命令、军师目标编排、武将复核、WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑；外交和太守预命令结果进入 `AgentDecisionRecord.commandResults`，不混入某条 `WarDirectiveRecord`。
+最终战争指令执行仍由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段君主塑形、外交提案命令、太守生产命令、军师目标编排、武将复核、WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑；外交和太守预命令结果进入 `AgentDecisionRecord.commandResults`，不混入某条 `WarDirectiveRecord`。`CommandValidationError` 的 rawValue 仍保留给 Codable 和测试断言，玩家/AI 可见的拒绝原因通过 `displayName` / `displayMessage` 输出中文。
 
 Legacy Agent D 仍存在，但只在显式 `.legacyAgentOrder` 分支运行：
 
@@ -1622,7 +1624,7 @@ attackingUnitIds =
 
 - 先记录 acting division 的 logical source zone。
 - 调 `RuleEngine.execute(command, in: state)`。
-- 如果被拒绝，写日志；如果原命令非法但 fallback hold 合法，则执行 fallback。
+- 如果被拒绝，写中文拒绝日志；如果原命令非法但 fallback hold 合法，则执行 fallback。
 - 成功后做防御性同步：
   - 计算 affected region。
   - 尝试 `applyDirectiveOccupation`（通常普通 `CommandExecutor` 已处理过）。

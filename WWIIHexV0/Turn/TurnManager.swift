@@ -93,7 +93,7 @@ struct TurnManager {
                     contextSummary: contextSummary,
                     rawJSON: nil,
                     parsedIntent: nil,
-                    errors: ["AI turn requested for \(faction.displayName), but manager agent belongs to \(agent.faction.displayName)."]
+                    errors: ["请求 \(faction.displayName) AI 回合，但当前管理器 Agent 属于 \(agent.faction.displayName)。"]
                 )
             )
         }
@@ -106,7 +106,7 @@ struct TurnManager {
                     contextSummary: contextSummary,
                     rawJSON: nil,
                     parsedIntent: nil,
-                    errors: ["\(faction.displayName) AI turn requested outside its controllable phase."]
+                    errors: ["\(faction.displayName) AI 回合请求不在可行动阶段。"]
                 )
             )
         }
@@ -140,7 +140,7 @@ struct TurnManager {
             let parsedDecision = try parser.parse(rawJSON, expectedAgentId: agent.id, expectedTurn: state.turn)
             var nextState = state
             var commandResults: [CommandResultSummary] = []
-            var errors: [String] = parsedDecision.orders.isEmpty ? ["Agent returned no orders."] : []
+            var errors: [String] = parsedDecision.orders.isEmpty ? ["Agent 未返回命令。"] : []
 
             for (index, order) in parsedDecision.orders.enumerated() {
                 do {
@@ -152,10 +152,10 @@ struct TurnManager {
                     )
 
                     if !result.succeeded {
-                        errors.append("Order \(index) rejected: \(result.validation.errors.map(\.rawValue).joined(separator: ", ")).")
+                        errors.append("第 \(index) 条命令被拒绝：\(result.validation.displayMessage)。")
                     }
                 } catch {
-                    errors.append("Order \(index) mapping failed: \(error.localizedDescription)")
+                    errors.append("第 \(index) 条命令映射失败：\(error.localizedDescription)")
                     commandResults.append(.mappingFailed(orderIndex: index, order: order, error: error))
                 }
             }
@@ -164,7 +164,7 @@ struct TurnManager {
             nextState = endTurnResult.state
             commandResults.append(.endTurn(result: endTurnResult))
             if !endTurnResult.succeeded {
-                errors.append("AI end turn failed: \(endTurnResult.validation.errors.map(\.rawValue).joined(separator: ", ")).")
+                errors.append("AI 结束回合失败：\(endTurnResult.validation.displayMessage)。")
             }
 
             let record = AgentDecisionRecord(
@@ -448,8 +448,7 @@ struct TurnManager {
             if result.succeeded {
                 diagnostics.append("外交提案已经规则层执行：\(command.displayName)。")
             } else {
-                let reasons = result.validation.errors.map(\.rawValue).joined(separator: ", ")
-                diagnostics.append("外交提案被规则层拒绝：\(reasons)。")
+                diagnostics.append("外交提案被规则层拒绝：\(result.validation.displayMessage)。")
             }
         } else {
             diagnostics.append("外交提案缺少源国家或目标国家，未生成外交命令。")
@@ -511,8 +510,7 @@ struct TurnManager {
             if result.succeeded {
                 diagnostics.append("太守推荐已经规则层排产：\(command.displayName)。")
             } else {
-                let reasons = result.validation.errors.map(\.rawValue).joined(separator: ", ")
-                diagnostics.append("太守推荐被规则层拒绝：\(reasons)。")
+                diagnostics.append("太守推荐被规则层拒绝：\(result.validation.displayMessage)。")
             }
         } else {
             diagnostics.append("太守未建议新增生产，未生成内政命令。")
@@ -579,7 +577,7 @@ struct TurnManager {
         var directiveRecords: [WarDirectiveRecord] = []
         var errors = additionalDiagnostics
         if envelope.directives.isEmpty {
-            errors.append("Commander returned no directives.")
+            errors.append("指挥官未返回防区指令。")
         }
 
         for (directiveIndex, directive) in envelope.directives.enumerated() {
@@ -589,7 +587,7 @@ struct TurnManager {
             var perDirectiveDiagnostics: [String] = []
 
             if execution.generatedCommands.isEmpty {
-                let diagnostic = "Directive \(directiveIndex) generated no executable commands."
+                let diagnostic = "第 \(directiveIndex) 条防区指令未生成可执行命令。"
                 errors.append(diagnostic)
                 perDirectiveDiagnostics.append(diagnostic)
             }
@@ -605,7 +603,7 @@ struct TurnManager {
                 commandResults.append(summary)
                 perDirectiveResults.append(summary)
                 if !pair.1.succeeded {
-                    let diagnostic = "Directive \(directiveIndex) command \(commandIndex) rejected: \(pair.1.validation.errors.map(\.rawValue).joined(separator: ", "))."
+                    let diagnostic = "第 \(directiveIndex) 条防区指令第 \(commandIndex) 个命令被拒绝：\(pair.1.validation.displayMessage)。"
                     errors.append(diagnostic)
                     perDirectiveDiagnostics.append(diagnostic)
                 }
@@ -634,7 +632,7 @@ struct TurnManager {
         nextState = endTurnResult.state
         commandResults.append(.endTurn(result: endTurnResult))
         if !endTurnResult.succeeded {
-            errors.append("AI end turn failed: \(endTurnResult.validation.errors.map(\.rawValue).joined(separator: ", ")).")
+            errors.append("AI 结束回合失败：\(endTurnResult.validation.displayMessage)。")
         }
 
         if envelope.directives.isEmpty || !additionalDiagnostics.isEmpty {
@@ -684,13 +682,13 @@ struct TurnManager {
     private func directiveDiagnostics(for faction: Faction, state: GameState) -> [String] {
         var diagnostics: [String] = []
         if state.warDeploymentState.frontZones.isEmpty {
-            diagnostics.append("ZoneDirective pipeline selected but WarDeploymentState has no FrontZone data; legacy pipeline was not invoked.")
+            diagnostics.append("已选择防区指令管线，但部署层没有防区数据；未回退到旧管线。")
         }
 
         for division in state.divisions where division.faction == faction && !division.isDestroyed {
             guard let regionId = division.location(in: state.map),
                   state.warDeploymentState.regionToFrontZone[regionId] != nil else {
-                diagnostics.append("Division \(division.id) is not assigned to any FrontZone; no directive generated for this unit.")
+                diagnostics.append("军队 \(division.id) 未分配到任何防区；未为该军队生成指令。")
                 continue
             }
         }

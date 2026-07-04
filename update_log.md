@@ -2123,6 +2123,50 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不是全项目文案清零；Legacy Agent D、MockAI、部分历史文档、调试文案和更深层审计文本仍可能保留英文。
 - 未做运行时 UI 烟测，日志宽度、换行和实际面板可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 命令结果与拒绝原因中文化兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `CommandValidationError` 新增中文展示文案，保留 rawValue / Codable 兼容。
+- `CommandValidation` 新增 `displayErrors` 和 `displayMessage`，供规则层、AI 记录层和事件日志共用。
+- `RuleEngine` 的 `CommandResult.message` 改为中文成功/拒绝文案。
+- `AgentDecisionRecord.CommandResultSummary`、`TurnManager` 和 `WarCommandExecutor` 改用中文校验原因，避免 AI 面板、`WarDirectiveRecord.diagnostics` 和事件日志继续暴露 `wrongPhase`、`destinationOccupied` 等枚举名。
+- 保持命令校验、移动、交战、外交、生产、fallback hold 和动态方面推进规则不变；本轮只改善玩家/审计可见反馈文本。
+
+关键系统：
+
+- `WWIIHexV0/Commands/CommandValidation.swift`
+- `WWIIHexV0/Rules/RuleEngine.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_command_result_localization.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- 旧英文命令结果/拒绝诊断残留扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不是全项目文案清零；region id、zone id、JSON id、旧测试、历史 prompt 和部分调试文本仍可能保留英文。
+- 未做运行时 UI 烟测，AI 面板实际换行和日志宽度仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

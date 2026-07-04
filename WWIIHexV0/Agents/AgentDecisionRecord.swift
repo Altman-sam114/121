@@ -28,7 +28,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
             message: result.message,
-            errors: result.validation.errors.map(\.rawValue)
+            errors: result.validation.displayErrors
         )
     }
 
@@ -46,7 +46,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             mappingSucceeded: false,
             validationSucceeded: nil,
             executed: false,
-            message: "Mapping failed.",
+            message: "命令映射失败。",
             errors: [error.localizedDescription]
         )
     }
@@ -62,7 +62,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
             message: result.message,
-            errors: result.validation.errors.map(\.rawValue)
+            errors: result.validation.displayErrors
         )
     }
 
@@ -83,7 +83,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
             message: result.message,
-            errors: result.validation.errors.map(\.rawValue)
+            errors: result.validation.displayErrors
         )
     }
 
@@ -101,7 +101,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
             message: result.message,
-            errors: result.validation.errors.map(\.rawValue)
+            errors: result.validation.displayErrors
         )
     }
 
@@ -119,7 +119,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
             message: result.message,
-            errors: result.validation.errors.map(\.rawValue)
+            errors: result.validation.displayErrors
         )
     }
 }

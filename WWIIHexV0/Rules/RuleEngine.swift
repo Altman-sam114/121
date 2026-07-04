@@ -8,12 +8,11 @@ struct RuleEngine {
         let preparedState = EconomyRules().bootstrapIfNeeded(state)
         let validation = validator.validate(command, in: preparedState)
         guard validation.isValid else {
-            let errorMessage = validation.errors.map(\.rawValue).joined(separator: ", ")
             return CommandResult(
                 command: command,
                 validation: validation,
                 state: preparedState,
-                message: "Command rejected: \(errorMessage)."
+                message: "命令被拒绝：\(validation.displayMessage)。"
             )
         }
 
@@ -22,7 +21,7 @@ struct RuleEngine {
             command: command,
             validation: validation,
             state: nextState,
-            message: "Command executed: \(command.displayName)."
+            message: "命令已执行：\(command.displayName)。"
         )
     }
 
