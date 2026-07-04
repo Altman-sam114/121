@@ -1586,6 +1586,57 @@ guerrillaWarfare 额外参考 infrastructure
 - 军师层只调整 `DirectiveEnvelope`，不会直接验证运行时 AI 回合行为；真实行为正确性等待云端 CI 和后续 Agent C artifact 复判。
 - 完整 v2.4 Agent court 仍需继续推进太守内政、武将指令和外交 directive。
 
+## v2.4 - 武将军令复核兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 deterministic `GeneralAgent`，接在 `StrategistAgent.plan` 之后、`WarCommandExecutor` 之前。
+- `.marshalDirective` 和显式 `.zoneDirective` 路径都经过 `GeneralAgent.plan`，保持元帅主线与 fallback / 手写 directive 路径一致。
+- `GeneralAgent` 读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、指挥风格和防区压力复核军令。
+- 新增 `GeneralDecisionRecord` 和 `GameState.generalRecords`，旧存档缺字段时默认空数组兼容。
+- `AgentPanelView` 显示武将、动作和防区，让 AI 回合能解释“武将做了什么”。
+- `AppContainer` 创建 `TurnManager` 时传入 `GeneralAgent(registry:)`，保留现有将军池与武将分配逻辑。
+- `WWIIHexV0.xcodeproj/project.pbxproj` 加入 `GeneralAgent.swift` 的文件引用和 source phase。
+
+关键系统：
+
+- `WWIIHexV0/Agents/GeneralAgent.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Core/GameState.swift`
+- `WWIIHexV0/Core/WarDirectiveRecord.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0.xcodeproj/project.pbxproj`
+- `AGENTS.md`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_directive_audit.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift`。
+- `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`：通过。
+- 文档和改动 Swift / project 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成武将军令复核兼容层，不实现完整武将技能、太守、外交 Agent，也不新增真实 LLM。
+- 武将层只调整 `DirectiveEnvelope`，不会直接验证运行时 AI 回合行为；真实行为正确性等待云端 CI 和后续 Agent C artifact 复判。
+- 完整 v2.4 Agent court 仍需继续推进太守内政和外交 directive。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

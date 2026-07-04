@@ -18,6 +18,7 @@ struct GameState: Codable, Equatable {
     var eventLog: [GameLogEntry]
     var warDirectiveRecords: [WarDirectiveRecord]
     var strategistRecords: [StrategistDecisionRecord]
+    var generalRecords: [GeneralDecisionRecord]
     var playerCommandState: PlayerCommandState
 
     init(
@@ -38,6 +39,7 @@ struct GameState: Codable, Equatable {
         eventLog: [GameLogEntry],
         warDirectiveRecords: [WarDirectiveRecord] = [],
         strategistRecords: [StrategistDecisionRecord] = [],
+        generalRecords: [GeneralDecisionRecord] = [],
         playerCommandState: PlayerCommandState = .empty
     ) {
         self.scenarioId = scenarioId
@@ -57,6 +59,7 @@ struct GameState: Codable, Equatable {
         self.eventLog = eventLog
         self.warDirectiveRecords = warDirectiveRecords
         self.strategistRecords = strategistRecords
+        self.generalRecords = generalRecords
         self.playerCommandState = playerCommandState
     }
 
@@ -156,6 +159,7 @@ struct GameState: Codable, Equatable {
         case eventLog
         case warDirectiveRecords
         case strategistRecords
+        case generalRecords
         case playerCommandState
     }
 
@@ -179,12 +183,20 @@ struct GameState: Codable, Equatable {
             eventLog: try container.decode([GameLogEntry].self, forKey: .eventLog),
             warDirectiveRecords: try container.decodeIfPresent([WarDirectiveRecord].self, forKey: .warDirectiveRecords) ?? [],
             strategistRecords: try container.decodeIfPresent([StrategistDecisionRecord].self, forKey: .strategistRecords) ?? [],
+            generalRecords: try container.decodeIfPresent([GeneralDecisionRecord].self, forKey: .generalRecords) ?? [],
             playerCommandState: try container.decodeIfPresent(PlayerCommandState.self, forKey: .playerCommandState) ?? .empty
         )
     }
 
     var latestStrategistRecord: StrategistDecisionRecord? {
         strategistRecords.last
+    }
+
+    var latestGeneralRecords: [GeneralDecisionRecord] {
+        guard let latestTurn = generalRecords.last?.turn else {
+            return []
+        }
+        return generalRecords.filter { $0.turn == latestTurn }
     }
 
     func division(id: String) -> Division? {
@@ -214,6 +226,13 @@ struct GameState: Codable, Equatable {
         strategistRecords.append(record)
         if strategistRecords.count > 40 {
             strategistRecords.removeFirst(strategistRecords.count - 40)
+        }
+    }
+
+    mutating func appendGeneralRecords(_ records: [GeneralDecisionRecord]) {
+        generalRecords.append(contentsOf: records)
+        if generalRecords.count > 80 {
+            generalRecords.removeFirst(generalRecords.count - 80)
         }
     }
 

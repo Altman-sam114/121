@@ -358,6 +358,7 @@
 		0D0000000000000000000101 /* GeneralRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000001 /* GeneralRegistry.swift */; };
 		0D0000000000000000000102 /* RulerAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000002 /* RulerAgent.swift */; };
 		0F0000000000000000000101 /* StrategistAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000001 /* StrategistAgent.swift */; };
+		0F0000000000000000000102 /* GeneralAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000002 /* GeneralAgent.swift */; };
 		0D0000000000000000000103 /* DiplomacyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000003 /* DiplomacyState.swift */; };
 		0D0000000000000000000104 /* EconomyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000004 /* EconomyState.swift */; };
 		0D0000000000000000000105 /* GeneralAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000005 /* GeneralAssignment.swift */; };
@@ -368,6 +369,7 @@
 		0D0000000000000000000201 /* GeneralRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000001 /* GeneralRegistry.swift */; };
 		0D0000000000000000000202 /* RulerAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000002 /* RulerAgent.swift */; };
 		0F0000000000000000000201 /* StrategistAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000001 /* StrategistAgent.swift */; };
+		0F0000000000000000000202 /* GeneralAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000002 /* GeneralAgent.swift */; };
 		0D0000000000000000000203 /* DiplomacyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000003 /* DiplomacyState.swift */; };
 		0D0000000000000000000204 /* EconomyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000004 /* EconomyState.swift */; };
 		0D0000000000000000000205 /* GeneralAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000005 /* GeneralAssignment.swift */; };
@@ -376,6 +378,7 @@
 		0D0000000000000000000301 /* GeneralRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000001 /* GeneralRegistry.swift */; };
 		0D0000000000000000000302 /* RulerAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000002 /* RulerAgent.swift */; };
 		0F0000000000000000000301 /* StrategistAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000001 /* StrategistAgent.swift */; };
+		0F0000000000000000000302 /* GeneralAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000002 /* GeneralAgent.swift */; };
 		0D0000000000000000000303 /* DiplomacyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000003 /* DiplomacyState.swift */; };
 		0D0000000000000000000304 /* EconomyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000004 /* EconomyState.swift */; };
 		0D0000000000000000000305 /* GeneralAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000005 /* GeneralAssignment.swift */; };
@@ -578,6 +581,7 @@
 		0D0000000000000000000001 /* GeneralRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralRegistry.swift; sourceTree = "<group>"; };
 		0D0000000000000000000002 /* RulerAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulerAgent.swift; sourceTree = "<group>"; };
 		0F0000000000000000000001 /* StrategistAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategistAgent.swift; sourceTree = "<group>"; };
+		0F0000000000000000000002 /* GeneralAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralAgent.swift; sourceTree = "<group>"; };
 		0D0000000000000000000003 /* DiplomacyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiplomacyState.swift; sourceTree = "<group>"; };
 		0D0000000000000000000004 /* EconomyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EconomyState.swift; sourceTree = "<group>"; };
 		0D0000000000000000000005 /* GeneralAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralAssignment.swift; sourceTree = "<group>"; };
@@ -796,6 +800,7 @@
 				0D0000000000000000000001 /* GeneralRegistry.swift */,
 				0D0000000000000000000002 /* RulerAgent.swift */,
 				0F0000000000000000000001 /* StrategistAgent.swift */,
+				0F0000000000000000000002 /* GeneralAgent.swift */,
 				020000000000000000000034 /* GameAgent.swift */,
 				020000000000000000000035 /* AgentConfiguration.swift */,
 				020000000000000000000036 /* AgentDecision.swift */,
@@ -1143,6 +1148,7 @@
 				0D0000000000000000000101 /* GeneralRegistry.swift in Sources */,
 				0D0000000000000000000102 /* RulerAgent.swift in Sources */,
 				0F0000000000000000000101 /* StrategistAgent.swift in Sources */,
+				0F0000000000000000000102 /* GeneralAgent.swift in Sources */,
 				0D0000000000000000000108 /* EconomyPanelView.swift in Sources */,
 				0D0000000000000000000109 /* DiplomacyPanelView.swift in Sources */,
 				0D000000000000000000010B /* GeneralCommandPanelView.swift in Sources */,
@@ -1333,6 +1339,7 @@
 				0D0000000000000000000201 /* GeneralRegistry.swift in Sources */,
 				0D0000000000000000000202 /* RulerAgent.swift in Sources */,
 				0F0000000000000000000201 /* StrategistAgent.swift in Sources */,
+				0F0000000000000000000202 /* GeneralAgent.swift in Sources */,
 				01000000000000000000012F /* WarDirectiveRecord.swift in Sources */,
 				0100000000000000000000E0 /* HexDirection.swift in Sources */,
 				0100000000000000000000E1 /* HexCoord.swift in Sources */,
@@ -1424,6 +1431,7 @@
 				0D0000000000000000000301 /* GeneralRegistry.swift in Sources */,
 				0D0000000000000000000302 /* RulerAgent.swift in Sources */,
 				0F0000000000000000000301 /* StrategistAgent.swift in Sources */,
+				0F0000000000000000000302 /* GeneralAgent.swift in Sources */,
 				0D0000000000000000000308 /* EconomyPanelView.swift in Sources */,
 				0D0000000000000000000309 /* DiplomacyPanelView.swift in Sources */,
 				0D000000000000000000030B /* GeneralCommandPanelView.swift in Sources */,

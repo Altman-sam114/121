@@ -209,6 +209,7 @@ struct RootGameView: View {
                         record: container.lastAgentDecisionRecord,
                         rulerRecord: container.gameState.diplomacyState.latestRulerRecord,
                         strategistRecord: container.gameState.latestStrategistRecord,
+                        generalRecords: container.gameState.latestGeneralRecords,
                         directiveRecords: container.lastWarDirectiveRecords
                     )
                 }

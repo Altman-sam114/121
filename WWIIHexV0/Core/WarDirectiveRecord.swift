@@ -82,3 +82,46 @@ struct StrategistDecisionRecord: Identifiable, Codable, Equatable {
         self.rationale = rationale
     }
 }
+
+struct GeneralDecisionRecord: Identifiable, Codable, Equatable {
+    let id: String
+    let turn: Int
+    let faction: Faction
+    let zoneId: FrontZoneId
+    let generalId: String?
+    let generalName: String?
+    let commandStyle: ZoneCommanderAgentConfig.CommandStyle?
+    let directiveType: DirectiveType
+    let tactic: TacticName?
+    let targetRegionIds: [RegionId]
+    let action: String
+    let rationale: String
+
+    init(
+        id: String,
+        turn: Int,
+        faction: Faction,
+        zoneId: FrontZoneId,
+        generalId: String?,
+        generalName: String?,
+        commandStyle: ZoneCommanderAgentConfig.CommandStyle?,
+        directiveType: DirectiveType,
+        tactic: TacticName?,
+        targetRegionIds: [RegionId],
+        action: String,
+        rationale: String
+    ) {
+        self.id = id
+        self.turn = turn
+        self.faction = faction
+        self.zoneId = zoneId
+        self.generalId = generalId
+        self.generalName = generalName
+        self.commandStyle = commandStyle
+        self.directiveType = directiveType
+        self.tactic = tactic
+        self.targetRegionIds = targetRegionIds
+        self.action = action
+        self.rationale = rationale
+    }
+}

@@ -4,17 +4,20 @@ struct AgentPanelView: View {
     let record: AgentDecisionRecord?
     let rulerRecord: RulerDecisionRecord?
     let strategistRecord: StrategistDecisionRecord?
+    let generalRecords: [GeneralDecisionRecord]
     let directiveRecords: [WarDirectiveRecord]
 
     init(
         record: AgentDecisionRecord?,
         rulerRecord: RulerDecisionRecord? = nil,
         strategistRecord: StrategistDecisionRecord? = nil,
+        generalRecords: [GeneralDecisionRecord] = [],
         directiveRecords: [WarDirectiveRecord] = []
     ) {
         self.record = record
         self.rulerRecord = rulerRecord
         self.strategistRecord = strategistRecord
+        self.generalRecords = generalRecords
         self.directiveRecords = directiveRecords
     }
 
@@ -77,6 +80,30 @@ struct AgentPanelView: View {
                 Text(strategistRecord.rationale)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            if !generalRecords.isEmpty {
+                Divider()
+                Text("武将")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(Array(generalRecords.prefix(4))) { generalRecord in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(generalRecord.generalName ?? generalRecord.generalId ?? "未分配")
+                                    .font(.caption.bold())
+                                Text(generalRecord.action)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text("\(generalRecord.zoneId.rawValue) / \(generalRecord.directiveType.displayName)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
 
             if let record, !record.commandResults.isEmpty {

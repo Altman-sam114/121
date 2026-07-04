@@ -71,7 +71,8 @@ final class AppContainer: ObservableObject {
             providerName: "MockAI",
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: bootstrappedState, registry: generalRegistry),
-            marshalAgent: Self.buildMarshalAgent(faction: .germany, state: bootstrappedState)
+            marshalAgent: Self.buildMarshalAgent(faction: .germany, state: bootstrappedState),
+            generalAgent: GeneralAgent(registry: generalRegistry)
         )
         return AppContainer(
             gameState: bootstrappedState,
@@ -750,7 +751,8 @@ final class AppContainer: ObservableObject {
             providerName: "MockAI",
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: state, registry: generalRegistry),
-            marshalAgent: Self.buildMarshalAgent(faction: faction, state: state)
+            marshalAgent: Self.buildMarshalAgent(faction: faction, state: state),
+            generalAgent: GeneralAgent(registry: generalRegistry)
         )
     }
 
