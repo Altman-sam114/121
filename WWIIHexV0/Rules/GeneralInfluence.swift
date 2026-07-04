@@ -11,15 +11,15 @@ struct GeneralCombatInfluenceSummary: Equatable {
     var logFragment: String? {
         var parts: [String] = []
         if attackBonus != 0 {
-            parts.append("\(attackerName) attack \(signed(attackBonus))")
+            parts.append("\(attackerName) 攻击 \(signed(attackBonus))")
         }
         if defenseBonus != 0 {
-            parts.append("\(defenderName) defense \(signed(defenseBonus))")
+            parts.append("\(defenderName) 防御 \(signed(defenseBonus))")
         }
         guard !parts.isEmpty else {
             return nil
         }
-        return "general influence \(parts.joined(separator: ", "))"
+        return "武将影响：\(parts.joined(separator: "，"))"
     }
 
     private var attackerName: String {
@@ -46,7 +46,7 @@ struct GeneralMovementInfluenceSummary: Equatable {
         guard roadBonus != 0 else {
             return nil
         }
-        return "general road mobility \(displayName) movement \(signed(roadBonus)) (limit \(baseMovement)->\(effectiveMovement))"
+        return "武将道路：\(displayName) 机动 \(signed(roadBonus)) (上限 \(baseMovement)->\(effectiveMovement))"
     }
 
     private var displayName: String {

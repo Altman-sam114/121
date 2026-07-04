@@ -2046,6 +2046,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 旧存档或缺少 registry 刷新的状态仍可能只显示武将 id，这是兼容 fallback；新分配/刷新后的 assignment 会带 `generalDisplayName`。
 - 本轮只改善移动日志可读性，不实现完整道路建设、借道通行、粮道可视化或武将详情联动。
 
+## v2.4 - 武将道路与交战日志中文化兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralCombatInfluenceSummary.logFragment` 改为中文审计片段，输出 `武将影响：... 攻击/防御 ...`。
+- `GeneralMovementInfluenceSummary.logFragment` 改为中文审计片段，输出 `武将道路：... 机动 ... (上限 ...->...)`。
+- 保持道路机动、攻防修正、移动执行和交战执行规则不变；本轮只改善玩家可见日志片段。
+- 文档补充：武将道路/交战摘要中文优先，但历史移动、攻击、撤退等主体日志仍需后续分批迁移。
+
+关键系统：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_log_localization.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只中文化武将影响片段，不代表所有事件日志完成中文化。
+- 未做运行时 UI 烟测，日志宽度、换行和实际面板可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -33,7 +33,7 @@ v2.4 命名边界：
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
-- `CommandExecutor` 会把武将姓名、道路机动和攻防修正摘要写入移动、攻击和反击日志，便于审计“武将做了什么”。
+- `CommandExecutor` 会把中文武将姓名、道路机动和攻防修正摘要写入移动、攻击和反击日志，便于审计“武将做了什么”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
@@ -89,7 +89,7 @@ flowchart TD
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
-    LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>含武将姓名、道路机动和攻防修正摘要"]:::ui
+    LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>含中文武将姓名、道路机动和攻防修正摘要"]:::ui
 
     ME --> JSON --> DL --> GS
     GS --> HEX
