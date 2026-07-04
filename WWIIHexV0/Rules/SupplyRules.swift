@@ -41,10 +41,15 @@ struct SupplyRules {
 
         if hpRecovered > 0 {
             state.appendEvent(
-                "\(after.name) reinforced in \(after.supplyState.rawValue): +\(hpRecovered) strength."
+                "\(after.name) reinforced in \(after.supplyState.displayName): +\(hpRecovered) strength."
+            )
+        } else if isBesieged(after, in: state) {
+            state.appendEvent(
+                "\(after.name) is besieged at a city or pass; recovery is blocked while \(after.supplyState.displayName).",
+                category: .encircle
             )
         } else {
-            state.appendEvent("\(after.name) could not recover while \(after.supplyState.rawValue).")
+            state.appendEvent("\(after.name) could not recover while \(after.supplyState.displayName).")
         }
     }
 
@@ -90,9 +95,13 @@ struct SupplyRules {
 
             let hpLost = beforeHP - state.divisions[index].hp
             if hpLost > 0 {
-                state.appendEvent(
-                    "\(state.divisions[index].name) suffered encirclement attrition: -\(hpLost) strength."
-                )
+                let message: String
+                if isBesieged(state.divisions[index], in: state) {
+                    message = "\(state.divisions[index].name) suffered siege attrition after its grain route was cut: -\(hpLost) strength."
+                } else {
+                    message = "\(state.divisions[index].name) suffered encirclement attrition: -\(hpLost) strength."
+                }
+                state.appendEvent(message, category: .encircle)
             }
         }
     }
@@ -124,6 +133,15 @@ struct SupplyRules {
             isSafeRetreatTile($0, for: division.faction, in: state)
         }
         return safeExits.count < 2
+    }
+
+    func isBesieged(_ division: Division, in state: GameState) -> Bool {
+        guard isCityOrFortressPosition(division.coord, in: state),
+              !hasSupplyLine(for: division, in: state) else {
+            return false
+        }
+
+        return hasAdjacentHostileDivision(to: division.coord, faction: division.faction, in: state)
     }
 
     func isSafeRetreatTile(_ coord: HexCoord, for faction: Faction, in state: GameState) -> Bool {
@@ -226,6 +244,44 @@ struct SupplyRules {
         }
 
         return true
+    }
+
+    private func isCityOrFortressPosition(_ coord: HexCoord, in state: GameState) -> Bool {
+        guard let tile = state.map.tile(at: coord) else {
+            return false
+        }
+
+        if isCityOrFortressTile(tile) {
+            return true
+        }
+
+        guard let regionId = state.map.region(for: coord),
+              let region = state.map.region(id: regionId) else {
+            return false
+        }
+
+        if region.city != nil {
+            return true
+        }
+
+        return Set([region.representativeHex] + region.displayHexes).contains { regionCoord in
+            state.map.tile(at: regionCoord).map(isCityOrFortressTile) ?? false
+        }
+    }
+
+    private func isCityOrFortressTile(_ tile: HexTile) -> Bool {
+        tile.baseTerrain == .city ||
+            tile.baseTerrain == .fortress ||
+            tile.cityName != nil ||
+            tile.fortressName != nil
+    }
+
+    private func hasAdjacentHostileDivision(to coord: HexCoord, faction: Faction, in state: GameState) -> Bool {
+        state.divisions.contains { other in
+            !other.isDestroyed &&
+                other.faction.isHostile(to: faction) &&
+                other.coord.distance(to: coord) == 1
+        }
     }
 
     private func retreatSortKey(for coord: HexCoord, faction: Faction, in state: GameState) -> RetreatSortKey {

@@ -1419,6 +1419,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只完成战术显示和审计文本三国化，不新增围城、士气、兵种克制和多势力 turn order。
 - `TacticName` 的 rawValue 仍保留 `blitzkrieg` 等旧 schema 值，后续若要彻底改 schema 需单独版本迁移和兼容桥。
 
+## v2.3 - 围城与粮草最小规则
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `SupplyRules.isBesieged` 新增围城判定：军队位于城池/关隘 hex，或位于带 city 的 region；该军队无可用补给线；相邻 hex 有敌对军队。
+- `CombatRules.effectiveDefense` 对围城守军施加有效防御下降修正，保持最低防御为 1，并继续叠加现有 terrain / infantry / hold 规则。
+- `SupplyRules.applyResupplyRest` 在围城恢复失败时输出更明确的围城和粮道日志。
+- `SupplyRules.applyEncirclementAttrition` 对围城单位使用 siege attrition 文案，说明粮道断绝导致损耗。
+- `EconomyRules` 未新增重复恢复逻辑；现有自动补员已经要求 supplied、非撤退、非敌邻，因此围城/断粮单位不会自动恢复。
+- 文档状态更新为 v2.3 三国兵种、战术审计显示、围城和粮草规则兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `md/prompt/v2.0-三国迁移/v2.3_siege_grain_rules.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 文档和改动 Swift 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成围城/粮草最小规则，不新增士气、疲劳、独立粮仓库存、多回合围城进度、兵种克制和多势力 turn order。
+- city region 围城判定当前是 v2.3 简化：同一城池 region 内断粮且敌邻的守军会被视作围城；后续若需要可收紧到具体 city / fortress hex。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

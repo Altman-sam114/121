@@ -7,6 +7,7 @@ struct CombatDamage: Equatable {
 
 struct CombatRules {
     let movementRules = MovementRules()
+    private let supplyRules = SupplyRules()
 
     func terrainDefenseBonus(for defender: Division, attackedBy attacker: Division, in state: GameState) -> Int {
         guard let defenderTile = state.map.tile(at: defender.coord) else {
@@ -26,6 +27,9 @@ struct CombatRules {
            defender.isInfantryHeavy,
            defenderTile.baseTerrain.supportsInfantryDefenseBonus {
             baseDefense = max(1, Int((Double(baseDefense) * 1.3).rounded()))
+        }
+        if supplyRules.isBesieged(defender, in: state) {
+            baseDefense = max(1, Int((Double(baseDefense) * 0.75).rounded()))
         }
         guard defender.retreatMode == .hold else {
             return baseDefense

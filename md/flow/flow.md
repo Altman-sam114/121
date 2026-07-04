@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.3 三国兵种模板兼容层）
+# 三国棋策 Agent 核心流程文档（v2.3 三国围城和粮草规则兼容层）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.3 当前完成官渡默认剧本预览和三国兵种模板兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.3 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化和围城/粮草最小规则：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -31,7 +31,7 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层和战术审计显示三国化：
+v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化和围城/粮草最小规则：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
@@ -46,6 +46,7 @@ v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `ComponentType` 保留旧 rawValue `tank/motorizedInfantry/infantry/artillery`，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用；旧阿登模板仍可加载。
 - `TacticName` 仍保留旧 Codable rawValue 作为指令 schema，但 `displayName`、AI 面板和模拟元帅 rationale 已显示为正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
+- `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
 最关键的铁律：
@@ -1073,6 +1074,9 @@ Region controller 聚合权重：
 
 ```text
 计算 attackDamage
+  -> CombatRules.effectiveDefense
+    -> 城池/关隘位置 + 无粮道 + 敌邻接 => SupplyRules.isBesieged
+    -> 围城守军有效防御下降，minimum 1
 attacker.hasActed = true
 attacker.facing = 面向 defender
 对 defender 扣 strength
@@ -1090,14 +1094,17 @@ resolveCombatResult
 
 ```text
 SupplyRules.updateSupplyStates
+  -> hasSupplyLine 不通时进入 lowSupply / encircled
+  -> 城池/关隘位置 + 无粮道 + 敌邻接会被 isBesieged 识别为围城
 EconomyRules.resolveFactionTurn(for: activeFaction)
   -> 收入入账
   -> 支付战略补给维护费
   -> supplies 短缺时 supplied 单位降为 lowSupply
-  -> 安全后方自动补员
+  -> 安全后方 supplied 且非敌邻单位自动补员；围城/断粮单位不会恢复
   -> 推进生产队列并部署完成单位
 SupplyRules.advanceRetreats
 SupplyRules.applyEncirclementAttrition
+  -> 围城单位使用 siege attrition 日志说明粮道断绝
 VictoryRules.updateVictoryState
 
 activeFaction:

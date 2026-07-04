@@ -56,3 +56,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.2_guandu_preview_default.md`
 - `md/prompt/v2.0-三国迁移/v2.3_sanguo_unit_templates.md`
 - `md/prompt/v2.0-三国迁移/v2.3_tactic_display_labels.md`
+- `md/prompt/v2.0-三国迁移/v2.3_siege_grain_rules.md`
