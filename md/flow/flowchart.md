@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.2 官渡默认剧本预览）
+# 三国棋策 Agent Mermaid 核心流程图（v2.3 三国兵种模板兼容层）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.2 当前完成官渡默认剧本预览，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.3 当前完成官渡默认剧本预览和三国兵种模板兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,22 +12,24 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.2 先接入官渡默认剧本预览，不替换规则权威
+  -> v2.3 先接入官渡默认剧本和三国兵种模板，不替换规则权威
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
 
-v2.2 命名边界：
+v2.3 命名边界：
 
 - `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
 - 默认新局优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json`；旧阿登数据保留作 fallback。
+- 单位模板优先加载 `sanguo_unit_templates.json`；缺文件时才 fallback 到旧 `unit_templates.json`。
 - `Faction` 可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`；`Faction.scenarioCases` 给 MapEditor、场景数据和战略派生层控制计算使用。
 - 默认 `Faction.activeTurnCases` / 兼容 `Faction.allCases` 仍只枚举当前可行动双方，新增三国势力不参与旧回合循环。
 - null / 缺省的 `RegionDataSet` owner/controller 会映射到 `.neutral`，不会再 fallback 给 `.allies`。
 - Theater / FrontLine / WarDeployment / Region visibility 派生层会识别 `Faction.scenarioCases` 中的三国势力，不再只看旧二元回合列表。
 - `DiplomacyState.initial` 能生成三国基础 country / bloc profile，默认曹袁为 `atWar`，其他新势力默认中立关系。
 - 规则和 AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`，不在新代码里继续依赖二元 `opponent`。
-- `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营。
+- `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营、弓弩营、亲卫营、舟师营。
+- `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。
 

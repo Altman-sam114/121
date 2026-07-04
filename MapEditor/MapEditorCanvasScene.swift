@@ -433,15 +433,35 @@ private extension SKColor {
 
 private extension String {
     var mapEditorUnitAbbreviation: String {
-        if localizedStandardContains("panzer") || localizedStandardContains("tank") {
-            return "ARM"
+        if localizedStandardContains("panzer")
+            || localizedStandardContains("tank")
+            || localizedStandardContains("cavalry")
+            || localizedStandardContains("骑") {
+            return "骑"
         }
-        if localizedStandardContains("artillery") {
-            return "ART"
+        if localizedStandardContains("artillery")
+            || localizedStandardContains("siege")
+            || localizedStandardContains("器械") {
+            return "械"
+        }
+        if localizedStandardContains("archer")
+            || localizedStandardContains("弓") {
+            return "弓"
+        }
+        if localizedStandardContains("garrison")
+            || localizedStandardContains("guard")
+            || localizedStandardContains("守军")
+            || localizedStandardContains("亲卫") {
+            return "卫"
+        }
+        if localizedStandardContains("naval")
+            || localizedStandardContains("fleet")
+            || localizedStandardContains("舟") {
+            return "舟"
         }
         if localizedStandardContains("motorized") {
-            return "MOT"
+            return "轻"
         }
-        return "INF"
+        return "步"
     }
 }

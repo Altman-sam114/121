@@ -5,6 +5,11 @@ enum ComponentType: String, Codable, Equatable, CaseIterable {
     case motorizedInfantry
     case infantry
     case artillery
+    case cavalry
+    case archer
+    case siegeEngine
+    case naval
+    case guardUnit = "guard"
 
     var baseStats: EffectiveStats {
         switch self {
@@ -16,6 +21,16 @@ enum ComponentType: String, Codable, Equatable, CaseIterable {
             return EffectiveStats(attack: 4, defense: 5, movement: 3, range: 1, vision: 2)
         case .artillery:
             return EffectiveStats(attack: 7, defense: 2, movement: 2, range: 2, vision: 2)
+        case .cavalry:
+            return EffectiveStats(attack: 7, defense: 4, movement: 5, range: 1, vision: 3)
+        case .archer:
+            return EffectiveStats(attack: 5, defense: 3, movement: 3, range: 2, vision: 3)
+        case .siegeEngine:
+            return EffectiveStats(attack: 7, defense: 2, movement: 2, range: 2, vision: 2)
+        case .naval:
+            return EffectiveStats(attack: 5, defense: 4, movement: 4, range: 1, vision: 3)
+        case .guardUnit:
+            return EffectiveStats(attack: 5, defense: 6, movement: 3, range: 1, vision: 2)
         }
     }
 
@@ -29,6 +44,16 @@ enum ComponentType: String, Codable, Equatable, CaseIterable {
             return "步卒"
         case .artillery:
             return "器械"
+        case .cavalry:
+            return "骑兵"
+        case .archer:
+            return "弓弩"
+        case .siegeEngine:
+            return "攻城器械"
+        case .naval:
+            return "舟师"
+        case .guardUnit:
+            return "亲卫"
         }
     }
 
@@ -42,6 +67,16 @@ enum ComponentType: String, Codable, Equatable, CaseIterable {
             return "步"
         case .artillery:
             return "械"
+        case .cavalry:
+            return "骑"
+        case .archer:
+            return "弓"
+        case .siegeEngine:
+            return "械"
+        case .naval:
+            return "舟"
+        case .guardUnit:
+            return "卫"
         }
     }
 }
@@ -348,11 +383,17 @@ struct Division: Identifiable, Codable, Equatable {
     }
 
     var isArmor: Bool {
-        components.contains { $0.type == .tank && $0.weight >= 0.25 }
+        components.contains {
+            ($0.type == .tank || $0.type == .cavalry)
+                && $0.weight >= 0.25
+        }
     }
 
     var isArtillery: Bool {
-        components.contains { $0.type == .artillery && $0.weight >= 0.50 }
+        components.contains {
+            ($0.type == .artillery || $0.type == .siegeEngine)
+                && $0.weight >= 0.50
+        }
     }
 
     var thematicDisplayName: String {
@@ -374,6 +415,15 @@ struct Division: Identifiable, Codable, Equatable {
         }
         if isArmor {
             return "骑兵军"
+        }
+        if components.contains(where: { $0.type == .archer && $0.weight >= 0.40 }) {
+            return "弓弩营"
+        }
+        if components.contains(where: { $0.type == .guardUnit && $0.weight >= 0.40 }) {
+            return "亲卫营"
+        }
+        if components.contains(where: { $0.type == .naval && $0.weight >= 0.40 }) {
+            return "舟师营"
         }
         if components.contains(where: { $0.type == .motorizedInfantry && $0.weight >= 0.40 }) {
             return "轻骑营"

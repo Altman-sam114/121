@@ -177,15 +177,24 @@ final class UnitNode: SKNode {
 private extension Division {
     var markerCode: String {
         if isArtillery {
-            return "ART"
+            return "械"
         }
         if isArmor {
-            return "ARM"
+            return "骑"
+        }
+        if components.contains(where: { $0.type == .archer && $0.weight >= 0.40 }) {
+            return "弓"
+        }
+        if components.contains(where: { $0.type == .guardUnit && $0.weight >= 0.40 }) {
+            return "卫"
+        }
+        if components.contains(where: { $0.type == .naval && $0.weight >= 0.40 }) {
+            return "舟"
         }
         if components.contains(where: { $0.type == .motorizedInfantry && $0.weight >= 0.40 }) {
-            return "MOT"
+            return "轻"
         }
-        return "INF"
+        return "步"
     }
 
     var markerReadinessText: String {

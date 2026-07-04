@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "templates": [
+    {
+      "id": "infantry_camp",
+      "displayName": "步卒营",
+      "maxHP": 18,
+      "components": [
+        {
+          "type": "infantry",
+          "weight": 0.75
+        },
+        {
+          "type": "archer",
+          "weight": 0.15
+        },
+        {
+          "type": "guard",
+          "weight": 0.1
+        }
+      ]
+    },
+    {
+      "id": "cavalry_wing",
+      "displayName": "骑军",
+      "maxHP": 18,
+      "components": [
+        {
+          "type": "cavalry",
+          "weight": 0.75
+        },
+        {
+          "type": "infantry",
+          "weight": 0.25
+        }
+      ]
+    },
+    {
+      "id": "archer_camp",
+      "displayName": "弓弩营",
+      "maxHP": 16,
+      "components": [
+        {
+          "type": "archer",
+          "weight": 0.7
+        },
+        {
+          "type": "infantry",
+          "weight": 0.3
+        }
+      ]
+    },
+    {
+      "id": "siege_engine_camp",
+      "displayName": "器械营",
+      "maxHP": 16,
+      "components": [
+        {
+          "type": "siegeEngine",
+          "weight": 0.6
+        },
+        {
+          "type": "infantry",
+          "weight": 0.3
+        },
+        {
+          "type": "archer",
+          "weight": 0.1
+        }
+      ]
+    },
+    {
+      "id": "garrison_camp",
+      "displayName": "守军",
+      "maxHP": 18,
+      "components": [
+        {
+          "type": "guard",
+          "weight": 0.55
+        },
+        {
+          "type": "infantry",
+          "weight": 0.35
+        },
+        {
+          "type": "archer",
+          "weight": 0.1
+        }
+      ]
+    },
+    {
+      "id": "naval_fleet",
+      "displayName": "舟师",
+      "maxHP": 16,
+      "components": [
+        {
+          "type": "naval",
+          "weight": 0.65
+        },
+        {
+          "type": "archer",
+          "weight": 0.2
+        },
+        {
+          "type": "infantry",
+          "weight": 0.15
+        }
+      ]
+    }
+  ]
+}

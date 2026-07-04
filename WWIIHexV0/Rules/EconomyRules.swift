@@ -266,13 +266,13 @@ struct EconomyRules {
 
     private func reinforcementCostPerStrength(for division: Division) -> EconomyResources {
         let armorWeight = division.components
-            .filter { $0.type == .tank }
+            .filter { $0.type == .tank || $0.type == .cavalry }
             .reduce(0.0) { $0 + $1.weight }
         let motorizedWeight = division.components
-            .filter { $0.type == .motorizedInfantry }
+            .filter { $0.type == .motorizedInfantry || $0.type == .naval }
             .reduce(0.0) { $0 + $1.weight }
         let artilleryWeight = division.components
-            .filter { $0.type == .artillery }
+            .filter { $0.type == .artillery || $0.type == .siegeEngine }
             .reduce(0.0) { $0 + $1.weight }
 
         return EconomyResources(

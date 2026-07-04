@@ -174,7 +174,11 @@ struct DataLoader {
     }
 
     func loadUnitTemplates() throws -> [UnitTemplateDefinition] {
-        try loadJSON(UnitTemplateCatalogDefinition.self, named: "unit_templates").templates
+        do {
+            return try loadJSON(UnitTemplateCatalogDefinition.self, named: "sanguo_unit_templates").templates
+        } catch DataLoaderError.missingResource(_) {
+            return try loadJSON(UnitTemplateCatalogDefinition.self, named: "unit_templates").templates
+        }
     }
 
     func loadGeneralAgents() throws -> [GeneralAgentDefinition] {
@@ -477,13 +481,16 @@ struct DataLoader {
             }
 
             let components: [DivisionComponent]
+            let maxHP: Int
             if let template = templates.first(where: { $0.id == definition.templateId }) {
                 components = template.components.compactMap { component in
                     guard let type = ComponentType(rawValue: component.type) else { return nil }
                     return DivisionComponent(type: type, weight: component.weight)
                 }
+                maxHP = max(template.maxHP, definition.hp)
             } else {
                 components = fallbackComponents(for: definition.templateId)
+                maxHP = max(fallbackMaxHP(for: definition.templateId), definition.hp)
             }
 
             guard !components.isEmpty else {
@@ -498,7 +505,7 @@ struct DataLoader {
                 coord: HexCoord(q: definition.coord.q, r: definition.coord.r),
                 facing: HexDirection(rawValue: definition.facing) ?? .west,
                 hp: definition.hp,
-                maxHP: 10,
+                maxHP: maxHP,
                 components: components,
                 supplyState: SupplyState(rawValue: definition.supplyState) ?? .supplied,
                 retreatMode: definition.retreatMode.flatMap(RetreatMode.init(rawValue:)) ?? .retreatable
@@ -519,8 +526,37 @@ struct DataLoader {
             return [DivisionComponent(type: .motorizedInfantry, weight: 1.0)]
         case "artillery_division":
             return [DivisionComponent(type: .artillery, weight: 1.0)]
+        case "cavalry_wing":
+            return [DivisionComponent(type: .cavalry, weight: 0.75), DivisionComponent(type: .infantry, weight: 0.25)]
+        case "archer_camp":
+            return [DivisionComponent(type: .archer, weight: 0.70), DivisionComponent(type: .infantry, weight: 0.30)]
+        case "siege_engine_camp":
+            return [DivisionComponent(type: .siegeEngine, weight: 0.60), DivisionComponent(type: .infantry, weight: 0.40)]
+        case "garrison_camp":
+            return [DivisionComponent(type: .guardUnit, weight: 0.55), DivisionComponent(type: .infantry, weight: 0.45)]
+        case "naval_fleet":
+            return [DivisionComponent(type: .naval, weight: 0.65), DivisionComponent(type: .archer, weight: 0.20), DivisionComponent(type: .infantry, weight: 0.15)]
         default:
             return [DivisionComponent(type: .infantry, weight: 1.0)]
+        }
+    }
+
+    private func fallbackMaxHP(for templateId: String) -> Int {
+        switch templateId {
+        case "artillery_division",
+             "anti_tank_division":
+            return 8
+        case "garrison_division":
+            return 9
+        case "cavalry_wing",
+             "garrison_camp":
+            return 18
+        case "archer_camp",
+             "siege_engine_camp",
+             "naval_fleet":
+            return 16
+        default:
+            return 10
         }
     }
 

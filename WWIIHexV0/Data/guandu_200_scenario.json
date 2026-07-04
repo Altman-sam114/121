@@ -78,12 +78,12 @@
     {"id": "obj_luoyang", "name": "洛阳残垣", "kind": "city", "coord": {"q": 4, "r": 0}, "points": 2}
   ],
   "initialUnits": [
-    {"id": "yuan_guard_ye", "name": "袁军邺城守军", "faction": "allies", "templateId": "garrison_division", "coord": {"q": 1, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
-    {"id": "yuan_cavalry_liyang", "name": "袁军黎阳骑军", "faction": "allies", "templateId": "motorized_division", "coord": {"q": 2, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
-    {"id": "yuan_siege_guandu", "name": "袁军官渡器械营", "faction": "allies", "templateId": "artillery_division", "coord": {"q": 3, "r": 2}, "facing": "east", "hp": 16, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
-    {"id": "cao_guard_xuchang", "name": "曹军许昌守军", "faction": "germany", "templateId": "garrison_division", "coord": {"q": 5, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
-    {"id": "cao_cavalry_wuchao", "name": "曹军乌巢骑军", "faction": "germany", "templateId": "panzer_division", "coord": {"q": 4, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
-    {"id": "cao_infantry_runan", "name": "曹军汝南步军", "faction": "germany", "templateId": "infantry_division", "coord": {"q": 5, "r": 3}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null}
+    {"id": "yuan_guard_ye", "name": "袁军邺城守军", "faction": "allies", "templateId": "garrison_camp", "coord": {"q": 1, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "yuan_cavalry_liyang", "name": "袁军黎阳骑军", "faction": "allies", "templateId": "cavalry_wing", "coord": {"q": 2, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "yuan_siege_guandu", "name": "袁军官渡器械营", "faction": "allies", "templateId": "siege_engine_camp", "coord": {"q": 3, "r": 2}, "facing": "east", "hp": 16, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_guard_xuchang", "name": "曹军许昌守军", "faction": "germany", "templateId": "garrison_camp", "coord": {"q": 5, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_cavalry_wuchao", "name": "曹军乌巢骑军", "faction": "germany", "templateId": "cavalry_wing", "coord": {"q": 4, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_infantry_runan", "name": "曹军汝南步军", "faction": "germany", "templateId": "infantry_camp", "coord": {"q": 5, "r": 3}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null}
   ],
   "victoryConditions": [
     {"id": "yuan_take_xuchang", "type": "controlObjective", "faction": "allies", "objectiveId": "obj_xuchang", "objectiveIds": null, "targetFaction": "germany", "targetTemplateIds": null, "turns": null, "turn": null, "count": null, "status": "active", "description": "袁绍势力控制许昌。"},

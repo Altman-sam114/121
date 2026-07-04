@@ -1330,6 +1330,56 @@ guerrillaWarfare 额外参考 infrastructure
 - `cao/yuan/liuBei/sun/liuBiao/maTeng/han/neutral` 已进入数据和外交基础，但还未进入完整 playable turn order。
 - 仍复用旧 `unit_templates.json` 的二战模板 id；三国兵种模板属于后续 v2.3。
 
+## v2.3 - 三国兵种模板兼容层
+
+完成日期：2026-07-04
+
+核心更新：
+
+- 新增 `WWIIHexV0/Data/sanguo_unit_templates.json`，提供 `infantry_camp`、`cavalry_wing`、`archer_camp`、`siege_engine_camp`、`garrison_camp`、`naval_fleet` 等三国 templateId。
+- `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard`，供三国模板解码。
+- 官渡预览初始单位改用三国 templateId，不再引用 `infantry_division`、`artillery_division`、`motorized_division`、`panzer_division`、`garrison_division`。
+- `DataLoader.loadUnitTemplates()` 优先加载 `sanguo_unit_templates.json`，缺文件时再 fallback 到旧 `unit_templates.json`。
+- `DataLoader.makeDivisions()` 使用模板 `maxHP` 作为军队 `maxStrength` 上限，避免官渡 `hp: 18` 被旧默认 10 截断。
+- 经济补员、兵牌短码、tooltip 和 MapEditor 画布缩写补齐三国 component 兼容显示。
+- `WWIIHexV0.xcodeproj/project.pbxproj` 将 `sanguo_unit_templates.json` 加入 iOS/macOS 主资源。
+
+关键系统：
+
+- `WWIIHexV0/Core/Division.swift`
+- `WWIIHexV0/Data/DataLoader.swift`
+- `WWIIHexV0/Data/sanguo_unit_templates.json`
+- `WWIIHexV0/Data/guandu_200_scenario.json`
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `WWIIHexV0/Core/EconomyState.swift`
+- `WWIIHexV0/SpriteKit/UnitNode.swift`
+- `WWIIHexV0/UI/UnitTooltipView.swift`
+- `MapEditor/MapEditorCanvasScene.swift`
+- `WWIIHexV0.xcodeproj/project.pbxproj`
+- `md/prompt/v2.0-三国迁移/v2.3_sanguo_unit_templates.md`
+
+验证记录：
+
+- `jq empty WWIIHexV0/Data/sanguo_unit_templates.json`：通过。
+- `jq empty WWIIHexV0/Data/guandu_200_scenario.json`：通过。
+- 三国模板语义轻量检查通过：components 权重和为 1、component rawValue 在兼容白名单内、官渡初始单位 templateId 均能在三国模板中找到、官渡初始单位 templateId 不再以 `_division` 结尾。
+- `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`：通过。
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI / SpriteKit / MapEditor 改动 parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/SpriteKit/UnitNode.swift WWIIHexV0/UI/UnitTooltipView.swift MapEditor/MapEditorCanvasScene.swift`。
+- 文档和改动 Swift 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 当前状态 v2.2 旧口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成兵种模板和兼容显示，不实现完整围城、士气、兵种克制和多势力 turn order。
+- `Division`、`hp/maxHP`、`unit_templates.json` 等源码/旧数据兼容名仍保留，后续需要继续分阶段迁移。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
@@ -1340,7 +1390,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 对比记录：
 
-- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.2 三国迁移官渡默认剧本预览。
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.3 三国迁移兵种模板兼容层。
 - 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
 - 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
 - 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。

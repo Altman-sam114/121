@@ -240,10 +240,16 @@ struct EconomyState: Codable, Equatable {
 
 extension Division {
     var isInfantryHeavy: Bool {
-        components.contains { $0.type == .infantry && $0.weight >= 0.50 }
+        components.contains {
+            ($0.type == .infantry || $0.type == .guardUnit)
+                && $0.weight >= 0.50
+        }
     }
 
     var isMechanizedHeavy: Bool {
-        isArmor || components.contains { $0.type == .motorizedInfantry && $0.weight >= 0.50 }
+        isArmor || components.contains {
+            ($0.type == .motorizedInfantry || $0.type == .naval)
+                && $0.weight >= 0.50
+        }
     }
 }

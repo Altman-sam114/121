@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.2 官渡默认剧本预览）
+# 三国棋策 Agent 核心流程文档（v2.3 三国兵种模板兼容层）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.2 当前完成官渡默认剧本预览：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.3 当前完成官渡默认剧本预览和三国兵种模板兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -31,16 +31,19 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.2 迁移层当前完成显示语义、多势力数据基础和官渡默认剧本预览：
+v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览和三国兵种模板兼容层：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
 - 默认 `DataLoader.loadInitialGameState()` 先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到阿登兼容数据。
+- `DataLoader.loadUnitTemplates()` 先尝试 `sanguo_unit_templates.json`，缺文件时再 fallback 到旧 `unit_templates.json`；如果三国模板存在但解析失败，会暴露错误而不是静默退旧数据。
+- `DataLoader.makeDivisions()` 现在使用模板 `maxHP` 作为军队 `maxStrength` 上限，避免官渡高于 10 的初始兵力被旧默认值截断。
 - MapEditor 默认资源桥也读写 `guandu_200_scenario` + `guandu_200_regions`。
 - `Faction` 还可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`，供后续三国 JSON / MapEditor / 初始外交 profile 使用。
 - `Faction.activeTurnCases` / 兼容 `Faction.allCases` 当前仍只包含 `.germany`、`.allies`；完整多势力 turn order 尚未迁移。
 - `Faction.scenarioCases` 是 MapEditor、场景数据和战略派生层控制比例/主控方计算可表达的势力全集。
-- `Division` 当前显示为军队/步卒营/骑兵军/器械营，但 `Division.coord` 仍是单位位置权威。
+- `Division` 当前显示为军队/步卒营/骑兵军/器械营/弓弩营/亲卫营/舟师营，但 `Division.coord` 仍是单位位置权威。
+- `ComponentType` 保留旧 rawValue `tank/motorizedInfantry/infantry/artillery`，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用；旧阿登模板仍可加载。
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
@@ -823,6 +826,7 @@ WWIIHexV0Mac
 ```text
 guandu_200_scenario.json
 guandu_200_regions.json
+sanguo_unit_templates.json
 ardennes_v0_scenario.json
 ardennes_v02_regions.json
 general_agents.json

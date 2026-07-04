@@ -54,3 +54,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.1_neutral_faction_foundation.md`
 - `md/prompt/v2.0-三国迁移/v2.1_sanguo_power_profiles.md`
 - `md/prompt/v2.0-三国迁移/v2.2_guandu_preview_default.md`
+- `md/prompt/v2.0-三国迁移/v2.3_sanguo_unit_templates.md`
