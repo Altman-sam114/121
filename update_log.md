@@ -1739,7 +1739,56 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮只完成太守内政建议与审计，不自动执行生产、不实现修路/屯田/治安状态变化，也不新增完整内政 directive validator / executor。
 - 太守建议只进入 `DirectiveEnvelope.theaterContext`、AI raw JSON 和 UI 审计；后续若要真实排产，必须经 `Command.queueProduction -> CommandValidator -> EconomyRules.queueProduction`。
-- 外交 Agent、完整多势力 turn order 和发布级 UI 仍待后续版本推进。
+- 真实外交关系执行器、完整多势力 turn order 和发布级 UI 仍待后续版本推进。
+
+## v2.4 - 外交提案审计兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 deterministic `DiplomatAgent`，在君主姿态之后、太守内政建议之前读取国家、集团、外交关系、紧张度和战线压力。
+- 新增 `DiplomaticProposal` 和 `DiplomatDecisionRecord`，支持同盟、停战、借道、称臣、讨伐檄文、奉表勤王等外交提案审计。
+- `DiplomacyState` 新增 `diplomatRecords`、`latestDiplomatRecord` 和 `appendDiplomatRecord`，并为旧存档缺字段提供默认空数组解码。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 路径中调用 `DiplomatAgent.plan`，把提案写入事件日志、AI raw JSON 和 `DirectiveEnvelope.theaterContext`。
+- `AgentPanelView` 和 `DiplomacyPanelView` 显示外交官、提案、对象、目标郡县和理由。
+- `DiplomaticStatus.displayName` 与 `DiplomacyPanelView` 主要标题迁移为中文显示，不改变 Codable rawValue。
+- `AppContainer` 创建 `TurnManager` 时传入默认外交 agent，`WWIIHexV0.xcodeproj/project.pbxproj` 将 `DiplomatAgent.swift` 接入主目标源码。
+- 文档状态更新为 v2.4 君主/外交/太守/军师/武将指令编排、道路和交战兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Agents/DiplomatAgent.swift`
+- `WWIIHexV0/Core/DiplomacyState.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/DiplomacyPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0.xcodeproj/project.pbxproj`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomat_proposal_audit.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`：通过。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成外交提案与审计，不自动改变外交关系、不实现借道、停战、同盟或称臣执行器。
+- 外交建议只进入 `DirectiveEnvelope.theaterContext`、AI raw JSON、外交日志和 UI 审计；后续若要真实生效，必须新增结构化外交 directive、validator 和 executor。
+- 完整多势力 turn order、完整外交系统和发布级 UI 仍待后续版本推进。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 

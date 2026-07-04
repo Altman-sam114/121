@@ -66,15 +66,15 @@ enum DiplomaticStatus: String, Codable, Equatable, CaseIterable {
     var displayName: String {
         switch self {
         case .allied:
-            return "Allied"
+            return "同盟"
         case .coBelligerent:
-            return "Co-belligerent"
+            return "共同作战"
         case .neutral:
-            return "Neutral"
+            return "中立"
         case .hostile:
-            return "Hostile"
+            return "敌对"
         case .atWar:
-            return "At war"
+            return "交战"
         }
     }
 }
@@ -197,11 +197,54 @@ struct RulerDecisionRecord: Identifiable, Codable, Equatable {
     let rationale: String
 }
 
+enum DiplomaticProposal: String, Codable, Equatable, CaseIterable {
+    case alliance
+    case truce
+    case borrowPassage
+    case vassalage
+    case warAppeal
+    case tribute
+
+    var displayName: String {
+        switch self {
+        case .alliance:
+            return "同盟"
+        case .truce:
+            return "停战"
+        case .borrowPassage:
+            return "借道"
+        case .vassalage:
+            return "称臣"
+        case .warAppeal:
+            return "讨伐檄文"
+        case .tribute:
+            return "奉表勤王"
+        }
+    }
+}
+
+struct DiplomatDecisionRecord: Identifiable, Codable, Equatable {
+    let id: String
+    let turn: Int
+    let faction: Faction
+    let diplomatAgentId: String
+    let sourceCountryId: CountryId?
+    let targetCountryId: CountryId?
+    let targetFaction: Faction?
+    let proposal: DiplomaticProposal
+    let relationStatus: DiplomaticStatus?
+    let tension: Int?
+    let objectiveRegionIds: [RegionId]
+    let summary: String
+    let rationale: String
+}
+
 struct DiplomacyState: Codable, Equatable {
     var countries: [CountryProfile]
     var blocs: [DiplomaticBloc]
     var relations: [DiplomaticRelation]
     var rulerRecords: [RulerDecisionRecord]
+    var diplomatRecords: [DiplomatDecisionRecord]
     var lastUpdatedTurn: Int?
 
     init(
@@ -209,13 +252,36 @@ struct DiplomacyState: Codable, Equatable {
         blocs: [DiplomaticBloc] = [],
         relations: [DiplomaticRelation] = [],
         rulerRecords: [RulerDecisionRecord] = [],
+        diplomatRecords: [DiplomatDecisionRecord] = [],
         lastUpdatedTurn: Int? = nil
     ) {
         self.countries = countries.sorted { $0.id.rawValue < $1.id.rawValue }
         self.blocs = blocs.sorted { $0.id.rawValue < $1.id.rawValue }
         self.relations = relations.sorted { $0.id < $1.id }
         self.rulerRecords = rulerRecords
+        self.diplomatRecords = diplomatRecords
         self.lastUpdatedTurn = lastUpdatedTurn
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case countries
+        case blocs
+        case relations
+        case rulerRecords
+        case diplomatRecords
+        case lastUpdatedTurn
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            countries: try container.decodeIfPresent([CountryProfile].self, forKey: .countries) ?? [],
+            blocs: try container.decodeIfPresent([DiplomaticBloc].self, forKey: .blocs) ?? [],
+            relations: try container.decodeIfPresent([DiplomaticRelation].self, forKey: .relations) ?? [],
+            rulerRecords: try container.decodeIfPresent([RulerDecisionRecord].self, forKey: .rulerRecords) ?? [],
+            diplomatRecords: try container.decodeIfPresent([DiplomatDecisionRecord].self, forKey: .diplomatRecords) ?? [],
+            lastUpdatedTurn: try container.decodeIfPresent(Int.self, forKey: .lastUpdatedTurn)
+        )
     }
 
     static var empty: DiplomacyState {
@@ -247,6 +313,10 @@ struct DiplomacyState: Codable, Equatable {
 
     var latestRulerRecord: RulerDecisionRecord? {
         rulerRecords.last
+    }
+
+    var latestDiplomatRecord: DiplomatDecisionRecord? {
+        diplomatRecords.last
     }
 
     func countries(for faction: Faction) -> [CountryProfile] {
@@ -291,6 +361,14 @@ struct DiplomacyState: Codable, Equatable {
         rulerRecords.append(record)
         if rulerRecords.count > 40 {
             rulerRecords.removeFirst(rulerRecords.count - 40)
+        }
+        lastUpdatedTurn = record.turn
+    }
+
+    mutating func appendDiplomatRecord(_ record: DiplomatDecisionRecord) {
+        diplomatRecords.append(record)
+        if diplomatRecords.count > 40 {
+            diplomatRecords.removeFirst(diplomatRecords.count - 40)
         }
         lastUpdatedTurn = record.turn
     }

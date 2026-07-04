@@ -30,6 +30,7 @@ struct TurnManager {
     let commanderPool: TheaterCommanderPool?
     let marshalAgent: MarshalAgent?
     let rulerAgent: RulerAgent?
+    let diplomatAgent: DiplomatAgent?
     let governorAgent: GovernorAgent?
     let strategistAgent: StrategistAgent?
     let generalAgent: GeneralAgent?
@@ -46,6 +47,7 @@ struct TurnManager {
         commanderPool: TheaterCommanderPool? = nil,
         marshalAgent: MarshalAgent? = nil,
         rulerAgent: RulerAgent? = nil,
+        diplomatAgent: DiplomatAgent? = nil,
         governorAgent: GovernorAgent? = nil,
         strategistAgent: StrategistAgent? = nil,
         generalAgent: GeneralAgent? = nil,
@@ -61,6 +63,7 @@ struct TurnManager {
         self.commanderPool = commanderPool
         self.marshalAgent = marshalAgent
         self.rulerAgent = rulerAgent
+        self.diplomatAgent = diplomatAgent
         self.governorAgent = governorAgent
         self.strategistAgent = strategistAgent
         self.generalAgent = generalAgent
@@ -199,12 +202,19 @@ struct TurnManager {
             let diagnostics = directiveDiagnostics(for: faction, state: state)
             let envelope = makeZoneDirectiveEnvelope(state: state, faction: faction, issuerId: agent.id)
             let rulerAdjustment = applyRulerAdjustment(to: envelope, state: state, faction: faction)
-            let governorAdjustment = applyGovernorPlanning(
+            let diplomatAdjustment = applyDiplomatPlanning(
                 to: rulerAdjustment.envelope,
                 state: rulerAdjustment.state,
                 faction: faction,
                 rulerRecord: rulerAdjustment.record
             )
+            let governorAdjustment = applyGovernorPlanning(
+                to: diplomatAdjustment.envelope,
+                state: diplomatAdjustment.state,
+                faction: faction,
+                rulerRecord: rulerAdjustment.record
+            )
+            let diplomatJSON = try Self.canonicalDiplomatJSON(diplomatAdjustment.record)
             let strategistAdjustment = applyStrategistPlanning(
                 to: governorAdjustment.envelope,
                 state: governorAdjustment.state,
@@ -218,6 +228,7 @@ struct TurnManager {
             let governorJSON = try Self.canonicalGovernorJSON(governorAdjustment.record)
             let generalJSON = try Self.canonicalDirectiveJSON(generalAdjustment.envelope)
             let rawJSON = [
+                "Diplomat proposal JSON:\n\(diplomatJSON)",
                 "Governor advice JSON:\n\(governorJSON)",
                 "General-adjusted ZoneDirective JSON:\n\(generalJSON)"
             ].joined(separator: "\n\n")
@@ -227,10 +238,11 @@ struct TurnManager {
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: "ruler-governor-strategist-general-shaped zone directives",
-                providerSuffix: "RulerGovernorStrategistGeneralDirective",
+                parsedIntent: "ruler-diplomat-governor-strategist-general-shaped zone directives",
+                providerSuffix: "RulerDiplomatGovernorStrategistGeneralDirective",
                 additionalDiagnostics: diagnostics
                     + rulerAdjustment.diagnostics
+                    + diplomatAdjustment.diagnostics
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
                     + generalAdjustment.diagnostics
@@ -269,9 +281,16 @@ struct TurnManager {
             let compiledJSON = try Self.canonicalDirectiveJSON(resolution.directiveEnvelope)
             let rulerAdjustment = applyRulerAdjustment(to: resolution.directiveEnvelope, state: state, faction: faction)
             let rulerJSON = try Self.canonicalDirectiveJSON(rulerAdjustment.envelope)
-            let governorAdjustment = applyGovernorPlanning(
+            let diplomatAdjustment = applyDiplomatPlanning(
                 to: rulerAdjustment.envelope,
                 state: rulerAdjustment.state,
+                faction: faction,
+                rulerRecord: rulerAdjustment.record
+            )
+            let diplomatJSON = try Self.canonicalDiplomatJSON(diplomatAdjustment.record)
+            let governorAdjustment = applyGovernorPlanning(
+                to: diplomatAdjustment.envelope,
+                state: diplomatAdjustment.state,
                 faction: faction,
                 rulerRecord: rulerAdjustment.record
             )
@@ -292,6 +311,7 @@ struct TurnManager {
                 resolution.rawTheaterJSON,
                 "Compiled ZoneDirective JSON:\n\(compiledJSON)",
                 "Ruler-adjusted ZoneDirective JSON:\n\(rulerJSON)",
+                "Diplomat proposal JSON:\n\(diplomatJSON)",
                 "Governor advice JSON:\n\(governorJSON)",
                 "Strategist-adjusted ZoneDirective JSON:\n\(strategistJSON)",
                 "General-adjusted ZoneDirective JSON:\n\(generalJSON)"
@@ -305,11 +325,12 @@ struct TurnManager {
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "ruler-governor-strategist-general-shaped marshal directives",
-                providerSuffix: "RulerGovernorStrategistGeneralMarshalDirective",
+                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "ruler-diplomat-governor-strategist-general-shaped marshal directives",
+                providerSuffix: "RulerDiplomatGovernorStrategistGeneralMarshalDirective",
                 additionalDiagnostics: diagnostics
                     + resolution.diagnostics
                     + rulerAdjustment.diagnostics
+                    + diplomatAdjustment.diagnostics
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
                     + generalAdjustment.diagnostics
@@ -388,6 +409,32 @@ struct TurnManager {
             record: adjustment.record,
             diagnostics: [
                 "军师 \(adjustment.record.strategistAgentId) 编排目标 \(targetSummary.isEmpty ? "无" : targetSummary)。"
+            ]
+        )
+    }
+
+    private func applyDiplomatPlanning(
+        to envelope: DirectiveEnvelope,
+        state: GameState,
+        faction: Faction,
+        rulerRecord: RulerDecisionRecord?
+    ) -> (state: GameState, envelope: DirectiveEnvelope, record: DiplomatDecisionRecord, diagnostics: [String]) {
+        let diplomat = diplomatAgent ?? DiplomatAgent.automatic(for: faction, in: state)
+        let adjustment = diplomat.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
+        var nextState = state
+        nextState.diplomacyState.appendDiplomatRecord(adjustment.record)
+        nextState.appendEvent(
+            "\(adjustment.record.diplomatAgentId) 提出 \(faction.displayName) 外交方案：\(adjustment.record.summary)",
+            category: .diplomacy,
+            relatedRecordId: adjustment.record.id
+        )
+        let target = adjustment.record.targetCountryId?.rawValue ?? "无对象"
+        return (
+            state: nextState,
+            envelope: adjustment.envelope,
+            record: adjustment.record,
+            diagnostics: [
+                "外交官 \(adjustment.record.diplomatAgentId) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
             ]
         )
     }
@@ -620,6 +667,13 @@ struct TurnManager {
     }
 
     static func canonicalGovernorJSON(_ record: GovernorDecisionRecord) throws -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(record)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    static func canonicalDiplomatJSON(_ record: DiplomatDecisionRecord) throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(record)

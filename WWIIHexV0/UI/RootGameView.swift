@@ -208,6 +208,7 @@ struct RootGameView: View {
                     AgentPanelView(
                         record: container.lastAgentDecisionRecord,
                         rulerRecord: container.gameState.diplomacyState.latestRulerRecord,
+                        diplomatRecord: container.gameState.diplomacyState.latestDiplomatRecord,
                         governorRecord: container.gameState.latestGovernorRecord,
                         strategistRecord: container.gameState.latestStrategistRecord,
                         generalRecords: container.gameState.latestGeneralRecords,

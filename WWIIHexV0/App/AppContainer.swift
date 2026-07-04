@@ -72,6 +72,7 @@ final class AppContainer: ObservableObject {
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: bootstrappedState, registry: generalRegistry),
             marshalAgent: Self.buildMarshalAgent(faction: .germany, state: bootstrappedState),
+            diplomatAgent: DiplomatAgent.automatic(for: .germany, in: bootstrappedState),
             governorAgent: GovernorAgent.automatic(for: .germany, in: bootstrappedState),
             generalAgent: GeneralAgent(registry: generalRegistry)
         )
@@ -753,6 +754,8 @@ final class AppContainer: ObservableObject {
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: state, registry: generalRegistry),
             marshalAgent: Self.buildMarshalAgent(faction: faction, state: state),
+            diplomatAgent: DiplomatAgent.automatic(for: faction, in: state),
+            governorAgent: GovernorAgent.automatic(for: faction, in: state),
             generalAgent: GeneralAgent(registry: generalRegistry)
         )
     }

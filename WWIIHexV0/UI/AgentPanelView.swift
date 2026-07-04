@@ -3,6 +3,7 @@ import SwiftUI
 struct AgentPanelView: View {
     let record: AgentDecisionRecord?
     let rulerRecord: RulerDecisionRecord?
+    let diplomatRecord: DiplomatDecisionRecord?
     let governorRecord: GovernorDecisionRecord?
     let strategistRecord: StrategistDecisionRecord?
     let generalRecords: [GeneralDecisionRecord]
@@ -11,6 +12,7 @@ struct AgentPanelView: View {
     init(
         record: AgentDecisionRecord?,
         rulerRecord: RulerDecisionRecord? = nil,
+        diplomatRecord: DiplomatDecisionRecord? = nil,
         governorRecord: GovernorDecisionRecord? = nil,
         strategistRecord: StrategistDecisionRecord? = nil,
         generalRecords: [GeneralDecisionRecord] = [],
@@ -18,6 +20,7 @@ struct AgentPanelView: View {
     ) {
         self.record = record
         self.rulerRecord = rulerRecord
+        self.diplomatRecord = diplomatRecord
         self.governorRecord = governorRecord
         self.strategistRecord = strategistRecord
         self.generalRecords = generalRecords
@@ -62,6 +65,30 @@ struct AgentPanelView: View {
                         Text(zoneId.rawValue)
                     }
                 }
+            }
+
+            if let diplomatRecord {
+                Divider()
+                LabeledContent("外交官") {
+                    Text(diplomatRecord.diplomatAgentId)
+                }
+                LabeledContent("提案") {
+                    Text(diplomatRecord.proposal.displayName)
+                }
+                if let target = diplomatRecord.targetCountryId {
+                    LabeledContent("对象") {
+                        Text(target.rawValue)
+                    }
+                }
+                if !diplomatRecord.objectiveRegionIds.isEmpty {
+                    LabeledContent("目标郡县") {
+                        Text(diplomatRecord.objectiveRegionIds.map(\.rawValue).joined(separator: ", "))
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                Text(diplomatRecord.rationale)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if let governorRecord {

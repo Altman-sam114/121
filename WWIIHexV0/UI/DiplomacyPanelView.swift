@@ -6,11 +6,16 @@ struct DiplomacyPanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Diplomacy")
+            Text("外交")
                 .font(.headline)
 
             if let rulerRecord = diplomacyState.latestRulerRecord {
                 rulerSection(rulerRecord)
+                Divider()
+            }
+
+            if let diplomatRecord = diplomacyState.latestDiplomatRecord {
+                diplomatSection(diplomatRecord)
                 Divider()
             }
 
@@ -27,7 +32,7 @@ struct DiplomacyPanelView: View {
 
     private var countrySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Countries")
+            Text("势力")
                 .font(.subheadline.weight(.semibold))
 
             ForEach(diplomacyState.countries) { country in
@@ -50,12 +55,12 @@ struct DiplomacyPanelView: View {
 
     private var blocSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Blocs")
+            Text("集团")
                 .font(.subheadline.weight(.semibold))
 
             ForEach(diplomacyState.blocs) { bloc in
                 LabeledContent(bloc.name) {
-                    Text("\(bloc.memberCountryIds.count) member(s)")
+                    Text("\(bloc.memberCountryIds.count) 方")
                         .foregroundStyle(bloc.faction == activeFaction ? .primary : .secondary)
                 }
                 .font(.caption)
@@ -65,11 +70,11 @@ struct DiplomacyPanelView: View {
 
     private var relationSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Relations")
+            Text("关系")
                 .font(.subheadline.weight(.semibold))
 
             if diplomacyState.relations.isEmpty {
-                Text("No diplomatic relations.")
+                Text("暂无外交关系。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -90,17 +95,39 @@ struct DiplomacyPanelView: View {
 
     private func rulerSection(_ record: RulerDecisionRecord) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Ruler")
+            Text("君主")
                 .font(.subheadline.weight(.semibold))
             LabeledContent("Agent") {
                 Text(record.rulerAgentId)
             }
-            LabeledContent("Posture") {
+            LabeledContent("姿态") {
                 Text(record.posture.displayName)
             }
             if let zoneId = record.preferredFrontZoneId {
-                LabeledContent("Focus") {
+                LabeledContent("重点") {
                     Text(zoneId.rawValue)
+                }
+            }
+            Text(record.rationale)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .font(.caption)
+    }
+
+    private func diplomatSection(_ record: DiplomatDecisionRecord) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("外交官")
+                .font(.subheadline.weight(.semibold))
+            LabeledContent("Agent") {
+                Text(record.diplomatAgentId)
+            }
+            LabeledContent("提案") {
+                Text(record.proposal.displayName)
+            }
+            if let target = record.targetCountryId {
+                LabeledContent("对象") {
+                    Text(target.rawValue)
                 }
             }
             Text(record.rationale)
