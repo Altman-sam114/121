@@ -32,6 +32,7 @@
 		010000000000000000000168 /* guandu_200_scenario.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000001 /* guandu_200_scenario.json */; };
 		010000000000000000000169 /* guandu_200_regions.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000002 /* guandu_200_regions.json */; };
 		01000000000000000000016A /* sanguo_unit_templates.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000003 /* sanguo_unit_templates.json */; };
+		01000000000000000000016B /* sanguo_generals.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000004 /* sanguo_generals.json */; };
 		010000000000000000000017 /* ScenarioDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000019 /* ScenarioDataTests.swift */; };
 		010000000000000000000018 /* HexDirection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000001A /* HexDirection.swift */; };
 		010000000000000000000019 /* HexCoord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000001B /* HexCoord.swift */; };
@@ -242,6 +243,8 @@
 		010000000000000000000130 /* Stage035CampaignSimulationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000009C /* Stage035CampaignSimulationTests.swift */; };
 		010000000000000000000131 /* StrategicStateSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000009D /* StrategicStateSynchronizer.swift */; };
 		010000000000000000000132 /* StrategicStateSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000009D /* StrategicStateSynchronizer.swift */; };
+		0F0000000000000000000103 /* GeneralInfluence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000003 /* GeneralInfluence.swift */; };
+		0F0000000000000000000203 /* GeneralInfluence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000003 /* GeneralInfluence.swift */; };
 		010000000000000000000148 /* OccupationRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000148 /* OccupationRules.swift */; };
 		010000000000000000000149 /* OccupationRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000148 /* OccupationRules.swift */; };
 		01000000000000000000014A /* Stage0355DynamicTheaterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000149 /* Stage0355DynamicTheaterTests.swift */; };
@@ -321,6 +324,7 @@
 		0C0000000000000000000146 /* FrontLineManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000071 /* FrontLineManager.swift */; };
 		0C0000000000000000000147 /* WarDeploymentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000007D /* WarDeploymentManager.swift */; };
 		0C0000000000000000000148 /* StrategicStateSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000009D /* StrategicStateSynchronizer.swift */; };
+		0F0000000000000000000303 /* GeneralInfluence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000003 /* GeneralInfluence.swift */; };
 		0C0000000000000000000149 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000000E /* Command.swift */; };
 		0C000000000000000000014A /* CommandValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000021 /* CommandValidation.swift */; };
 		0C000000000000000000014B /* CommandResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000022 /* CommandResult.swift */; };
@@ -355,6 +359,7 @@
 		0C0000000000000000000168 /* guandu_200_scenario.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000001 /* guandu_200_scenario.json */; };
 		0C0000000000000000000169 /* guandu_200_regions.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000002 /* guandu_200_regions.json */; };
 		0C000000000000000000016A /* sanguo_unit_templates.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000003 /* sanguo_unit_templates.json */; };
+		0C000000000000000000016B /* sanguo_generals.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000004 /* sanguo_generals.json */; };
 		0D0000000000000000000101 /* GeneralRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000001 /* GeneralRegistry.swift */; };
 		0D0000000000000000000102 /* RulerAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000002 /* RulerAgent.swift */; };
 		0F0000000000000000000101 /* StrategistAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0000000000000000000001 /* StrategistAgent.swift */; };
@@ -572,6 +577,7 @@
 		02000000000000000000009B /* LayeredMapUIStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayeredMapUIStateTests.swift; sourceTree = "<group>"; };
 		02000000000000000000009C /* Stage035CampaignSimulationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stage035CampaignSimulationTests.swift; sourceTree = "<group>"; };
 		02000000000000000000009D /* StrategicStateSynchronizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrategicStateSynchronizer.swift; sourceTree = "<group>"; };
+		0F0000000000000000000003 /* GeneralInfluence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralInfluence.swift; sourceTree = "<group>"; };
 		020000000000000000000148 /* OccupationRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OccupationRules.swift; sourceTree = "<group>"; };
 		020000000000000000000149 /* Stage0355DynamicTheaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stage0355DynamicTheaterTests.swift; sourceTree = "<group>"; };
 		02000000000000000000014B /* ZoneCommanderAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoneCommanderAgent.swift; sourceTree = "<group>"; };
@@ -592,6 +598,7 @@
 		0D000000000000000000000A /* generals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = generals.json; sourceTree = "<group>"; };
 		0D000000000000000000000B /* GeneralCommandPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralCommandPanelView.swift; sourceTree = "<group>"; };
 		0D000000000000000000000C /* GeneralProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralProfileView.swift; sourceTree = "<group>"; };
+		0E0000000000000000000004 /* sanguo_generals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sanguo_generals.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -774,6 +781,7 @@
 				020000000000000000000071 /* FrontLineManager.swift */,
 				02000000000000000000007D /* WarDeploymentManager.swift */,
 				02000000000000000000009D /* StrategicStateSynchronizer.swift */,
+				0F0000000000000000000003 /* GeneralInfluence.swift */,
 			);
 			path = Rules;
 			sourceTree = "<group>";
@@ -828,6 +836,7 @@
 				020000000000000000000017 /* unit_templates.json */,
 				020000000000000000000018 /* general_agents.json */,
 				0D000000000000000000000A /* generals.json */,
+				0E0000000000000000000004 /* sanguo_generals.json */,
 				020000000000000000000043 /* RegionDataSet.swift */,
 				020000000000000000000044 /* ardennes_v02_regions.json */,
 				0E0000000000000000000001 /* guandu_200_scenario.json */,
@@ -1086,6 +1095,7 @@
 				010000000000000000000168 /* guandu_200_scenario.json in Resources */,
 				010000000000000000000169 /* guandu_200_regions.json in Resources */,
 				01000000000000000000016A /* sanguo_unit_templates.json in Resources */,
+				01000000000000000000016B /* sanguo_generals.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1123,6 +1133,7 @@
 				0C0000000000000000000168 /* guandu_200_scenario.json in Resources */,
 				0C0000000000000000000169 /* guandu_200_regions.json in Resources */,
 				0C000000000000000000016A /* sanguo_unit_templates.json in Resources */,
+				0C000000000000000000016B /* sanguo_generals.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1245,6 +1256,7 @@
 				01000000000000000000006F /* FrontLineManager.swift in Sources */,
 				01000000000000000000007B /* WarDeploymentManager.swift in Sources */,
 				010000000000000000000131 /* StrategicStateSynchronizer.swift in Sources */,
+				0F0000000000000000000103 /* GeneralInfluence.swift in Sources */,
 				010000000000000000000085 /* MapEditorDocument.swift in Sources */,
 				010000000000000000000086 /* MapEditorHexMath.swift in Sources */,
 				010000000000000000000087 /* MapEditorExporter.swift in Sources */,
@@ -1409,6 +1421,7 @@
 				01000000000000000000011C /* FrontLineManager.swift in Sources */,
 				01000000000000000000011D /* WarDeploymentManager.swift in Sources */,
 				010000000000000000000132 /* StrategicStateSynchronizer.swift in Sources */,
+				0F0000000000000000000203 /* GeneralInfluence.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1502,6 +1515,7 @@
 				0C0000000000000000000146 /* FrontLineManager.swift in Sources */,
 				0C0000000000000000000147 /* WarDeploymentManager.swift in Sources */,
 				0C0000000000000000000148 /* StrategicStateSynchronizer.swift in Sources */,
+				0F0000000000000000000303 /* GeneralInfluence.swift in Sources */,
 				0C0000000000000000000149 /* Command.swift in Sources */,
 				0C000000000000000000014A /* CommandValidation.swift in Sources */,
 				0C000000000000000000014B /* CommandResult.swift in Sources */,

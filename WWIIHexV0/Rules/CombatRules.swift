@@ -8,6 +8,7 @@ struct CombatDamage: Equatable {
 struct CombatRules {
     let movementRules = MovementRules()
     private let supplyRules = SupplyRules()
+    private let generalInfluence = GeneralInfluence()
 
     func terrainDefenseBonus(for defender: Division, attackedBy attacker: Division, in state: GameState) -> Int {
         guard let defenderTile = state.map.tile(at: defender.coord) else {
@@ -23,6 +24,7 @@ struct CombatRules {
 
     func effectiveDefense(for defender: Division, attackedBy attacker: Division, in state: GameState) -> Int {
         var baseDefense = defender.defense + terrainDefenseBonus(for: defender, attackedBy: attacker, in: state)
+        baseDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
         if let defenderTile = state.map.tile(at: defender.coord),
            defender.isInfantryHeavy,
            defenderTile.baseTerrain.supportsInfantryDefenseBonus {
@@ -74,7 +76,9 @@ struct CombatRules {
             multiplier += 0.25
         }
 
-        return max(1, Int((Double(attacker.attack) * multiplier).rounded()))
+        let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) +
+            generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
+        return max(1, modifiedAttack)
     }
 
     func attackDamage(attacker: Division, defender: Division, in state: GameState) -> CombatDamage {

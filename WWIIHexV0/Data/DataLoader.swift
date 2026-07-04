@@ -186,7 +186,12 @@ struct DataLoader {
     }
 
     func loadGeneralRegistry() throws -> GeneralRegistry {
-        let catalog = try loadJSON(GeneralCatalogDefinition.self, named: "generals")
+        let catalog: GeneralCatalogDefinition
+        do {
+            catalog = try loadJSON(GeneralCatalogDefinition.self, named: "sanguo_generals")
+        } catch DataLoaderError.missingResource(_) {
+            catalog = try loadJSON(GeneralCatalogDefinition.self, named: "generals")
+        }
         return GeneralRegistry(generals: catalog.generals)
     }
 

@@ -66,6 +66,8 @@ struct GeneralData: Identifiable, Codable, Equatable {
             generalId: id,
             hqRegionId: hqRegionId,
             assignedDivisionIds: divisionIds,
+            commandStyleRawValue: commandStyle.rawValue,
+            skills: skills,
             loyalty: baseLoyalty,
             satisfaction: baseSatisfaction
         )
@@ -130,7 +132,12 @@ struct GeneralDispatcher {
             if let current = editableZone.generalAssignment,
                let general = registry.general(id: current.generalId),
                general.faction == editableZone.faction {
-                editableZone.generalAssignment = current.withAssignedDivisionIds(divisionIds)
+                editableZone.generalAssignment = current
+                    .withAssignedDivisionIds(divisionIds)
+                    .withSnapshot(
+                        commandStyleRawValue: general.commandStyle.rawValue,
+                        skills: general.skills
+                    )
                 next.frontZones[zone.id] = editableZone
                 usedGeneralIds.insert(current.generalId)
                 continue

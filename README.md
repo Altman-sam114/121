@@ -1,6 +1,6 @@
 # 三国棋策 Agent — iOS / macOS AI Agent 战棋迁移版
 
-> **当前状态：v2.4 君主/军师/武将指令编排兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
+> **当前状态：v2.4 君主/军师/武将指令编排、道路和交战兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
 
 ---
 
@@ -13,7 +13,7 @@
 - Hex 仍是移动、攻击、占领、视野、补给落点的战术权威。
 - Region 显示为郡县/州，是人口、钱粮、军械、城池和胜利点的战略聚合层。
 - Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
-- 当前阶段已完成官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则，并开始把君主、军师和武将层接入 AI 回合的 directive 编排；完整多势力 turn order、完整官渡大地图、太守和外交 Agent 将按 v2.4+ 分阶段推进。
+- 当前阶段已完成官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则，并开始把君主、军师和武将层接入 AI 回合的 directive 编排；武将分配已能影响道路机动与交战攻防修正。完整多势力 turn order、完整官渡大地图、太守和外交 Agent 将按 v2.4+ 分阶段推进。
 
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、军师、太守、武将等 Agent。
@@ -113,6 +113,7 @@ WWIIHexV0/
 - **v2.4 君主姿态塑形层**：`TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，写入 `RulerDecisionRecord`，只调整 `DirectiveEnvelope`，不得绕过 `WarCommandExecutor -> RuleEngine`。
 - **v2.4 军师目标编排层**：`StrategistAgent.plan` 承接君主姿态，重排目标 region、focus/support/convergence 和强度倾向，写入 `StrategistDecisionRecord`；它不生成底层 `Command`，不直接修改战术状态。
 - **v2.4 武将复核层**：`GeneralAgent.plan` 读取 `FrontZone.generalAssignment` 与武将 registry，对军师后的 `ZoneDirective` 做忠诚/满意度/风格收束，写入 `GeneralDecisionRecord`；它不绕过执行器，也不直接移动军队。
+- **v2.4 武将道路/交战规则**：`GeneralAssignment` 保存武将风格和技能快照；`GeneralInfluence` 让武将影响 `MovementRules` 的道路机动上限，以及 `CombatRules` 的攻击/防御修正。
 
 | 文件 | 职责 | 关键类型/协议 |
 |------|------|--------------|
@@ -143,7 +144,7 @@ WWIIHexV0/
 `MarshalBattlefieldSummarizer` 把 `GameState` 降维为元帅摘要，只包含 front zone、strength ratio、补给警告、目标和事件，不把全量 hex 网格喂给模型。`SimulatedMarshalLLMClient` 生成 fenced JSON 形式的 `TheaterDirectiveEnvelope`；`TheaterDirectiveDecoder` 提取并校验 JSON；`TheaterDirectiveCompiler` 把元帅意图编译成现有 `ZoneDirective`。v0.7 后 `TheaterDirective` 可携带 `convergenceRegionId` / `coordinatedZoneIds` 支持钳形会师意图；解码或编译失败时 fallback 到 `TheaterCommanderPool`，不执行半成品 LLM 输出。
 
 **Ruler / Strategist / General / Diplomacy 边界：**
-君主层当前记录国家姿态、优先防区、目标 region 和理由；军师层承接君主姿态并编排目标 region、支援 region 和会师 region；武将层读取防区武将分配，对军令投入强度和预备队做最后复核。三层都不能直接生成底层 `Command`，不能直接修改地图、军队、资源或动态战区，底层战争规则仍由 `ZoneDirective`、`WarCommandExecutor` 和 `RuleEngine` 收口。
+君主层当前记录国家姿态、优先防区、目标 region 和理由；军师层承接君主姿态并编排目标 region、支援 region 和会师 region；武将层读取防区武将分配，对军令投入强度和预备队做最后复核。武将快照会进入道路机动和交战攻防计算，但仍由 `MovementRules`、`CombatRules`、`WarCommandExecutor` 和 `RuleEngine` 统一执行，不能直接改地图、军队、资源或动态战区。
 
 ---
 

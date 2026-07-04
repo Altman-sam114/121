@@ -42,7 +42,7 @@ struct CommandValidator {
         }
 
         if let path = movementRules.shortestPathIgnoringMovement(for: division, to: destination, in: state),
-           path.cost > division.movement {
+           path.cost > movementRules.effectiveMovementLimit(for: division, in: state) {
             return .invalid(.insufficientMovement)
         }
 

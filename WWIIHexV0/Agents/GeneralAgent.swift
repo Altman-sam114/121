@@ -114,7 +114,7 @@ struct GeneralAgent {
         assignment: GeneralAssignment,
         general: GeneralData?
     ) -> (directive: ZoneDirective, action: String, rationale: String) {
-        let style = general?.commandStyle ?? inferredStyle(from: assignment)
+        let style = general?.commandStyle ?? commandStyle(from: assignment)
         var intensity = attack.intensity
         var maxCommittedUnits = attack.maxCommittedUnits
         var action = "保持攻势"
@@ -159,7 +159,7 @@ struct GeneralAgent {
         assignment: GeneralAssignment,
         general: GeneralData?
     ) -> (directive: ZoneDirective, action: String, rationale: String) {
-        let style = general?.commandStyle ?? inferredStyle(from: assignment)
+        let style = general?.commandStyle ?? commandStyle(from: assignment)
         let reserveTarget: Int
         let action: String
         if assignment.satisfaction < 35 || assignment.loyalty < 35 {
@@ -209,7 +209,7 @@ struct GeneralAgent {
             zoneId: directive.zoneId,
             generalId: generalId,
             generalName: general.map { generalName($0, fallback: $0.id) },
-            commandStyle: general?.commandStyle ?? assignment.map { inferredStyle(from: $0) },
+            commandStyle: general?.commandStyle ?? assignment.map { commandStyle(from: $0) },
             directiveType: directive.type,
             tactic: directive.tactic,
             targetRegionIds: directive.targetRegionIds,
@@ -241,6 +241,14 @@ struct GeneralAgent {
             return .aggressive
         }
         return .balanced
+    }
+
+    private func commandStyle(from assignment: GeneralAssignment) -> ZoneCommanderAgentConfig.CommandStyle {
+        if let rawValue = assignment.commandStyleRawValue,
+           let style = ZoneCommanderAgentConfig.CommandStyle(rawValue: rawValue) {
+            return style
+        }
+        return inferredStyle(from: assignment)
     }
 
     private func minOptional(_ current: Int?, _ cap: Int) -> Int? {

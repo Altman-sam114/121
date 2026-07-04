@@ -6,12 +6,18 @@ struct MovementPath: Equatable {
 }
 
 struct MovementRules {
+    private let generalInfluence = GeneralInfluence()
+
     func movementCost(from: HexTile, to: HexTile, direction: HexDirection) -> Int {
         var cost = from.hasRoad && to.hasRoad ? 1 : to.baseTerrain.movementCost
         if hasRiverCrossing(from: from, to: to, direction: direction), !(from.hasRoad && to.hasRoad) {
             cost += 2
         }
         return cost
+    }
+
+    func effectiveMovementLimit(for division: Division, in state: GameState) -> Int {
+        generalInfluence.effectiveMovementLimit(for: division, in: state)
     }
 
     func movementRange(for division: Division, in state: GameState) -> Set<HexCoord> {
@@ -41,7 +47,7 @@ struct MovementRules {
     }
 
     private func shortestPaths(from division: Division, in state: GameState) -> [HexCoord: MovementPath] {
-        shortestPaths(from: division, in: state, movementLimit: division.movement)
+        shortestPaths(from: division, in: state, movementLimit: effectiveMovementLimit(for: division, in: state))
     }
 
     private func shortestPaths(from division: Division, in state: GameState, movementLimit: Int) -> [HexCoord: MovementPath] {

@@ -27,6 +27,7 @@
       "infrastructure": 4,
       "supplyValue": 5,
       "factories": 2,
+      "assignedGeneralId": "general_yuan_shao",
       "resources": [],
       "coreOf": ["allies", "yuan"],
       "isPassable": true
@@ -45,6 +46,7 @@
       "infrastructure": 3,
       "supplyValue": 4,
       "factories": 1,
+      "assignedGeneralId": "general_ju_shou",
       "resources": [],
       "coreOf": ["allies", "yuan"],
       "isPassable": true
@@ -63,6 +65,7 @@
       "infrastructure": 3,
       "supplyValue": 3,
       "factories": 0,
+      "assignedGeneralId": "general_zhang_he",
       "resources": [],
       "coreOf": ["cao", "yuan"],
       "isPassable": true
@@ -81,6 +84,7 @@
       "infrastructure": 4,
       "supplyValue": 5,
       "factories": 2,
+      "assignedGeneralId": "general_cao_cao",
       "resources": [],
       "coreOf": ["germany", "cao"],
       "isPassable": true
@@ -99,6 +103,7 @@
       "infrastructure": 3,
       "supplyValue": 3,
       "factories": 1,
+      "assignedGeneralId": "general_zhang_liao",
       "resources": [],
       "coreOf": ["germany", "cao", "liuBei"],
       "isPassable": true
@@ -117,6 +122,7 @@
       "infrastructure": 3,
       "supplyValue": 4,
       "factories": 1,
+      "assignedGeneralId": "general_wen_pin",
       "resources": [],
       "coreOf": ["liuBiao"],
       "isPassable": true
@@ -153,6 +159,7 @@
       "infrastructure": 3,
       "supplyValue": 3,
       "factories": 1,
+      "assignedGeneralId": "general_sun_ce",
       "resources": [],
       "coreOf": ["sun"],
       "isPassable": true

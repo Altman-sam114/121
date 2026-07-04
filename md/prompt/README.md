@@ -61,3 +61,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_ruler_posture_shaping.md`
 - `md/prompt/v2.0-三国迁移/v2.4_strategist_directive_planning.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_directive_audit.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_road_combat_rules.md`
