@@ -1277,6 +1277,57 @@ guerrillaWarfare 额外参考 infrastructure
 - `Faction.isHostile(to:)` 当前只是不同且非中立即敌对的轻量规则；后续仍需接 `DiplomacyState` / `PowerRelation`。
 - 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.2 仍需迁移官渡剧本和默认加载入口。
 
+## v2.2 - 官渡默认剧本预览入口
+
+完成日期：2026-07-04
+
+核心更新：
+
+- 新增 `WWIIHexV0/Data/guandu_200_scenario.json`，作为 40 hex / 8 region 的“官渡前夜 200”迁移预览场景。
+- 新增 `WWIIHexV0/Data/guandu_200_regions.json`，覆盖邺城、黎阳渡、官渡、许昌、汝南、襄阳、洛阳残垣、寿春等首批区域。
+- `DataLoader.loadInitialGameState()` 默认先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到旧阿登兼容 JSON。
+- `MapEditorGameResourceBridge` 默认读写 `guandu_200_scenario` + `guandu_200_regions`，让编辑器默认地图和游戏默认入口保持一致。
+- `WWIIHexV0.xcodeproj/project.pbxproj` 将两个官渡 JSON 加入 iOS/macOS 主资源。
+- 文档状态更新为 v2.2 官渡默认剧本预览，并记录旧阿登数据保留为 fallback / 历史回归参考。
+
+关键系统：
+
+- `WWIIHexV0/Data/DataLoader.swift`
+- `WWIIHexV0/Data/guandu_200_scenario.json`
+- `WWIIHexV0/Data/guandu_200_regions.json`
+- `MapEditor/MapEditorGameResourceBridge.swift`
+- `WWIIHexV0.xcodeproj/project.pbxproj`
+- `AGENTS.md`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.2_guandu_preview_default.md`
+
+验证记录：
+
+- `jq empty WWIIHexV0/Data/guandu_200_scenario.json`：通过。
+- `jq empty WWIIHexV0/Data/guandu_200_regions.json`：通过。
+- 官渡 JSON 语义轻量检查通过：场景 id/displayName/tile 数、tile 坐标唯一、初始单位坐标存在、scenario tile regionId 与 region hexToRegion 一致、factions 列表包含三国势力且 player/AI 仍是兼容双方。
+- `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`：通过。
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- MapEditor 相关 parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift MapEditor/*.swift`。
+- 文档尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行重测试。
+
+遗留风险：
+
+- 官渡数据目前是迁移预览，不是完整 80-160 hex 首发地图。
+- 当前 `GamePhase` / `CommandValidator` 仍只允许旧 `.germany/.allies` 行动，所以官渡预览用旧 rawValue 承载曹/袁可行动双方。
+- `cao/yuan/liuBei/sun/liuBiao/maTeng/han/neutral` 已进入数据和外交基础，但还未进入完整 playable turn order。
+- 仍复用旧 `unit_templates.json` 的二战模板 id；三国兵种模板属于后续 v2.3。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
@@ -1287,7 +1338,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 对比记录：
 
-- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.1 三国迁移多势力数据基础。
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.2 三国迁移官渡默认剧本预览。
 - 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
 - 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
 - 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。

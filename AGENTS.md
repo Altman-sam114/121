@@ -11,7 +11,7 @@
 7. 相关源码、配置和必要时的测试文件：优先用 `rg` / `rg --files` 定位；测试文件默认只作语义参考，不默认执行。
 若文档、源码、轻量检查结果冲突，以当前源码和真实检查结果为准，并在本轮结束时同步修正文档。
 ## 2. 项目基本规则
-- 本项目是 Swift + SwiftUI + SpriteKit 的 iOS / macOS 回合制 hex 战棋，当前处于 v2.1 三国迁移多势力数据基础；源码目录和部分 Codable/rawValue 仍保留 WWIIHexV0 / germany / allies 等兼容名，数据层已可用 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral 表达势力归属。
+- 本项目是 Swift + SwiftUI + SpriteKit 的 iOS / macOS 回合制 hex 战棋，当前处于 v2.2 三国迁移官渡默认剧本预览；源码目录和部分 Codable/rawValue 仍保留 WWIIHexV0 / germany / allies 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json`，旧阿登数据保留作 fallback 和回归参考。
 - Hex 是战术权威：单位位置、移动、攻击、真实占领、视野、补给落点以 hex 为准。
 - Region 是战略聚合层：资源、人力、补给、胜利点、控制比例从 hex 状态聚合，不替代 hex。
 - `regionToTheater` 是初始/基础战区归属和地图编辑器种子，不是运行时推进层。

@@ -47,3 +47,10 @@ Agent A 写提示词时必须明确：
 - `smalldata_test`、`develop`、`codeb/...` 长期分支。
 - PR 创建、PR merge 或候选分支合并制度。
 - AITRANS 的漫画探针、GGUF、模型 Release、大数据输出、密码 artifact。
+
+## 5. 当前三国迁移阶段记录
+
+- `md/prompt/v2.0-三国迁移/v2.0_audit_and_contract.md`
+- `md/prompt/v2.0-三国迁移/v2.1_neutral_faction_foundation.md`
+- `md/prompt/v2.0-三国迁移/v2.1_sanguo_power_profiles.md`
+- `md/prompt/v2.0-三国迁移/v2.2_guandu_preview_default.md`

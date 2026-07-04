@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "id": "guandu_200",
+  "displayName": "官渡前夜 200 迁移预览",
+  "map": {
+    "width": 8,
+    "height": 5,
+    "coordinateSystem": "axial",
+    "isSparse": false,
+    "tiles": [
+      {"q": 0, "r": 0, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "allies", "cityName": "邺城", "isSupplySource": true, "supplyFaction": "allies", "objectiveId": "obj_ye", "regionId": "region_ye"},
+      {"q": 1, "r": 0, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "allies", "isSupplySource": false, "regionId": "region_ye"},
+      {"q": 2, "r": 0, "terrain": "plain", "hasRoad": true, "riverEdges": ["southEast"], "controller": "allies", "isSupplySource": false, "regionId": "region_liyang"},
+      {"q": 3, "r": 0, "terrain": "hill", "hasRoad": true, "riverEdges": ["southWest"], "controller": "allies", "isSupplySource": false, "regionId": "region_liyang"},
+      {"q": 4, "r": 0, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "han", "cityName": "洛阳残垣", "objectiveId": "obj_luoyang", "isSupplySource": false, "regionId": "region_luoyang"},
+      {"q": 5, "r": 0, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "han", "isSupplySource": false, "regionId": "region_luoyang"},
+      {"q": 6, "r": 0, "terrain": "hill", "hasRoad": false, "riverEdges": [], "controller": "han", "isSupplySource": false, "regionId": "region_luoyang"},
+      {"q": 7, "r": 0, "terrain": "mountain", "hasRoad": false, "riverEdges": [], "controller": "han", "isSupplySource": false, "regionId": "region_luoyang"},
+
+      {"q": 0, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "allies", "isSupplySource": false, "regionId": "region_ye"},
+      {"q": 1, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "allies", "isSupplySource": false, "regionId": "region_ye"},
+      {"q": 2, "r": 1, "terrain": "city", "hasRoad": true, "riverEdges": ["southEast"], "controller": "allies", "cityName": "黎阳", "isSupplySource": false, "regionId": "region_liyang"},
+      {"q": 3, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": ["southWest"], "controller": "allies", "isSupplySource": false, "regionId": "region_guandu"},
+      {"q": 4, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": ["west"], "controller": "germany", "isSupplySource": false, "regionId": "region_guandu"},
+      {"q": 5, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_xuchang"},
+      {"q": 6, "r": 1, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_xuchang"},
+      {"q": 7, "r": 1, "terrain": "hill", "hasRoad": false, "riverEdges": [], "controller": "han", "isSupplySource": false, "regionId": "region_luoyang"},
+
+      {"q": 0, "r": 2, "terrain": "forest", "hasRoad": false, "riverEdges": [], "controller": "allies", "isSupplySource": false, "regionId": "region_ye"},
+      {"q": 1, "r": 2, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "allies", "isSupplySource": false, "regionId": "region_liyang"},
+      {"q": 2, "r": 2, "terrain": "plain", "hasRoad": true, "riverEdges": ["east"], "controller": "allies", "isSupplySource": false, "regionId": "region_liyang"},
+      {"q": 3, "r": 2, "terrain": "city", "hasRoad": true, "riverEdges": ["west"], "controller": "allies", "cityName": "官渡", "objectiveId": "obj_guandu", "isSupplySource": false, "regionId": "region_guandu"},
+      {"q": 4, "r": 2, "terrain": "fortress", "hasRoad": true, "riverEdges": ["west"], "controller": "germany", "fortressName": "乌巢粮屯", "isSupplySource": false, "regionId": "region_guandu"},
+      {"q": 5, "r": 2, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "germany", "cityName": "许昌", "isSupplySource": true, "supplyFaction": "germany", "objectiveId": "obj_xuchang", "regionId": "region_xuchang"},
+      {"q": 6, "r": 2, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_xuchang"},
+      {"q": 7, "r": 2, "terrain": "hill", "hasRoad": false, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_xuchang"},
+
+      {"q": 0, "r": 3, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "liuBiao", "cityName": "襄阳", "objectiveId": "obj_xiangyang", "isSupplySource": false, "regionId": "region_xiangyang"},
+      {"q": 1, "r": 3, "terrain": "forest", "hasRoad": true, "riverEdges": [], "controller": "liuBiao", "isSupplySource": false, "regionId": "region_xiangyang"},
+      {"q": 2, "r": 3, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "sun", "isSupplySource": false, "regionId": "region_shouchun"},
+      {"q": 3, "r": 3, "terrain": "plain", "hasRoad": true, "riverEdges": ["northEast"], "controller": "neutral", "isSupplySource": false, "regionId": "region_guandu"},
+      {"q": 4, "r": 3, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "sun", "cityName": "寿春", "objectiveId": "obj_shouchun", "isSupplySource": false, "regionId": "region_shouchun"},
+      {"q": 5, "r": 3, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_runan"},
+      {"q": 6, "r": 3, "terrain": "city", "hasRoad": true, "riverEdges": [], "controller": "germany", "cityName": "汝南", "objectiveId": "obj_runan", "isSupplySource": false, "regionId": "region_runan"},
+      {"q": 7, "r": 3, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "sun", "isSupplySource": false, "regionId": "region_shouchun"},
+
+      {"q": 0, "r": 4, "terrain": "forest", "hasRoad": false, "riverEdges": [], "controller": "liuBiao", "isSupplySource": false, "regionId": "region_xiangyang"},
+      {"q": 1, "r": 4, "terrain": "hill", "hasRoad": true, "riverEdges": [], "controller": "liuBiao", "isSupplySource": false, "regionId": "region_xiangyang"},
+      {"q": 2, "r": 4, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "liuBiao", "isSupplySource": false, "regionId": "region_xiangyang"},
+      {"q": 3, "r": 4, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "sun", "isSupplySource": false, "regionId": "region_shouchun"},
+      {"q": 4, "r": 4, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "sun", "isSupplySource": false, "regionId": "region_shouchun"},
+      {"q": 5, "r": 4, "terrain": "forest", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_runan"},
+      {"q": 6, "r": 4, "terrain": "plain", "hasRoad": true, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_runan"},
+      {"q": 7, "r": 4, "terrain": "hill", "hasRoad": false, "riverEdges": [], "controller": "germany", "isSupplySource": false, "regionId": "region_runan"}
+    ]
+  },
+  "factions": ["germany", "allies", "cao", "yuan", "liuBei", "sun", "liuBiao", "maTeng", "han", "neutral"],
+  "maxTurns": 16,
+  "initialTurn": 1,
+  "initialPhase": "alliedPlayer",
+  "playerFaction": "allies",
+  "aiFaction": "germany",
+  "keyLocations": [
+    {"id": "loc_ye", "name": "邺城", "kind": "capital", "coord": {"q": 0, "r": 0}, "faction": "allies", "objectiveId": "obj_ye"},
+    {"id": "loc_guandu", "name": "官渡", "kind": "front", "coord": {"q": 3, "r": 2}, "faction": null, "objectiveId": "obj_guandu"},
+    {"id": "loc_xuchang", "name": "许昌", "kind": "capital", "coord": {"q": 5, "r": 2}, "faction": "germany", "objectiveId": "obj_xuchang"},
+    {"id": "loc_luoyang", "name": "洛阳残垣", "kind": "imperial", "coord": {"q": 4, "r": 0}, "faction": "han", "objectiveId": "obj_luoyang"},
+    {"id": "loc_xiangyang", "name": "襄阳", "kind": "regionalCapital", "coord": {"q": 0, "r": 3}, "faction": "liuBiao", "objectiveId": "obj_xiangyang"},
+    {"id": "loc_shouchun", "name": "寿春", "kind": "riverGate", "coord": {"q": 4, "r": 3}, "faction": "sun", "objectiveId": "obj_shouchun"}
+  ],
+  "objectives": [
+    {"id": "obj_ye", "name": "邺城", "kind": "city", "coord": {"q": 0, "r": 0}, "points": 5},
+    {"id": "obj_guandu", "name": "官渡", "kind": "city", "coord": {"q": 3, "r": 2}, "points": 4},
+    {"id": "obj_xuchang", "name": "许昌", "kind": "city", "coord": {"q": 5, "r": 2}, "points": 5},
+    {"id": "obj_runan", "name": "汝南", "kind": "city", "coord": {"q": 6, "r": 3}, "points": 3},
+    {"id": "obj_xiangyang", "name": "襄阳", "kind": "city", "coord": {"q": 0, "r": 3}, "points": 3},
+    {"id": "obj_shouchun", "name": "寿春", "kind": "city", "coord": {"q": 4, "r": 3}, "points": 3},
+    {"id": "obj_luoyang", "name": "洛阳残垣", "kind": "city", "coord": {"q": 4, "r": 0}, "points": 2}
+  ],
+  "initialUnits": [
+    {"id": "yuan_guard_ye", "name": "袁军邺城守军", "faction": "allies", "templateId": "garrison_division", "coord": {"q": 1, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "yuan_cavalry_liyang", "name": "袁军黎阳骑军", "faction": "allies", "templateId": "motorized_division", "coord": {"q": 2, "r": 1}, "facing": "east", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "yuan_siege_guandu", "name": "袁军官渡器械营", "faction": "allies", "templateId": "artillery_division", "coord": {"q": 3, "r": 2}, "facing": "east", "hp": 16, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_guard_xuchang", "name": "曹军许昌守军", "faction": "germany", "templateId": "garrison_division", "coord": {"q": 5, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "hold", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_cavalry_wuchao", "name": "曹军乌巢骑军", "faction": "germany", "templateId": "panzer_division", "coord": {"q": 4, "r": 2}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null},
+    {"id": "cao_infantry_runan", "name": "曹军汝南步军", "faction": "germany", "templateId": "infantry_division", "coord": {"q": 5, "r": 3}, "facing": "west", "hp": 18, "retreatMode": "retreatable", "supplyState": "supplied", "assignedAgentId": null}
+  ],
+  "victoryConditions": [
+    {"id": "yuan_take_xuchang", "type": "controlObjective", "faction": "allies", "objectiveId": "obj_xuchang", "objectiveIds": null, "targetFaction": "germany", "targetTemplateIds": null, "turns": null, "turn": null, "count": null, "status": "active", "description": "袁绍势力控制许昌。"},
+    {"id": "cao_take_ye", "type": "controlObjective", "faction": "germany", "objectiveId": "obj_ye", "objectiveIds": null, "targetFaction": "allies", "targetTemplateIds": null, "turns": null, "turn": null, "count": null, "status": "active", "description": "曹操势力控制邺城。"}
+  ],
+  "dataNotes": [
+    "v2.2 preview data: default new game now prefers a Guandu-themed scenario path before Ardennes fallback.",
+    "Playable turn loop still uses legacy germany/allies rawValues as Cao/Yuan compatibility carriers.",
+    "The factions list includes first-wave Three Kingdoms powers for diplomacy profile continuity; full multi-faction turn order remains future work.",
+    "All ids are ASCII; Chinese appears only in display fields."
+  ]
+}

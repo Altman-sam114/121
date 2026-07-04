@@ -29,6 +29,8 @@
 		010000000000000000000014 /* terrain_rules.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000016 /* terrain_rules.json */; };
 		010000000000000000000015 /* unit_templates.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000017 /* unit_templates.json */; };
 		010000000000000000000016 /* general_agents.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000018 /* general_agents.json */; };
+		010000000000000000000168 /* guandu_200_scenario.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000001 /* guandu_200_scenario.json */; };
+		010000000000000000000169 /* guandu_200_regions.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000002 /* guandu_200_regions.json */; };
 		010000000000000000000017 /* ScenarioDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000019 /* ScenarioDataTests.swift */; };
 		010000000000000000000018 /* HexDirection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000001A /* HexDirection.swift */; };
 		010000000000000000000019 /* HexCoord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02000000000000000000001B /* HexCoord.swift */; };
@@ -349,6 +351,8 @@
 		0C0000000000000000000165 /* unit_templates.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000017 /* unit_templates.json */; };
 		0C0000000000000000000166 /* general_agents.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000018 /* general_agents.json */; };
 		0C0000000000000000000167 /* ardennes_v02_regions.json in Resources */ = {isa = PBXBuildFile; fileRef = 020000000000000000000044 /* ardennes_v02_regions.json */; };
+		0C0000000000000000000168 /* guandu_200_scenario.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000001 /* guandu_200_scenario.json */; };
+		0C0000000000000000000169 /* guandu_200_regions.json in Resources */ = {isa = PBXBuildFile; fileRef = 0E0000000000000000000002 /* guandu_200_regions.json */; };
 		0D0000000000000000000101 /* GeneralRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000001 /* GeneralRegistry.swift */; };
 		0D0000000000000000000102 /* RulerAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000002 /* RulerAgent.swift */; };
 		0D0000000000000000000103 /* DiplomacyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D0000000000000000000003 /* DiplomacyState.swift */; };
@@ -468,6 +472,8 @@
 		020000000000000000000042 /* RegionGraphTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionGraphTests.swift; sourceTree = "<group>"; };
 		020000000000000000000043 /* RegionDataSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionDataSet.swift; sourceTree = "<group>"; };
 		020000000000000000000044 /* ardennes_v02_regions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ardennes_v02_regions.json; sourceTree = "<group>"; };
+		0E0000000000000000000001 /* guandu_200_scenario.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = guandu_200_scenario.json; sourceTree = "<group>"; };
+		0E0000000000000000000002 /* guandu_200_regions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = guandu_200_regions.json; sourceTree = "<group>"; };
 		020000000000000000000045 /* ArdennesV02DataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArdennesV02DataTests.swift; sourceTree = "<group>"; };
 		020000000000000000000046 /* RegionPathfinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionPathfinder.swift; sourceTree = "<group>"; };
 		020000000000000000000047 /* RegionMovementRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionMovementRules.swift; sourceTree = "<group>"; };
@@ -811,6 +817,8 @@
 				0D000000000000000000000A /* generals.json */,
 				020000000000000000000043 /* RegionDataSet.swift */,
 				020000000000000000000044 /* ardennes_v02_regions.json */,
+				0E0000000000000000000001 /* guandu_200_scenario.json */,
+				0E0000000000000000000002 /* guandu_200_regions.json */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -1061,6 +1069,8 @@
 				010000000000000000000016 /* general_agents.json in Resources */,
 				0D000000000000000000010A /* generals.json in Resources */,
 				010000000000000000000042 /* ardennes_v02_regions.json in Resources */,
+				010000000000000000000168 /* guandu_200_scenario.json in Resources */,
+				010000000000000000000169 /* guandu_200_regions.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1095,6 +1105,8 @@
 				0C0000000000000000000166 /* general_agents.json in Resources */,
 				0D000000000000000000030A /* generals.json in Resources */,
 				0C0000000000000000000167 /* ardennes_v02_regions.json in Resources */,
+				0C0000000000000000000168 /* guandu_200_scenario.json in Resources */,
+				0C0000000000000000000169 /* guandu_200_regions.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

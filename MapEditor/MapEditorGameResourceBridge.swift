@@ -15,8 +15,8 @@ enum MapEditorGameResourceBridgeError: Error, CustomStringConvertible {
 }
 
 enum MapEditorGameResourceBridge {
-    static let scenarioResourceName = "ardennes_v0_scenario"
-    static let regionResourceName = "ardennes_v02_regions"
+    static let scenarioResourceName = "guandu_200_scenario"
+    static let regionResourceName = "guandu_200_regions"
 
     static var gameDataDirectory: URL {
         URL(fileURLWithPath: #filePath)
