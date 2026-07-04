@@ -1380,6 +1380,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只完成兵种模板和兼容显示，不实现完整围城、士气、兵种克制和多势力 turn order。
 - `Division`、`hp/maxHP`、`unit_templates.json` 等源码/旧数据兼容名仍保留，后续需要继续分阶段迁移。
 
+## v2.3 - 战术审计显示三国化
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `TacticName.displayName` 按 v2.3 总提示词补齐三国战术口径：箭雨/器械压制、奇袭/袭扰、固守、诱敌/退守等。
+- `TheaterDirectiveDecoderError.tacticCategoryMismatch` 改用 tactic/category 的 `displayName`，避免面向日志和 UI 的诊断继续暴露旧 rawValue。
+- `SimulatedMarshalLLMClient` 的 rationale 改用中文元帅说明、`tactic.displayName` 和 Swift `FormatStyle` 数字格式，不再输出 `blitzkrieg` / `fireCoverage` 等旧战术 rawValue。
+- `MarshalFrontSummary.statusDisplayName` 将内部战线状态字符串映射为粮道告急、承压、占优、寡势、对峙，保留原 `status` 字符串给分类逻辑使用。
+- 文档状态更新为 v2.3 兵种模板与战术审计显示兼容层；执行管线和 Codable rawValue 不变。
+
+关键系统：
+
+- `WWIIHexV0/Commands/WarDirective.swift`
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `md/prompt/v2.0-三国迁移/v2.3_tactic_display_labels.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 人读战术 rawValue 扫描无命中：`rg -n "tactic\\.rawValue|String\\(format:.*strengthRatio|Simulated marshal JSON" WWIIHexV0/Commands WWIIHexV0/Agents WWIIHexV0/UI`。
+- 文档和改动 Swift 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 当前状态旧口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成战术显示和审计文本三国化，不新增围城、士气、兵种克制和多势力 turn order。
+- `TacticName` 的 rawValue 仍保留 `blitzkrieg` 等旧 schema 值，后续若要彻底改 schema 需单独版本迁移和兼容桥。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
@@ -1390,7 +1429,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 对比记录：
 
-- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.3 三国迁移兵种模板兼容层。
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.3 三国兵种模板与战术审计显示兼容层。
 - 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
 - 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
 - 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。

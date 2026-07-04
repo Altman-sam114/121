@@ -30,6 +30,7 @@ v2.3 命名边界：
 - 规则和 AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`，不在新代码里继续依赖二元 `opponent`。
 - `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营、弓弩营、亲卫营、舟师营。
 - `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
+- `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。
 

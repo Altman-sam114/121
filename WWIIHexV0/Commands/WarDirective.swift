@@ -74,15 +74,15 @@ enum TacticName: String, Codable, Equatable, CaseIterable {
         case .pincerMovement:
             return "合围"
         case .fireCoverage:
-            return "箭雨压制"
+            return "箭雨/器械压制"
         case .feint:
             return "佯攻"
         case .guerrillaWarfare:
-            return "奇袭"
+            return "奇袭/袭扰"
         case .holdPosition:
-            return "据守"
+            return "固守"
         case .elasticDefense:
-            return "诱敌退守"
+            return "诱敌/退守"
         case .defenseInDepth:
             return "层层设防"
         case .lastStand:
@@ -555,7 +555,7 @@ enum TheaterDirectiveDecoderError: Error, Equatable, LocalizedError {
         case .missingRegion(let regionId):
             return "Theater directive references missing region \(regionId.rawValue)."
         case .tacticCategoryMismatch(let directiveId, let tactic, let category):
-            return "Theater directive \(directiveId) uses tactic \(tactic.rawValue) outside category \(category.rawValue)."
+            return "Theater directive \(directiveId) uses tactic \(tactic.displayName) outside category \(category.displayName)."
         }
     }
 }

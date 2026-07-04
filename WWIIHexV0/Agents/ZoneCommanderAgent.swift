@@ -1024,6 +1024,23 @@ struct MarshalFrontSummary: Codable, Equatable, Identifiable {
     let keyObjectivesHeld: [String]
     let keyObjectivesLost: [String]
     let status: String
+
+    var statusDisplayName: String {
+        switch status {
+        case "supply_warning":
+            return "粮道告急"
+        case "under_pressure":
+            return "承压"
+        case "advantage":
+            return "占优"
+        case "outnumbered":
+            return "寡势"
+        case "stable_contact":
+            return "对峙"
+        default:
+            return status
+        }
+    }
 }
 
 struct MarshalBattlefieldSummarizer {
@@ -1318,7 +1335,7 @@ struct SimulatedMarshalLLMClient: MarshalLLMClient {
                     intensity: front.strengthRatio >= 1.8 ? .allOut : .limitedCounter,
                     maxCommittedUnits: front.frontUnitCount + max(0, front.depthUnitCount / 2),
                     exploitDepth: front.strengthRatio >= 1.8 ? 1 : 0,
-                    rationale: "Simulated marshal JSON: \(tactic.rawValue) selected from strength ratio \(String(format: "%.2f", front.strengthRatio))."
+                    rationale: "模拟元帅 JSON：选择\(tactic.displayName)，兵力比 \(front.strengthRatio.formatted(.number.precision(.fractionLength(2))))。"
                 )
             }
 
@@ -1334,7 +1351,7 @@ struct SimulatedMarshalLLMClient: MarshalLLMClient {
                 supportRegionIds: front.enemyRegionIds,
                 reserveBias: max(1, min(3, front.depthUnitCount)),
                 maxCommittedUnits: front.frontUnitCount,
-                rationale: "Simulated marshal JSON: \(tactic.rawValue) selected for front status \(front.status)."
+                rationale: "模拟元帅 JSON：根据战线状态\(front.statusDisplayName)选择\(tactic.displayName)。"
             )
         }
 

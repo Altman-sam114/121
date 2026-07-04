@@ -31,7 +31,7 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览和三国兵种模板兼容层：
+v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层和战术审计显示三国化：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
@@ -44,6 +44,7 @@ v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `Faction.scenarioCases` 是 MapEditor、场景数据和战略派生层控制比例/主控方计算可表达的势力全集。
 - `Division` 当前显示为军队/步卒营/骑兵军/器械营/弓弩营/亲卫营/舟师营，但 `Division.coord` 仍是单位位置权威。
 - `ComponentType` 保留旧 rawValue `tank/motorizedInfantry/infantry/artillery`，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用；旧阿登模板仍可加载。
+- `TacticName` 仍保留旧 Codable rawValue 作为指令 schema，但 `displayName`、AI 面板和模拟元帅 rationale 已显示为正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
@@ -1243,18 +1244,18 @@ shouldAttack =
 分类结果：
 
 - offense：
-  - `blitzkrieg`：机动兵力占比高且 adjustedRatio >= 1.65。
-  - `spearhead`：机动兵力可用，adjustedRatio >= 1.35，且有可见敌 region；用于定点矛头。
-  - `breakthrough`：adjustedRatio >= 1.35，向弱点突破。
-  - `fireCoverage`：炮兵/远程支援可用但优势不足，先火力覆盖。
-  - `feint`：优势不足但需要牵制时少量佯攻。
-  - `guerrillaWarfare`：机动兵力可用、敌 region 多、优势有限时袭扰纵深。
-  - `standardAttack`：普通进攻 fallback。
+  - `blitzkrieg`（疾袭）：机动兵力占比高且 adjustedRatio >= 1.65。
+  - `spearhead`（突击）：机动兵力可用，adjustedRatio >= 1.35，且有可见敌 region；用于定点矛头。
+  - `breakthrough`（破阵）：adjustedRatio >= 1.35，向弱点突破。
+  - `fireCoverage`（箭雨/器械压制）：炮兵/远程支援可用但优势不足，先火力覆盖。
+  - `feint`（佯攻）：优势不足但需要牵制时少量佯攻。
+  - `guerrillaWarfare`（奇袭/袭扰）：机动兵力可用、敌 region 多、优势有限时袭扰纵深。
+  - `standardAttack`（正攻）：普通进攻 fallback。
 - defense：
-  - `lastStand`：极端劣势、无纵深预备队且压力高时死守。
-  - `defenseInDepth`：有纵深预备队且压力/劣势明显时纵深防御。
-  - `elasticDefense`：压力、补给警告或劣势时弹性防御。
-  - `holdPosition`：普通防御 fallback。
+  - `lastStand`（死守）：极端劣势、无纵深预备队且压力高时死守。
+  - `defenseInDepth`（层层设防）：有纵深预备队且压力/劣势明显时纵深防御。
+  - `elasticDefense`（诱敌/退守）：压力、补给警告或劣势时弹性防御。
+  - `holdPosition`（固守）：普通防御 fallback。
 
 `TacticConditionChecker` 不再恒放行：闪电战/游击战要求机动单位，火力覆盖要求炮兵或远程单位，佯攻要求前线单位，纵深防御要求 depth 预备队；不满足条件会降级为 `holdPosition`。
 
