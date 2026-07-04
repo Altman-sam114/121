@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.3 三国兵种克制规则兼容层）
+# 三国棋策 Agent Mermaid 核心流程图（v2.4 君主姿态塑形兼容层）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.3 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则和兵种克制最小规则，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主姿态塑形兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,12 +12,12 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.3 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草和兵种克制最小规则
+  -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主姿态塑形
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
 
-v2.3 命名边界：
+v2.4 命名边界：
 
 - `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
 - 默认新局优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json`；旧阿登数据保留作 fallback。
@@ -33,8 +33,9 @@ v2.3 命名边界：
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，只塑形 `DirectiveEnvelope` 并写 `RulerDecisionRecord`；最终命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
-- 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。
+- 正式三国大地图、完整多势力 turn order、军师/太守/武将 Agent schema 后续分阶段实现。
 
 图里颜色含义：
 
@@ -66,11 +67,13 @@ flowchart TD
     AI["AI 元帅系统<br/>MarshalAgent + TheaterDirective JSON<br/>先做大战役级规划"]:::input
     DEC["元帅 JSON 解码<br/>TheaterDirectiveDecoder<br/>提取 fenced JSON、校验 id 与 schema"]:::command
     COMP["元帅意图编译<br/>TheaterDirectiveCompiler<br/>把 TheaterDirective 降级成 ZoneDirective"]:::command
+    RULER["君主姿态塑形<br/>RulerAgent.adjust<br/>调整 DirectiveEnvelope，写 RulerDecisionRecord"]:::command
     ZD["战争指令<br/>ZoneDirective<br/>战区级 attack/defend 意图"]:::command
     WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令"]:::command
     CMD["底层命令<br/>Command<br/>move / attack / hold / resupply / queueProduction / endTurn"]:::command
     RE["规则引擎<br/>RuleEngine<br/>先校验，再真正修改 GameState"]:::rules
     SYNC["战略同步器<br/>StrategicStateSynchronizer<br/>占领后刷新省份、战区、前线、部署"]:::rules
+    DIP["外交与君主审计<br/>DiplomacyState.rulerRecords<br/>保存姿态、目标和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
     LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>用于 UI 展示和后续调试"]:::ui
@@ -86,9 +89,11 @@ flowchart TD
     HEX --> H2T
     H2T --> FRONT --> DEPLOY
     GS --> ECO
+    GS --> DIP
 
     PLAYER --> CMD
-    AI --> DEC --> COMP --> ZD --> WCE --> CMD
+    AI --> DEC --> COMP --> RULER --> ZD --> WCE --> CMD
+    RULER --> DIP
     CMD --> RE --> HEX
     RE --> ECO
     RE --> SYNC
@@ -106,6 +111,7 @@ flowchart TD
     DEPLOY --> UI
     ECO --> UI
     DIP --> UI
+    DIP --> LOG
     RE --> LOG
     WCE --> LOG
 
@@ -233,9 +239,9 @@ flowchart TD
 
 ## 4. AI / 元帅决策链：AI 怎么下命令
 
-这张图看 v0.5 分支默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。`WarCommandExecutor` 再把这些战术翻译成底层 `Command`，最后交给 `RuleEngine`。
+这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，再由 `WarCommandExecutor` 把战术翻译成底层 `Command`，最后交给 `RuleEngine`。
 
-当前 v0.5 的默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留。统治者层只作为后续上游预留，当前不在主链路调用。旧 Agent D 管线仍保留，但默认不走。
+当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过 `RulerAgent.adjust`。旧 Agent D 管线仍保留，但默认不走。
 
 ```mermaid
 flowchart TD
@@ -249,7 +255,9 @@ flowchart TD
     DEC["元帅 JSON 解码器<br/>TheaterDirectiveDecoder<br/>提取 JSON、解码、校验 schema/zone/region/tactic"]:::command
     COMP["元帅意图编译器<br/>TheaterDirectiveCompiler<br/>TheaterDirective -> ZoneDirective<br/>传递 focus/convergence/coordinated 参数"]:::command
     ENV["指令信封<br/>DirectiveEnvelope<br/>收集编译后的 ZoneDirective"]:::command
-    TACTIC["高级战术路由<br/>TacticName<br/>blitzkrieg / spearhead / breakthrough / pincer / fire / feint / guerrilla / elastic / depth / lastStand"]:::command
+    RULER["君主姿态塑形<br/>RulerAgent.adjust<br/>选择进取/守成/合盟/稳固，只调整指令信封"]:::ai
+    DIP["君主审计<br/>DiplomacyState.rulerRecords + EventLog<br/>记录姿态、优先防区和理由"]:::ui
+    TACTIC["高级战术路由<br/>TacticName<br/>正攻 / 疾袭 / 突击 / 破阵 / 合围 / 箭雨 / 固守 / 死守"]:::command
     WCE["指令执行器<br/>WarCommandExecutor.execute<br/>按战术 profile 选择单位、目标和 fallback"]:::command
     BOTTOM["具体单位命令<br/>Command<br/>attack / move / hold / allowRetreat"]:::command
     RE["统一规则校验执行<br/>RuleEngine<br/>AI 和玩家共用同一套规则"]:::rules
@@ -259,7 +267,8 @@ flowchart TD
     START --> CHECK
     CHECK -->|否| STOP
     CHECK -->|是| REFRESH --> TM --> SUM --> LLM --> DEC --> COMP --> ENV
-    ENV --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
+    ENV --> RULER --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
+    RULER --> DIP
 
     FALLBACK["Fallback 将军池<br/>TheaterCommanderPool + ZoneCommanderAgent<br/>元帅 JSON 无效或某 zone 无指令时使用"]:::ai
     DEC -.解码失败.-> FALLBACK --> ENV
@@ -268,8 +277,8 @@ flowchart TD
     LEGACY["旧 Agent D 管线<br/>AgentContext -> DecisionProvider -> AgentCommandMapper<br/>只在 legacyAgentOrder 显式分支或测试中使用"]:::legacy
     TM -.默认不走.-> LEGACY
 
-    MANUAL["手写战区指令<br/>手工 ZoneDirective<br/>玩家聊天命令也可以直接指定 tactic/focus/convergence"]:::input
-    MANUAL --> TACTIC
+    MANUAL["显式 zoneDirective 路径<br/>TheaterCommanderPool / 手写 ZoneDirective<br/>也可指定 tactic/focus/convergence"]:::input
+    MANUAL --> RULER
 
     classDef input fill:#fef3c7,stroke:#d97706,color:#1f1600
     classDef decision fill:#fff7ed,stroke:#ea580c,color:#1f1300

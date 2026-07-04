@@ -171,13 +171,13 @@ enum RulerStrategicPosture: String, Codable, Equatable, CaseIterable {
     var displayName: String {
         switch self {
         case .offensive:
-            return "Offensive"
+            return "进取"
         case .defensive:
-            return "Defensive"
+            return "守成"
         case .coalitionMaintenance:
-            return "Coalition"
+            return "合盟"
         case .stabilizeFront:
-            return "Stabilize"
+            return "稳固"
         }
     }
 }

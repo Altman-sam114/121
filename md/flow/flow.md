@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.3 三国兵种克制规则兼容层）
+# 三国棋策 Agent 核心流程文档（v2.4 君主姿态塑形兼容层）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.3 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则和兵种克制最小规则：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主姿态塑形兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -23,6 +23,7 @@ MapEditor / JSON 数据
   -> MarshalAgent / TheaterDirective JSON
   -> TheaterDirectiveDecoder
   -> TheaterDirectiveCompiler
+  -> RulerAgent 姿态塑形 / RulerDecisionRecord
   -> ZoneCommanderAgent fallback / 手写 ZoneDirective
   -> WarCommandExecutor
   -> RuleEngine
@@ -31,7 +32,7 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则和兵种克制最小规则：
+v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主姿态塑形兼容层：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
@@ -48,6 +49,7 @@ v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
 最关键的铁律：
@@ -64,7 +66,7 @@ v2.3 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `DiplomacyState.initial` 能为三国势力生成基础 country / bloc profile；默认关系当前只把曹袁设为 `atWar`，汉室/中立和其他势力默认 `neutral`。
 - 玩家、AI、后续聊天命令最终都必须经过 `Command` / `ZoneDirective -> WarCommandExecutor -> RuleEngine`，不能直接改 `GameState`。
 - v0.5 默认战争 AI 上游是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行收口到 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
-- 统治者层只作为后续方向预留；当前 v0.5 主链路不调用 `RulerAgent`，也不写统治者决策记录。
+- 君主层当前作为 v2.4 上游姿态塑形层：`RulerAgent` 只调整 `DirectiveEnvelope` 并写 `RulerDecisionRecord`，不直接修改 hex、军队或资源。
 
 ---
 
@@ -86,6 +88,7 @@ theaterState: TheaterState
 frontLineState: FrontLineState
 warDeploymentState: WarDeploymentState
 economyState: EconomyState
+diplomacyState: DiplomacyState
 divisions: [Division]
 victoryState
 eventLog
@@ -101,6 +104,7 @@ playerCommandState
 - `frontLineState` 从动态战区相邻 hex 派生。
 - `warDeploymentState` 从动态战区/前线/单位位置派生，供 AI 调度单位。
 - `economyState` 保存 manpower、industry、supplies、生产队列、上回合收入/维护费/补员消耗，不直接改变战术占领权。
+- `diplomacyState` 保存国家、集团、关系和 `RulerDecisionRecord`，给君主姿态审计与 UI 读取。
 - `eventLog` 给 UI 和调试看。
 - `warDirectiveRecords` 记录战争指令执行回放，供 v0.36+ 后续接 LLM / 聊天命令审计。
 
@@ -360,16 +364,34 @@ isCoreZone
 
 这层是 AI 调度能否“看见部队”的关键。历史上的“AI 看起来不动”根因之一就是突破后的单位被误判成 garrison，从 `unitsFront` 调度池消失。现在前线/敌区/敌控 hex 会强制把这种单位归到 front。
 
-### 1.7 后续统治者层预留
+### 1.7 君主姿态塑形层
 
-v0.5 当前不接入统治者层。工作树中可能存在 `WWIIHexV0/Core/DiplomacyState.swift`、`WWIIHexV0/Agents/RulerAgent.swift` 等其他版本方向文件，但它们不是本 v0.5 分支的默认战争 AI 主链路，`TurnManager` 当前不调用 `RulerAgent`。
+源码：`WWIIHexV0/Core/DiplomacyState.swift`、`WWIIHexV0/Agents/RulerAgent.swift`、`WWIIHexV0/Turn/TurnManager.swift`
 
-后续若加入统治者层，必须满足这些边界：
+v2.4 当前已把君主层接入 `.marshalDirective` 和显式 `.zoneDirective` 执行前的姿态塑形点：
 
-- 统治者只能位于元帅上游，输出国家级姿态、优先方向或约束条件。
-- 统治者不得直接生成底层 `Command`，不得绕过 `MarshalAgent` / `ZoneDirective`。
-- 统治者不得直接修改 `HexTile.controller`、`Division.coord`、`regionToTheater`、`hexToTheater` 或 `hexToFrontZone`。
-- 若需要审计记录，必须单独设计数据 schema，并在 `md/flow/*`、`README.md`、`update_log.md` 中同步说明。
+```text
+MarshalAgent / TheaterCommanderPool
+  -> DirectiveEnvelope
+  -> RulerAgent.adjust
+  -> adjusted DirectiveEnvelope
+  -> WarCommandExecutor
+  -> RuleEngine
+```
+
+`RulerAgent` 的职责：
+
+- 根据 `GameState` 派生 `RulerStrategicSnapshot`，选择进取、守成、合盟或稳固姿态。
+- 只调整 `ZoneDirective` 的姿态参数，例如进攻强度、防守预备队和优先 region 排序。
+- 生成 `RulerDecisionRecord`，写入 `DiplomacyState.rulerRecords`，并追加 diplomacy 日志。
+- 把姿态摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
+
+君主层边界：
+
+- 君主层不能直接生成底层 `Command`。
+- 君主层不能绕过 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
+- 君主层不能直接修改 `HexTile.controller`、`Division.coord`、`regionToTheater`、`hexToTheater`、`hexToFrontZone`、资源库存或生产队列。
+- 后续若扩展为完整君主 / 军师 / 太守 / 武将 / 外交 Agent，仍必须保持 Codable directive、decoder/validator 和 fallback 边界。
 
 ### 1.8 EconomyState / EconomyRules
 
@@ -1124,11 +1146,11 @@ appendEvent("Turn advanced ...")
 
 ## 6. AI / 战争指令流程
 
-### 6.1 v0.5 默认元帅决策链
+### 6.1 v2.4 默认元帅决策链与君主塑形
 
-源码：`WWIIHexV0/Turn/TurnManager.swift`、`WWIIHexV0/Agents/ZoneCommanderAgent.swift`、`WWIIHexV0/Commands/WarDirective.swift`、`WWIIHexV0/Commands/WarCommandExecutor.swift`
+源码：`WWIIHexV0/Turn/TurnManager.swift`、`WWIIHexV0/Agents/MarshalAgent.swift`、`WWIIHexV0/Agents/RulerAgent.swift`、`WWIIHexV0/Agents/ZoneCommanderAgent.swift`、`WWIIHexV0/Core/DiplomacyState.swift`、`WWIIHexV0/Commands/WarDirective.swift`、`WWIIHexV0/Commands/WarCommandExecutor.swift`
 
-v0.5 分支默认路径：
+v2.4 当前默认路径：
 
 ```text
 AppContainer.runAIIfNeeded
@@ -1140,6 +1162,9 @@ AppContainer.runAIIfNeeded
   -> TheaterDirectiveDecoder.parse
   -> TheaterDirectiveCompiler.compile
   -> DirectiveEnvelope / ZoneDirective
+  -> RulerAgent.adjust
+  -> DiplomacyState.rulerRecords + diplomacy EventLog
+  -> adjusted DirectiveEnvelope / ZoneDirective
   -> WarCommandExecutor.execute(directive, in: state)
   -> RuleEngine.execute(Command)
   -> WarDirectiveRecord
@@ -1175,9 +1200,9 @@ TheaterDirective
 - defense -> `ZoneDirective.defend`，把 reserveBias 转成 targetReserves，把 focus/weighted regions 转成 strongpointRegionIds，把 supportRegionIds 转成 fallbackRegionIds。
 - 某个 zone 没有元帅 directive 或编译失败时，使用 `TheaterCommanderPool` 给该 zone 的旧 directive。
 
-最终执行由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段 WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑。
+元帅编译完成后，`TurnManager.applyRulerAdjustment` 会调用 `RulerAgent.adjust`。它可以根据当前压力、优势防区、外交敌对数量和近期防守记录，把进攻改为守成、调整进攻强度、提高防守预备队或重排目标 region；同时写入 `RulerDecisionRecord` 和外交日志。这个阶段只返回新的 `DirectiveEnvelope`，不执行底层命令，也不直接修改战术权威状态。
 
-统治者层是后续预留方向，当前 v0.5 主路径不调用 `RulerAgent`，也不在 `DirectiveEnvelope` 与执行层之间插入姿态塑形。
+最终执行仍由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段君主塑形、WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑。
 
 Legacy Agent D 仍存在，但只在显式 `.legacyAgentOrder` 分支运行：
 
@@ -1736,8 +1761,8 @@ MapEditorGameResourceBridge.loadDefaultDocument
 - 真 LLM 尚未接入；当前只用 `SimulatedMarshalLLMClient` 模拟 fenced JSON 输出和解码流程。
 - 默认 AI 上游已是 `MarshalAgent -> TheaterDirectiveEnvelope -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行必须是 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
 - 元帅层不能直接输出底层 `Command`，不能直接修改地图、单位、hex controller 或动态战区权威。
-- 统治者层只作为未来方向预留，当前 v0.5 不在主链路调用。
-- 当前工作树存在外交/经济/UI 等非 v0.5 方向残留，合并前需要单独审查文件归属和 public API 冲突。
+- 君主层当前已作为 v2.4 姿态塑形兼容层接入 `DirectiveEnvelope` 与 `WarCommandExecutor` 之间；它只能调整 `ZoneDirective`、写 `RulerDecisionRecord` 和追加外交日志。
+- 君主层不能直接修改地图、军队、资源、动态战区或部署归属，不能绕过 `WarCommandExecutor -> RuleEngine`。
 - `AttackIntensity.infiltration` 已在 `WarCommandExecutor` 中解释为默认低投入上限；`.limitedCounter` 和 `.allOut` 仍主要依赖 tactic profile 与显式 `maxCommittedUnits`。
 - `TacticConditionChecker` 当前总是允许现有战术。
 - 战区互助接口 `requestSupport` / `getAvailableForces` / `notifyThreat` 有模型但没有主流程调用方。

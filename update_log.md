@@ -1494,6 +1494,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只完成兵种克制最小规则，不新增完整克制矩阵、水战、士气、疲劳、武将技能和多势力 turn order。
 - 旧 `artillery` fallback 也获得攻城加成；后续若要区分野战火力和攻城器械，需要新增更细 component 或模板字段。
 
+## v2.4 - 君主姿态塑形兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `TurnManager` 新增可注入 `RulerAgent?`，默认用 `RulerAgent.automatic(for:in:)` 生成当前阵营君主。
+- `.marshalDirective` 路径在 `TheaterDirectiveCompiler` 产出 `DirectiveEnvelope` 后调用 `RulerAgent.adjust`，把调整后的 `ZoneDirective` 交给 `WarCommandExecutor`。
+- 显式 `.zoneDirective` 路径同样在执行前经过 `RulerAgent.adjust`，保持 fallback / 手写 directive 与元帅路径一致。
+- `applyRulerAdjustment` 将 `RulerDecisionRecord` 写入 `DiplomacyState.rulerRecords`，追加 diplomacy 事件日志，并把君主塑形诊断写入 `AgentDecisionRecord.errors`。
+- `RulerStrategicPosture.displayName`、`RulerAgent` rationale、君主事件和诊断文本改为中文口径。
+- 文档状态更新为 v2.4 君主姿态塑形兼容层；核心流程图新增 `RulerAgent.adjust` 与 `DiplomacyState.rulerRecords` 节点。
+
+关键系统：
+
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/Agents/RulerAgent.swift`
+- `WWIIHexV0/Core/DiplomacyState.swift`
+- `AGENTS.md`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_ruler_posture_shaping.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 文档和改动 Swift 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成君主姿态塑形兼容层，不实现完整君主 / 军师 / 太守 / 武将 / 外交 Agent 分层。
+- 君主层当前只调整 `DirectiveEnvelope`，不新增独立战略 directive schema；后续完整 v2.4 Agent court 仍需单独版本推进。
+- 未做本机运行时 AI 回合烟测，真实行为正确性等待云端 CI 和后续 Agent C artifact 复判。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
