@@ -32,8 +32,8 @@ v2.4 命名边界：
 - `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
-- `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
-- `CommandExecutor` 会把中文武将姓名、道路机动和攻防修正摘要写入移动、攻击和反击日志；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
+- `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
+- `CommandExecutor` 会把中文武将姓名、道路机动、交战审计和攻防修正摘要写入移动、攻击和反击日志；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
@@ -90,7 +90,7 @@ flowchart TD
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
-    LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动和命令结果中文化，含武将道路机动和攻防修正摘要"]:::ui
+    LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动和命令结果中文化，含武将道路机动、交战审计和攻防修正摘要"]:::ui
 
     ME --> JSON --> DL --> GS
     GS --> HEX
@@ -272,7 +272,7 @@ flowchart TD
 
 ## 4. AI / 元帅决策链：AI 怎么下命令
 
-这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，修路焦点会转换为 `Command.improveRoad` 经规则层执行，有效生产建议会转换为 `Command.queueProduction` 经规则层执行，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，移动、攻击、反击日志和命令拒绝原因会记录中文可审计摘要，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
+这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，修路焦点会转换为 `Command.improveRoad` 经规则层执行，有效生产建议会转换为 `Command.queueProduction` 经规则层执行，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，`CombatRules.combatAuditSummary` 读取同一套交战 profile 生成因素审计；移动、攻击、反击日志和命令拒绝原因会记录中文可审计摘要，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
 
 当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> DiplomatAgent.plan -> Command.proposeDiplomacy -> GovernorAgent.plan -> Command.improveRoad / Command.queueProduction -> StrategistAgent.plan -> GeneralAgent.plan -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过君主、外交、太守、军师和武将层。旧 Agent D 管线仍保留，但默认不走。
 
@@ -304,7 +304,7 @@ flowchart TD
     SREC["军师审计<br/>StrategistDecisionRecord + EventLog<br/>记录目标 region 和理由"]:::ui
     GENA["武将军令复核<br/>GeneralAgent.plan<br/>读取防区武将，复核投入和预备队"]:::ai
     GREC["武将审计<br/>GeneralDecisionRecord + EventLog<br/>记录武将动作和理由"]:::ui
-    GINF["武将战场影响<br/>GeneralInfluence<br/>道路机动、攻击、防御小幅修正"]:::rules
+    GINF["武将战场影响与交战审计<br/>GeneralInfluence / CombatAuditSummary<br/>道路机动、攻击、防御与交战因素摘要"]:::rules
     TACTIC["高级战术路由<br/>TacticName<br/>正攻 / 疾袭 / 突击 / 破阵 / 合围 / 箭雨 / 固守 / 死守"]:::command
     WCE["指令执行器<br/>WarCommandExecutor.execute<br/>按战术 profile 选择单位、目标和 fallback"]:::command
     BOTTOM["具体单位命令<br/>Command<br/>attack / move / hold / allowRetreat"]:::command

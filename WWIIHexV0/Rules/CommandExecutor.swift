@@ -93,6 +93,7 @@ struct CommandExecutor {
         let attacker = state.divisions[attackerIndex]
         let defender = state.divisions[targetIndex]
         let damage = combatRules.attackDamage(attacker: attacker, defender: defender, in: state)
+        let combatAudit = combatRules.combatAuditSummary(attacker: attacker, defender: defender, in: state)
         let generalInfluence = combatRules.generalInfluenceSummary(attacker: attacker, defender: defender, in: state)
         let attackerFacing = attacker.coord.direction(to: defender.coord) ?? attacker.facing
 
@@ -107,6 +108,7 @@ struct CommandExecutor {
                 subjectName: defender.name,
                 damage: damage,
                 outcome: attackOutcome,
+                combatAudit: combatAudit,
                 generalInfluence: generalInfluence
             )
         )
@@ -127,6 +129,11 @@ struct CommandExecutor {
         if !attackOutcome.shouldRetreat,
            combatRules.canCounterAttack(defender: updatedDefender, attacker: updatedAttacker) {
             let counterDamage = combatRules.counterAttackDamage(defender: updatedDefender, attacker: updatedAttacker, in: state)
+            let counterCombatAudit = combatRules.combatAuditSummary(
+                attacker: updatedDefender,
+                defender: updatedAttacker,
+                in: state
+            )
             let counterGeneralInfluence = combatRules.generalInfluenceSummary(
                 attacker: updatedDefender,
                 defender: updatedAttacker,
@@ -141,6 +148,7 @@ struct CommandExecutor {
                     subjectName: updatedAttacker.name,
                     damage: counterDamage,
                     outcome: counterOutcome,
+                    combatAudit: counterCombatAudit,
                     generalInfluence: counterGeneralInfluence
                 )
             )
@@ -398,11 +406,16 @@ struct CommandExecutor {
         subjectName: String,
         damage: CombatDamage,
         outcome: CombatResultSummary,
+        combatAudit: CombatAuditSummary,
         generalInfluence: GeneralCombatInfluenceSummary
     ) -> String {
         var parts = [
             "\(prefix)：兵力 -\(damage.strengthDamage)"
         ]
+
+        if let audit = combatAudit.logFragment {
+            parts.append(audit)
+        }
 
         if let influence = generalInfluence.logFragment {
             parts.append(influence)

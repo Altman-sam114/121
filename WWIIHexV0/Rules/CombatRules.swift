@@ -5,6 +5,57 @@ struct CombatDamage: Equatable {
     let lossRatio: Double
 }
 
+struct CombatAuditSummary: Equatable {
+    let baseAttack: Int
+    let effectiveAttack: Int
+    let baseDefense: Int
+    let effectiveDefense: Int
+    let flankBonus: Int
+    let attackFactors: [String]
+    let defenseFactors: [String]
+
+    var logFragment: String? {
+        var headline: [String] = []
+        if baseAttack != effectiveAttack {
+            headline.append("攻击 \(baseAttack)->\(effectiveAttack)")
+        }
+        if baseDefense != effectiveDefense {
+            headline.append("防御 \(baseDefense)->\(effectiveDefense)")
+        }
+        if let flankDescription {
+            headline.append(flankDescription)
+        }
+
+        let factors = attackFactors + defenseFactors
+        guard !headline.isEmpty || !factors.isEmpty else {
+            return nil
+        }
+
+        let headlineText = headline.isEmpty ? "修正因素" : headline.joined(separator: "，")
+        if factors.isEmpty {
+            return "交战审计：\(headlineText)"
+        }
+        return "交战审计：\(headlineText)（\(factors.joined(separator: "，"))）"
+    }
+
+    private var flankDescription: String? {
+        switch flankBonus {
+        case 0:
+            return nil
+        case 2:
+            return "侧击 +2"
+        case 4:
+            return "背击 +4"
+        default:
+            return "夹击 \(signed(flankBonus))"
+        }
+    }
+
+    private func signed(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : "\(value)"
+    }
+}
+
 struct CombatRules {
     let movementRules = MovementRules()
     private let supplyRules = SupplyRules()
@@ -23,20 +74,7 @@ struct CombatRules {
     }
 
     func effectiveDefense(for defender: Division, attackedBy attacker: Division, in state: GameState) -> Int {
-        var baseDefense = defender.defense + terrainDefenseBonus(for: defender, attackedBy: attacker, in: state)
-        baseDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
-        if let defenderTile = state.map.tile(at: defender.coord),
-           defender.isInfantryHeavy,
-           defenderTile.baseTerrain.supportsInfantryDefenseBonus {
-            baseDefense = max(1, Int((Double(baseDefense) * 1.3).rounded()))
-        }
-        if supplyRules.isBesieged(defender, in: state) {
-            baseDefense = max(1, Int((Double(baseDefense) * 0.75).rounded()))
-        }
-        guard defender.retreatMode == .hold else {
-            return baseDefense
-        }
-        return max(1, Int((Double(baseDefense) * 1.2).rounded()))
+        defenseProfile(defender: defender, attackedBy: attacker, in: state).effectiveDefense
     }
 
     func flankBonus(attacker: Division, defender: Division) -> Int {
@@ -61,24 +99,7 @@ struct CombatRules {
     }
 
     func effectiveAttack(for attacker: Division, against defender: Division, in state: GameState) -> Int {
-        guard let defenderTile = state.map.tile(at: defender.coord) else {
-            return attacker.attack
-        }
-
-        var multiplier = 1.0
-        if attacker.isArmor && defenderTile.baseTerrain == .plain {
-            multiplier += 0.2
-        }
-        if attacker.isArmor && defenderTile.baseTerrain.armorSlowdownCost > 0 {
-            multiplier -= 0.1
-        }
-        if attacker.isSiegeCapable && isCityOrFortress(defenderTile) {
-            multiplier += 0.25
-        }
-
-        let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) +
-            generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
-        return max(1, modifiedAttack)
+        attackProfile(attacker: attacker, defender: defender, in: state).effectiveAttack
     }
 
     func attackDamage(attacker: Division, defender: Division, in state: GameState) -> CombatDamage {
@@ -121,6 +142,24 @@ struct CombatRules {
         generalInfluence.combatSummary(attacker: attacker, defender: defender, in: state)
     }
 
+    func combatAuditSummary(
+        attacker: Division,
+        defender: Division,
+        in state: GameState
+    ) -> CombatAuditSummary {
+        let attackProfile = attackProfile(attacker: attacker, defender: defender, in: state)
+        let defenseProfile = defenseProfile(defender: defender, attackedBy: attacker, in: state)
+        return CombatAuditSummary(
+            baseAttack: attackProfile.baseAttack,
+            effectiveAttack: attackProfile.effectiveAttack,
+            baseDefense: defenseProfile.baseDefense,
+            effectiveDefense: defenseProfile.effectiveDefense,
+            flankBonus: flankBonus(attacker: attacker, defender: defender),
+            attackFactors: attackProfile.factors,
+            defenseFactors: defenseProfile.factors
+        )
+    }
+
     func hasRiverBetween(_ a: HexCoord, _ b: HexCoord, in state: GameState) -> Bool {
         guard a.distance(to: b) == 1,
               let direction = a.direction(to: b),
@@ -149,4 +188,89 @@ struct CombatRules {
         }
         return Double(strengthDamage) / Double(defender.strength)
     }
+
+    private func attackProfile(attacker: Division, defender: Division, in state: GameState) -> AttackProfile {
+        guard let defenderTile = state.map.tile(at: defender.coord) else {
+            return AttackProfile(baseAttack: attacker.attack, effectiveAttack: attacker.attack, factors: [])
+        }
+
+        var multiplier = 1.0
+        var factors: [String] = []
+        if attacker.isArmor && defenderTile.baseTerrain == .plain {
+            multiplier += 0.2
+            factors.append("攻方骑兵平原 +20%")
+        }
+        if attacker.isArmor && defenderTile.baseTerrain.armorSlowdownCost > 0 {
+            multiplier -= 0.1
+            factors.append("攻方骑兵受 \(defenderTile.baseTerrain.displayName) -10%")
+        }
+        if attacker.isSiegeCapable && isCityOrFortress(defenderTile) {
+            multiplier += 0.25
+            factors.append("攻方器械攻城 +25%")
+        }
+
+        let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) +
+            generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
+        return AttackProfile(
+            baseAttack: attacker.attack,
+            effectiveAttack: max(1, modifiedAttack),
+            factors: factors
+        )
+    }
+
+    private func defenseProfile(defender: Division, attackedBy attacker: Division, in state: GameState) -> DefenseProfile {
+        var effectiveDefense = defender.defense
+        var factors: [String] = []
+
+        if let defenderTile = state.map.tile(at: defender.coord) {
+            let terrainBonus = defenderTile.baseTerrain.defenseBonus
+            if terrainBonus != 0 {
+                factors.append("守方\(defenderTile.baseTerrain.displayName)防御 +\(terrainBonus)")
+            }
+            effectiveDefense += terrainBonus
+
+            if hasRiverBetween(attacker.coord, defender.coord, in: state) {
+                effectiveDefense += 2
+                factors.append("守方隔河 +2")
+            }
+
+            effectiveDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+
+            if defender.isInfantryHeavy,
+               defenderTile.baseTerrain.supportsInfantryDefenseBonus {
+                effectiveDefense = max(1, Int((Double(effectiveDefense) * 1.3).rounded()))
+                factors.append("守方步卒据险 x1.3")
+            }
+        } else {
+            effectiveDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+        }
+
+        if supplyRules.isBesieged(defender, in: state) {
+            effectiveDefense = max(1, Int((Double(effectiveDefense) * 0.75).rounded()))
+            factors.append("守方围城 x0.75")
+        }
+
+        if defender.retreatMode == .hold {
+            effectiveDefense = max(1, Int((Double(effectiveDefense) * 1.2).rounded()))
+            factors.append("守方死守 x1.2")
+        }
+
+        return DefenseProfile(
+            baseDefense: defender.defense,
+            effectiveDefense: effectiveDefense,
+            factors: factors
+        )
+    }
+}
+
+private struct AttackProfile: Equatable {
+    let baseAttack: Int
+    let effectiveAttack: Int
+    let factors: [String]
+}
+
+private struct DefenseProfile: Equatable {
+    let baseDefense: Int
+    let effectiveDefense: Int
+    let factors: [String]
 }

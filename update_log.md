@@ -2216,6 +2216,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 修路命令可能消耗资源导致同轮生产建议被拒绝；这会作为中文命令结果记录，属于当前兼容层预期行为。
 - 未做运行时 UI 烟测，AI 面板多条太守命令的实际换行和日志宽度仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 交战因素日志审计兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `CombatAuditSummary`，把攻击/防御有效值变化、地形、河流、器械攻城、围城、死守和侧击整理为中文审计片段。
+- `CombatRules.effectiveAttack` / `effectiveDefense` 改为读取同一套内部 attack / defense profile，避免战斗计算和日志解释分叉。
+- `CommandExecutor` 在攻击和反击日志中追加 `交战审计：...`，并继续保留已有武将攻防修正日志。
+- 保持伤害、撤退、反击、占领、动态方面推进、防区推进和武将修正规则不变；本轮只改善交战原因可读性。
+
+关键系统：
+
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_combat_factor_log_audit.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只做事件日志审计，不实现发布级战报面板、图标化战斗解释、士气、疲劳或单挑。
+- 未做运行时 UI 烟测，事件日志换行、宽度和实际战报可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
