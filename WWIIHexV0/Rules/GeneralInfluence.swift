@@ -2,22 +2,32 @@ import Foundation
 
 struct GeneralCombatInfluenceSummary: Equatable {
     let attackerGeneralId: String?
+    let attackerGeneralName: String?
     let defenderGeneralId: String?
+    let defenderGeneralName: String?
     let attackBonus: Int
     let defenseBonus: Int
 
     var logFragment: String? {
         var parts: [String] = []
         if attackBonus != 0 {
-            parts.append("\(attackerGeneralId ?? "attacker") attack \(signed(attackBonus))")
+            parts.append("\(attackerName) attack \(signed(attackBonus))")
         }
         if defenseBonus != 0 {
-            parts.append("\(defenderGeneralId ?? "defender") defense \(signed(defenseBonus))")
+            parts.append("\(defenderName) defense \(signed(defenseBonus))")
         }
         guard !parts.isEmpty else {
             return nil
         }
         return "general influence \(parts.joined(separator: ", "))"
+    }
+
+    private var attackerName: String {
+        attackerGeneralName ?? attackerGeneralId ?? "attacker"
+    }
+
+    private var defenderName: String {
+        defenderGeneralName ?? defenderGeneralId ?? "defender"
     }
 
     private func signed(_ value: Int) -> String {
@@ -94,7 +104,9 @@ struct GeneralInfluence {
         let defenderAssignment = assignment(for: defender, in: state)
         return GeneralCombatInfluenceSummary(
             attackerGeneralId: attackerAssignment?.generalId,
+            attackerGeneralName: attackerAssignment?.generalDisplayName,
             defenderGeneralId: defenderAssignment?.generalId,
+            defenderGeneralName: defenderAssignment?.generalDisplayName,
             attackBonus: attackBonus(attacker: attacker, defender: defender, in: state),
             defenseBonus: defenseBonus(defender: defender, attackedBy: attacker, in: state)
         )

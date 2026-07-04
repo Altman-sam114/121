@@ -56,8 +56,8 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
-- `GeneralAssignment` 现在保存武将风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
-- `CommandExecutor` 会把 `GeneralInfluence` 的攻防修正摘要追加到攻击和反击日志，便于玩家和 Agent C 复判“哪个武将影响了交战”。
+- `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
+- `CommandExecutor` 会把 `GeneralInfluence` 的攻防修正摘要追加到攻击和反击日志，优先显示武将姓名，便于玩家和 Agent C 复判“哪个武将影响了交战”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
@@ -459,10 +459,10 @@ MarshalAgent / TheaterCommanderPool
 `GeneralInfluence` 的职责：
 
 - 从 `GameState.warDeploymentState.frontZones[].generalAssignment` 找到单位所属武将。
-- 读取 `commandStyleRawValue`、`skills`、忠诚和满意度快照，不依赖 UI 或外部 registry。
+- 读取 `generalDisplayName`、`commandStyleRawValue`、`skills`、忠诚和满意度快照，不依赖 UI 或外部 registry。
 - `MovementRules.effectiveMovementLimit` 会在单位使用道路网络且武将状态可靠时提供 1-2 点道路机动加成。
 - `CombatRules.effectiveAttack` 和 `effectiveDefense` 会按武将技能、风格质量、地形、道路/攻城场景给小幅攻防修正。
-- `CombatRules.generalInfluenceSummary` 将同一套攻防修正整理为只读摘要；`CommandExecutor.combatLog` 会在攻击和反击事件中输出这段摘要，不改变伤害计算。
+- `CombatRules.generalInfluenceSummary` 将同一套攻防修正整理为只读摘要；`CommandExecutor.combatLog` 会在攻击和反击事件中输出这段摘要，优先使用 assignment 的武将姓名快照，不改变伤害计算。
 - 道路 ZOC、攻击目标、粮道通行和安全补员邻接统一按 `Faction.isHostile(to:)` 判断敌对；中立势力不会只因 `faction != activeFaction` 阻断道路、粮道或被合法攻击。
 - 这些修正只改变规则计算，不直接执行移动、攻击或状态写入。
 

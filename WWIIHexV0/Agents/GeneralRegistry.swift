@@ -64,6 +64,7 @@ struct GeneralData: Identifiable, Codable, Equatable {
     func defaultAssignment(hqRegionId: RegionId?, divisionIds: [String]) -> GeneralAssignment {
         GeneralAssignment(
             generalId: id,
+            generalDisplayName: localizedName,
             hqRegionId: hqRegionId,
             assignedDivisionIds: divisionIds,
             commandStyleRawValue: commandStyle.rawValue,
@@ -136,7 +137,8 @@ struct GeneralDispatcher {
                     .withAssignedDivisionIds(divisionIds)
                     .withSnapshot(
                         commandStyleRawValue: general.commandStyle.rawValue,
-                        skills: general.skills
+                        skills: general.skills,
+                        generalDisplayName: general.localizedName
                     )
                 next.frontZones[zone.id] = editableZone
                 usedGeneralIds.insert(current.generalId)

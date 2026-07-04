@@ -3,6 +3,7 @@ import Foundation
 struct GeneralAssignment: Codable, Equatable, Identifiable {
     let id: String
     var generalId: String { id }
+    var generalDisplayName: String?
     var hqRegionId: RegionId?
     var assignedDivisionIds: [String]
     var commandStyleRawValue: String?
@@ -13,6 +14,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
 
     private enum CodingKeys: String, CodingKey {
         case id
+        case generalDisplayName
         case hqRegionId
         case assignedDivisionIds
         case commandStyleRawValue
@@ -24,6 +26,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
 
     init(
         generalId: String,
+        generalDisplayName: String? = nil,
         hqRegionId: RegionId? = nil,
         assignedDivisionIds: [String] = [],
         commandStyleRawValue: String? = nil,
@@ -33,6 +36,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
         interventionCount: Int = 0
     ) {
         self.id = generalId
+        self.generalDisplayName = generalDisplayName
         self.hqRegionId = hqRegionId
         self.assignedDivisionIds = assignedDivisionIds.sorted()
         self.commandStyleRawValue = commandStyleRawValue
@@ -46,6 +50,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             generalId: try container.decode(String.self, forKey: .id),
+            generalDisplayName: try container.decodeIfPresent(String.self, forKey: .generalDisplayName),
             hqRegionId: try container.decodeIfPresent(RegionId.self, forKey: .hqRegionId),
             assignedDivisionIds: try container.decodeIfPresent([String].self, forKey: .assignedDivisionIds) ?? [],
             commandStyleRawValue: try container.decodeIfPresent(String.self, forKey: .commandStyleRawValue),
@@ -59,6 +64,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(generalDisplayName, forKey: .generalDisplayName)
         try container.encodeIfPresent(hqRegionId, forKey: .hqRegionId)
         try container.encode(assignedDivisionIds, forKey: .assignedDivisionIds)
         try container.encodeIfPresent(commandStyleRawValue, forKey: .commandStyleRawValue)
@@ -71,6 +77,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
     func withAssignedDivisionIds(_ divisionIds: [String]) -> GeneralAssignment {
         GeneralAssignment(
             generalId: generalId,
+            generalDisplayName: generalDisplayName,
             hqRegionId: hqRegionId,
             assignedDivisionIds: divisionIds,
             commandStyleRawValue: commandStyleRawValue,
@@ -81,9 +88,14 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
         )
     }
 
-    func withSnapshot(commandStyleRawValue: String?, skills: [String]) -> GeneralAssignment {
+    func withSnapshot(
+        commandStyleRawValue: String?,
+        skills: [String],
+        generalDisplayName: String? = nil
+    ) -> GeneralAssignment {
         GeneralAssignment(
             generalId: generalId,
+            generalDisplayName: generalDisplayName ?? self.generalDisplayName,
             hqRegionId: hqRegionId,
             assignedDivisionIds: assignedDivisionIds,
             commandStyleRawValue: commandStyleRawValue,
@@ -97,6 +109,7 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
     func registeringPlayerIntervention(cost: Int = 4) -> GeneralAssignment {
         GeneralAssignment(
             generalId: generalId,
+            generalDisplayName: generalDisplayName,
             hqRegionId: hqRegionId,
             assignedDivisionIds: assignedDivisionIds,
             commandStyleRawValue: commandStyleRawValue,

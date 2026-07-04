@@ -1961,9 +1961,50 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- 日志当前使用武将 id，而不是本地化姓名；后续若需要玩家级战报可接入 `GeneralRegistry` 或 UI 层名称映射。
+- 本轮初版日志摘要使用武将 id；后续“武将姓名快照兼容层”已接上本地化姓名显示。
 - 本轮只做交战日志审计，不实现完整战报面板、技能树、单挑或士气。
 - `origin/main` 推送仍受 GitHub 443 网络连接失败影响，云端 CI 暂未触发；本地已有两个未推送提交。
+
+## v2.4 - 武将姓名快照兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralAssignment` 新增可选 `generalDisplayName`，旧存档缺字段时仍可解码。
+- `GeneralData.defaultAssignment` 和 `GeneralDispatcher.assignGenerals` 刷新 assignment 时写入武将 `localizedName`。
+- `GeneralCombatInfluenceSummary` 的交战日志片段优先显示武将姓名，缺失时回退到武将 id。
+- 规则层仍只读 `GameState.warDeploymentState.frontZones[].generalAssignment`，不依赖 UI 或运行时 `GeneralRegistry`。
+
+关键系统：
+
+- `WWIIHexV0/Core/GeneralAssignment.swift`
+- `WWIIHexV0/Agents/GeneralRegistry.swift`
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_combat_log_audit.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_name_snapshot.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 旧存档或缺少 registry 刷新的状态仍可能只显示武将 id，这是兼容 fallback；新分配/刷新后的 assignment 会带 `generalDisplayName`。
+- 本轮只改善日志可读性，不实现完整战报 UI、头像或武将技能详情联动。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
