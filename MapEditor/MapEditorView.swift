@@ -79,13 +79,13 @@ struct MapEditorView: View {
             Toggle("道路", isOn: $viewModel.paintRoad)
             Toggle("补给站", isOn: $viewModel.paintSupply)
             Picker("补给阵营", selection: $viewModel.supplyFaction) {
-                ForEach(Faction.allCases, id: \.self) { faction in
+                ForEach(Faction.scenarioCases, id: \.self) { faction in
                     Text(faction.chineseName).tag(faction)
                 }
             }
             Picker("控制方", selection: controllerBinding) {
                 Text("中立").tag(Optional<Faction>.none)
-                ForEach(Faction.allCases, id: \.self) { faction in
+                ForEach(Faction.scenarioCases, id: \.self) { faction in
                     Text(faction.chineseName).tag(Optional(faction))
                 }
             }
@@ -144,7 +144,7 @@ struct MapEditorView: View {
             Text("部队模式")
                 .font(.headline)
             Picker("阵营", selection: $viewModel.selectedUnitFaction) {
-                ForEach(Faction.allCases, id: \.self) { faction in
+                ForEach(Faction.scenarioCases, id: \.self) { faction in
                     Text(faction.chineseName).tag(faction)
                 }
             }
@@ -451,6 +451,20 @@ private extension Faction {
             return "德军"
         case .allies:
             return "盟军"
+        case .cao:
+            return "曹操"
+        case .yuan:
+            return "袁绍"
+        case .liuBei:
+            return "刘备"
+        case .sun:
+            return "孙氏"
+        case .liuBiao:
+            return "刘表"
+        case .maTeng:
+            return "马腾"
+        case .han:
+            return "汉室"
         case .neutral:
             return "中立"
         }

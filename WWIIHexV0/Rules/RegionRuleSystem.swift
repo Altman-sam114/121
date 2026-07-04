@@ -21,7 +21,7 @@ struct RegionRuleSystem {
         }
 
         var visibleRegionsByFaction: [Faction: Set<RegionId>] = [:]
-        for faction in Faction.allCases {
+        for faction in Faction.scenarioCases {
             visibleRegionsByFaction[faction] = visibility.visibleRegions(for: faction, in: state)
         }
 
@@ -32,4 +32,3 @@ struct RegionRuleSystem {
         )
     }
 }
-

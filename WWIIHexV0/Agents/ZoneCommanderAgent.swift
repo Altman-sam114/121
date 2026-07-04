@@ -912,6 +912,69 @@ struct MarshalAgentConfig: Codable, Equatable, Identifiable {
                 strategicBias: .balanced,
                 theaterGroupZoneIds: zoneIds
             )
+        case .cao:
+            return MarshalAgentConfig(
+                id: "strategist_cao",
+                name: "曹军军师",
+                faction: .cao,
+                personality: "Concentrates force, protects grain routes, and favors decisive pressure.",
+                strategicBias: .offensive,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .yuan:
+            return MarshalAgentConfig(
+                id: "strategist_yuan",
+                name: "袁军军师",
+                faction: .yuan,
+                personality: "Uses broad fronts and massed strength, but prefers lower operational risk.",
+                strategicBias: .balanced,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .liuBei:
+            return MarshalAgentConfig(
+                id: "strategist_liu_bei",
+                name: "刘备军师",
+                faction: .liuBei,
+                personality: "Preserves field armies, seeks allies, and attacks exposed positions.",
+                strategicBias: .defensive,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .sun:
+            return MarshalAgentConfig(
+                id: "strategist_sun",
+                name: "孙氏都督",
+                faction: .sun,
+                personality: "Favors mobility, flank pressure, and rapid seizure of river crossings.",
+                strategicBias: .balanced,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .liuBiao:
+            return MarshalAgentConfig(
+                id: "strategist_liu_biao",
+                name: "刘表军师",
+                faction: .liuBiao,
+                personality: "Prioritizes regional stability, strongpoints, and defensive reserves.",
+                strategicBias: .defensive,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .maTeng:
+            return MarshalAgentConfig(
+                id: "strategist_ma_teng",
+                name: "马腾军师",
+                faction: .maTeng,
+                personality: "Uses cavalry pressure and raids against weakly held approaches.",
+                strategicBias: .offensive,
+                theaterGroupZoneIds: zoneIds
+            )
+        case .han:
+            return MarshalAgentConfig(
+                id: "strategist_han",
+                name: "汉室廷议",
+                faction: .han,
+                personality: "Avoids direct commitment and prefers stabilizing loyal commanderies.",
+                strategicBias: .defensive,
+                theaterGroupZoneIds: zoneIds
+            )
         case .neutral:
             return MarshalAgentConfig(
                 id: "marshal_neutral",

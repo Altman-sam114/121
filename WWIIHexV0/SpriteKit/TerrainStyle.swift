@@ -44,6 +44,20 @@ enum TerrainStyle {
             return SKColor(red: 0.23, green: 0.24, blue: 0.25, alpha: 1)
         case .allies:
             return SKColor(red: 0.12, green: 0.36, blue: 0.68, alpha: 1)
+        case .cao:
+            return SKColor(red: 0.48, green: 0.08, blue: 0.07, alpha: 1)
+        case .yuan:
+            return SKColor(red: 0.78, green: 0.58, blue: 0.18, alpha: 1)
+        case .liuBei:
+            return SKColor(red: 0.18, green: 0.44, blue: 0.25, alpha: 1)
+        case .sun:
+            return SKColor(red: 0.68, green: 0.18, blue: 0.12, alpha: 1)
+        case .liuBiao:
+            return SKColor(red: 0.18, green: 0.46, blue: 0.52, alpha: 1)
+        case .maTeng:
+            return SKColor(red: 0.38, green: 0.28, blue: 0.18, alpha: 1)
+        case .han:
+            return SKColor(red: 0.46, green: 0.30, blue: 0.58, alpha: 1)
         case .neutral:
             return SKColor(red: 0.48, green: 0.44, blue: 0.36, alpha: 1)
         }
@@ -55,6 +69,20 @@ enum TerrainStyle {
             return SKColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1)
         case .allies:
             return SKColor(red: 0.04, green: 0.18, blue: 0.36, alpha: 1)
+        case .cao:
+            return SKColor(red: 0.18, green: 0.02, blue: 0.02, alpha: 1)
+        case .yuan:
+            return SKColor(red: 0.36, green: 0.22, blue: 0.04, alpha: 1)
+        case .liuBei:
+            return SKColor(red: 0.06, green: 0.20, blue: 0.10, alpha: 1)
+        case .sun:
+            return SKColor(red: 0.28, green: 0.06, blue: 0.04, alpha: 1)
+        case .liuBiao:
+            return SKColor(red: 0.06, green: 0.20, blue: 0.24, alpha: 1)
+        case .maTeng:
+            return SKColor(red: 0.16, green: 0.10, blue: 0.06, alpha: 1)
+        case .han:
+            return SKColor(red: 0.18, green: 0.10, blue: 0.24, alpha: 1)
         case .neutral:
             return SKColor(red: 0.22, green: 0.20, blue: 0.17, alpha: 1)
         }
@@ -74,6 +102,18 @@ enum TerrainStyle {
             return SKColor(red: 0.20, green: 0.85, blue: 0.45, alpha: 1)
         case (.allies, .garrisonUnit):
             return SKColor(red: 0.42, green: 0.38, blue: 0.95, alpha: 1)
+        case (.cao, .frontUnit), (.yuan, .frontUnit), (.liuBei, .frontUnit),
+             (.sun, .frontUnit), (.liuBiao, .frontUnit), (.maTeng, .frontUnit),
+             (.han, .frontUnit):
+            return unitFillColor(for: faction)
+        case (.cao, .depthUnit), (.yuan, .depthUnit), (.liuBei, .depthUnit),
+             (.sun, .depthUnit), (.liuBiao, .depthUnit), (.maTeng, .depthUnit),
+             (.han, .depthUnit):
+            return unitFillColor(for: faction).withAlphaComponent(0.82)
+        case (.cao, .garrisonUnit), (.yuan, .garrisonUnit), (.liuBei, .garrisonUnit),
+             (.sun, .garrisonUnit), (.liuBiao, .garrisonUnit), (.maTeng, .garrisonUnit),
+             (.han, .garrisonUnit):
+            return unitFillColor(for: faction).withAlphaComponent(0.66)
         case (.neutral, .frontUnit), (.neutral, .depthUnit), (.neutral, .garrisonUnit):
             return SKColor(red: 0.58, green: 0.53, blue: 0.43, alpha: 1)
         }
@@ -85,6 +125,20 @@ enum TerrainStyle {
             return SKColor(red: 0.08, green: 0.08, blue: 0.08, alpha: 1)
         case .allies:
             return SKColor(red: 0.04, green: 0.20, blue: 0.62, alpha: 1)
+        case .cao:
+            return SKColor(red: 0.58, green: 0.08, blue: 0.06, alpha: 1)
+        case .yuan:
+            return SKColor(red: 0.82, green: 0.62, blue: 0.20, alpha: 1)
+        case .liuBei:
+            return SKColor(red: 0.16, green: 0.45, blue: 0.22, alpha: 1)
+        case .sun:
+            return SKColor(red: 0.70, green: 0.18, blue: 0.10, alpha: 1)
+        case .liuBiao:
+            return SKColor(red: 0.16, green: 0.48, blue: 0.54, alpha: 1)
+        case .maTeng:
+            return SKColor(red: 0.42, green: 0.30, blue: 0.18, alpha: 1)
+        case .han:
+            return SKColor(red: 0.46, green: 0.30, blue: 0.58, alpha: 1)
         case .neutral:
             return SKColor(red: 0.50, green: 0.45, blue: 0.34, alpha: 1)
         case nil:

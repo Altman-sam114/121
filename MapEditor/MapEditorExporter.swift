@@ -131,7 +131,7 @@ enum MapEditorExporter {
                     )
                 }
             ),
-            factions: Faction.allCases.map(\.rawValue),
+            factions: Faction.scenarioCases.map(\.rawValue),
             maxTurns: 12,
             initialTurn: 1,
             initialPhase: GamePhase.alliedPlayer.rawValue,

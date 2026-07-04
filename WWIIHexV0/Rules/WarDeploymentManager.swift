@@ -649,7 +649,7 @@ struct WarDeploymentManager {
             guard let region = map.regions[regionId] else { continue }
             area[region.controller, default: 0] += max(1, region.displayHexes.count)
         }
-        return Faction.allCases.max { (area[$0] ?? 0) < (area[$1] ?? 0) }
+        return Faction.scenarioCases.max { (area[$0] ?? 0) < (area[$1] ?? 0) }
     }
 
     private func strength(in regionId: RegionId, for faction: Faction, map: MapState) -> Int {

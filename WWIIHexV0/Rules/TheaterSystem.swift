@@ -458,11 +458,11 @@ struct TheaterSystem {
         }
 
         var ratios: [Faction: Double] = [:]
-        for faction in Faction.allCases {
+        for faction in Faction.scenarioCases {
             ratios[faction] = Double(areaByFaction[faction] ?? 0) / Double(totalArea)
         }
 
-        let sortedControl = Faction.allCases.sorted {
+        let sortedControl = Faction.scenarioCases.sorted {
             let lhs = ratios[$0] ?? 0
             let rhs = ratios[$1] ?? 0
             return lhs == rhs ? $0.rawValue < $1.rawValue : lhs > rhs

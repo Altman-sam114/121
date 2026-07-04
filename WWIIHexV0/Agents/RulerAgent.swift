@@ -358,6 +358,76 @@ extension RulerAgent {
                 coalitionDiscipline: 82,
                 riskTolerance: 48
             )
+        case .cao:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_cao_cao",
+                name: "曹操",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 82,
+                coalitionDiscipline: 64,
+                riskTolerance: 70
+            )
+        case .yuan:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_yuan_shao",
+                name: "袁绍",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 68,
+                coalitionDiscipline: 52,
+                riskTolerance: 50
+            )
+        case .liuBei:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_liu_bei",
+                name: "刘备",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 48,
+                coalitionDiscipline: 78,
+                riskTolerance: 46
+            )
+        case .sun:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_sun",
+                name: "孙氏",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 66,
+                coalitionDiscipline: 70,
+                riskTolerance: 62
+            )
+        case .liuBiao:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_liu_biao",
+                name: "刘表",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 28,
+                coalitionDiscipline: 76,
+                riskTolerance: 28
+            )
+        case .maTeng:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_ma_teng",
+                name: "马腾",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 70,
+                coalitionDiscipline: 44,
+                riskTolerance: 66
+            )
+        case .han:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_han_court",
+                name: "汉室",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 8,
+                coalitionDiscipline: 92,
+                riskTolerance: 12
+            )
         case .neutral:
             config = RulerAgentConfig(
                 id: country?.rulerAgentId ?? "ruler_neutral",

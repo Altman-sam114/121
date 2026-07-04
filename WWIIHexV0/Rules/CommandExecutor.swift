@@ -178,7 +178,7 @@ struct CommandExecutor {
             state.activeFaction = .germany
             state.phase = .germanAI
             state.turn += 1
-        case .neutral:
+        case .cao, .yuan, .liuBei, .sun, .liuBiao, .maTeng, .han, .neutral:
             state.activeFaction = .germany
             state.phase = .germanAI
             state.turn += 1

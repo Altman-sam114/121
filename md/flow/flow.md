@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.1 中立兼容基础）
+# 三国棋策 Agent 核心流程文档（v2.1 多势力数据基础）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.1 当前只完成中立兼容基础：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名和旧 JSON 数据入口，新增 `Faction.neutral` 用于数据层中立归属；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.1 当前完成多势力数据基础：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名和旧 JSON 数据入口，`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -31,11 +31,13 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.1 迁移层当前只完成显示语义和中立兼容基础：
+v2.1 迁移层当前只完成显示语义和多势力数据基础：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
-- `Faction.neutral` 当前只用于 region owner/controller 等数据层中立语义，不参与默认回合循环、经济初始化或 AI 自动行动。
+- `Faction` 还可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`，供后续三国 JSON / MapEditor / 初始外交 profile 使用。
+- `Faction.activeTurnCases` / 兼容 `Faction.allCases` 当前仍只包含 `.germany`、`.allies`；完整多势力 turn order 尚未迁移。
+- `Faction.scenarioCases` 是 MapEditor、场景数据和战略派生层控制比例/主控方计算可表达的势力全集。
 - `Division` 当前显示为军队/步卒营/骑兵军/器械营，但 `Division.coord` 仍是单位位置权威。
 - `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
 - 地图和默认 JSON 仍是阿登兼容数据；正式三国剧本、完整三国势力枚举和多势力外交属于后续 v2.1+ / v2.2+。
@@ -49,7 +51,9 @@ v2.1 迁移层当前只完成显示语义和中立兼容基础：
 - `hexToFrontZone` 是部署层动态归属权威。
 - `EconomyState` 是 faction 级经济总账；收入来自受控 region、城市、工厂、基础设施和补给值，但战术占领仍以 hex 为准。
 - `RegionDataSet` 中 owner/controller 缺省或 null 会映射为 `.neutral`，不会再 fallback 给 `.allies`。
+- Theater / FrontLine / WarDeployment / Region visibility 这类派生层使用 `Faction.scenarioCases` 识别地图上的三国势力；`Faction.allCases` 当前只保留旧二元回合兼容含义。
 - 规则/AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`；`Faction.opponent` 只作为旧兼容 helper，不应作为新代码敌我关系来源。
+- `DiplomacyState.initial` 能为三国势力生成基础 country / bloc profile；默认关系当前只把曹袁设为 `atWar`，汉室/中立和其他势力默认 `neutral`。
 - 玩家、AI、后续聊天命令最终都必须经过 `Command` / `ZoneDirective -> WarCommandExecutor -> RuleEngine`，不能直接改 `GameState`。
 - v0.5 默认战争 AI 上游是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行收口到 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
 - 统治者层只作为后续方向预留；当前 v0.5 主链路不调用 `RulerAgent`，也不写统治者决策记录。

@@ -226,61 +226,10 @@ struct DiplomacyState: Codable, Equatable {
         var countries: [CountryProfile] = []
         var blocs: [DiplomaticBloc] = []
 
-        if factions.contains(.germany) {
-            countries.append(
-                CountryProfile(
-                    id: "germany",
-                    name: "German Reich",
-                    faction: .germany,
-                    blocId: "axis",
-                    rulerAgentId: "ruler_germany",
-                    isPrimaryBelligerent: true,
-                    warSupport: 82
-                )
-            )
-            blocs.append(DiplomaticBloc(id: "axis", name: "Axis", faction: .germany, memberCountryIds: ["germany"]))
-        }
-
-        if factions.contains(.allies) {
-            countries.append(
-                CountryProfile(
-                    id: "united_states",
-                    name: "United States",
-                    faction: .allies,
-                    blocId: "allied_coalition",
-                    rulerAgentId: "ruler_allies",
-                    isPrimaryBelligerent: true,
-                    warSupport: 78
-                )
-            )
-            countries.append(
-                CountryProfile(
-                    id: "united_kingdom",
-                    name: "United Kingdom",
-                    faction: .allies,
-                    blocId: "allied_coalition",
-                    rulerAgentId: "ruler_uk",
-                    warSupport: 74
-                )
-            )
-            countries.append(
-                CountryProfile(
-                    id: "belgium",
-                    name: "Belgium",
-                    faction: .allies,
-                    blocId: "allied_coalition",
-                    rulerAgentId: "ruler_belgium",
-                    warSupport: 68
-                )
-            )
-            blocs.append(
-                DiplomaticBloc(
-                    id: "allied_coalition",
-                    name: "Allied Coalition",
-                    faction: .allies,
-                    memberCountryIds: ["belgium", "united_kingdom", "united_states"]
-                )
-            )
+        for faction in stableUnique(factions) {
+            let seed = factionDiplomacySeed(for: faction)
+            countries.append(contentsOf: seed.countries)
+            blocs.append(contentsOf: seed.blocs)
         }
 
         return DiplomacyState(
@@ -352,7 +301,7 @@ struct DiplomacyState: Codable, Equatable {
             for rhsIndex in countries.indices where rhsIndex > lhsIndex {
                 let lhs = countries[lhsIndex]
                 let rhs = countries[rhsIndex]
-                let status: DiplomaticStatus = lhs.faction == rhs.faction ? .allied : .atWar
+                let status = initialStatus(between: lhs.faction, and: rhs.faction)
                 relations.append(
                     DiplomaticRelation(
                         firstCountryId: lhs.id,
@@ -365,5 +314,183 @@ struct DiplomacyState: Codable, Equatable {
             }
         }
         return relations
+    }
+
+    private static func stableUnique(_ factions: [Faction]) -> [Faction] {
+        var seen: Set<Faction> = []
+        var result: [Faction] = []
+        for faction in factions where !seen.contains(faction) {
+            seen.insert(faction)
+            result.append(faction)
+        }
+        return result
+    }
+
+    private static func initialStatus(between lhs: Faction, and rhs: Faction) -> DiplomaticStatus {
+        if lhs == rhs {
+            return .allied
+        }
+        if lhs == .neutral || rhs == .neutral || lhs == .han || rhs == .han {
+            return .neutral
+        }
+        let atWarPairs: Set<Set<Faction>> = [
+            Set([.germany, .allies]),
+            Set([.cao, .yuan])
+        ]
+        return atWarPairs.contains(Set([lhs, rhs])) ? .atWar : .neutral
+    }
+
+    private static func factionDiplomacySeed(for faction: Faction) -> (
+        countries: [CountryProfile],
+        blocs: [DiplomaticBloc]
+    ) {
+        switch faction {
+        case .germany:
+            let country = CountryProfile(
+                id: "germany",
+                name: "German Reich",
+                faction: .germany,
+                blocId: "axis",
+                rulerAgentId: "ruler_germany",
+                isPrimaryBelligerent: true,
+                warSupport: 82
+            )
+            return ([country], [DiplomaticBloc(id: "axis", name: "Axis", faction: .germany, memberCountryIds: [country.id])])
+        case .allies:
+            let countries = [
+                CountryProfile(
+                    id: "united_states",
+                    name: "United States",
+                    faction: .allies,
+                    blocId: "allied_coalition",
+                    rulerAgentId: "ruler_allies",
+                    isPrimaryBelligerent: true,
+                    warSupport: 78
+                ),
+                CountryProfile(
+                    id: "united_kingdom",
+                    name: "United Kingdom",
+                    faction: .allies,
+                    blocId: "allied_coalition",
+                    rulerAgentId: "ruler_uk",
+                    warSupport: 74
+                ),
+                CountryProfile(
+                    id: "belgium",
+                    name: "Belgium",
+                    faction: .allies,
+                    blocId: "allied_coalition",
+                    rulerAgentId: "ruler_belgium",
+                    warSupport: 68
+                )
+            ]
+            return (
+                countries,
+                [
+                    DiplomaticBloc(
+                        id: "allied_coalition",
+                        name: "Allied Coalition",
+                        faction: .allies,
+                        memberCountryIds: countries.map(\.id)
+                    )
+                ]
+            )
+        case .cao:
+            return singleCountrySeed(
+                faction: .cao,
+                countryId: "power_cao",
+                blocId: "bloc_cao",
+                name: "曹操",
+                rulerAgentId: "ruler_cao_cao",
+                isPrimaryBelligerent: true,
+                warSupport: 78
+            )
+        case .yuan:
+            return singleCountrySeed(
+                faction: .yuan,
+                countryId: "power_yuan",
+                blocId: "bloc_yuan",
+                name: "袁绍",
+                rulerAgentId: "ruler_yuan_shao",
+                isPrimaryBelligerent: true,
+                warSupport: 76
+            )
+        case .liuBei:
+            return singleCountrySeed(
+                faction: .liuBei,
+                countryId: "power_liu_bei",
+                blocId: "bloc_liu_bei",
+                name: "刘备",
+                rulerAgentId: "ruler_liu_bei",
+                warSupport: 66
+            )
+        case .sun:
+            return singleCountrySeed(
+                faction: .sun,
+                countryId: "power_sun",
+                blocId: "bloc_sun",
+                name: "孙氏",
+                rulerAgentId: "ruler_sun",
+                warSupport: 70
+            )
+        case .liuBiao:
+            return singleCountrySeed(
+                faction: .liuBiao,
+                countryId: "power_liu_biao",
+                blocId: "bloc_liu_biao",
+                name: "刘表",
+                rulerAgentId: "ruler_liu_biao",
+                warSupport: 54
+            )
+        case .maTeng:
+            return singleCountrySeed(
+                faction: .maTeng,
+                countryId: "power_ma_teng",
+                blocId: "bloc_ma_teng",
+                name: "马腾",
+                rulerAgentId: "ruler_ma_teng",
+                warSupport: 62
+            )
+        case .han:
+            return singleCountrySeed(
+                faction: .han,
+                countryId: "power_han",
+                blocId: "bloc_han",
+                name: "汉室",
+                rulerAgentId: "ruler_han_court",
+                warSupport: 40
+            )
+        case .neutral:
+            return singleCountrySeed(
+                faction: .neutral,
+                countryId: "power_neutral",
+                blocId: "bloc_neutral",
+                name: "中立郡县",
+                rulerAgentId: "ruler_neutral",
+                warSupport: 0
+            )
+        }
+    }
+
+    private static func singleCountrySeed(
+        faction: Faction,
+        countryId: CountryId,
+        blocId: DiplomaticBlocId,
+        name: String,
+        rulerAgentId: String,
+        isPrimaryBelligerent: Bool = false,
+        warSupport: Int
+    ) -> (countries: [CountryProfile], blocs: [DiplomaticBloc]) {
+        let country = CountryProfile(
+            id: countryId,
+            name: name,
+            faction: faction,
+            blocId: blocId,
+            rulerAgentId: rulerAgentId,
+            isPrimaryBelligerent: isPrimaryBelligerent,
+            warSupport: warSupport
+        )
+        let bloc = DiplomaticBloc(id: blocId, name: "\(name)集团", faction: faction, memberCountryIds: [countryId])
+        return ([country], [bloc])
     }
 }

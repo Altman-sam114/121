@@ -1209,28 +1209,39 @@ guerrillaWarfare 额外参考 infrastructure
 - 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.1-v2.2 必须分阶段迁移。
 - 未做运行时 UI 和 SpriteKit 截图验证，显示是否完全无残留需后续授权运行检查。
 
-## v2.1 - 中立势力兼容基础与敌对判断去二元化小步
+## v2.1 - 中立兼容、三国势力数据与敌对判断去二元化小步
 
 完成日期：2026-07-04
 
 核心更新：
 
 - `Faction` 新增 `.neutral`，用于数据层中立 owner/controller；默认 `Faction.allCases` 仍只枚举当前可行动的 `.germany` / `.allies`，避免中立进入旧二元回合、经济初始化和默认 AI 行动。
+- `Faction` 新增三国数据势力 rawValue：`.cao`、`.yuan`、`.liuBei`、`.sun`、`.liuBiao`、`.maTeng`、`.han`。
+- 新增 `Faction.activeTurnCases` 和 `Faction.scenarioCases`：前者保留当前旧二元回合参与者，后者供 MapEditor 和场景 JSON 表达完整三国势力集合。
+- `TheaterSystem`、`FrontLineManager`、`WarDeploymentManager`、`RegionRuleSystem` 的控制比例、主控方和可见 region 候选改用 `Faction.scenarioCases`，让三国 controller 能进入战略派生层计算，但不进入旧回合顺序。
 - `RegionDataSet.toRegions()` 修正 owner/controller 缺省或 null 时的旧 fallback：现在映射为 `.neutral`，不再错误回退到 `.allies`。
 - `Faction.opponent` 保留为旧兼容 helper，但规则和 AI 摘要的核心敌对判断改用 `Faction.isHostile(to:)`。
+- `DiplomacyState.initial` 可按传入 faction 列表生成基础 country / bloc profile：保留旧 germany/allies 兼容 profile，并新增曹操、袁绍、刘备、孙氏、刘表、马腾、汉室和中立郡县 profile。
+- 初始外交关系中，旧 germany/allies 与新曹袁设为 `atWar`；汉室/中立和其他新增势力默认 `neutral`。
 - `CommandExecutor`、`AppContainer`、`TurnManager`、`VictoryState` 补齐 `.neutral` 分支：中立不触发 AI、不作为默认回合参与者、不计入当前二元胜负统计。
 - `SupplyRules`、`RegionSupplyRules`、`RegionCombatRules`、`WarCommandExecutor`、`AgentContexts`、`ZoneCommanderAgent`、`FrontLineManager` 改用 hostile 判断处理敌控、敌军、敌方目标和前线对手。
-- `TerrainStyle`、`MapEditorView` 增加中立显示 fallback。
+- `RulerAgent`、`MarshalAgentConfig`、`TerrainStyle`、`MapEditorView` 增加三国势力与中立 fallback。
+- `MapEditorView` 的势力选择器和 `MapEditorExporter` 导出的 scenario factions 改用 `Faction.scenarioCases`。
 - 新增 `md/prompt/v2.0-三国迁移/v2.1_neutral_faction_foundation.md`，记录本轮目标、非目标、兼容边界和后续风险。
+- 新增 `md/prompt/v2.0-三国迁移/v2.1_sanguo_power_profiles.md`，记录三国势力数据和初始外交 profile 小步。
 
 关键系统：
 
 - `WWIIHexV0/Core/Faction.swift`
+- `WWIIHexV0/Core/DiplomacyState.swift`
 - `WWIIHexV0/Data/RegionDataSet.swift`
 - `WWIIHexV0/Rules/SupplyRules.swift`
 - `WWIIHexV0/Rules/RegionSupplyRules.swift`
 - `WWIIHexV0/Rules/RegionCombatRules.swift`
+- `WWIIHexV0/Rules/TheaterSystem.swift`
 - `WWIIHexV0/Rules/FrontLineManager.swift`
+- `WWIIHexV0/Rules/WarDeploymentManager.swift`
+- `WWIIHexV0/Rules/RegionRuleSystem.swift`
 - `WWIIHexV0/Commands/WarCommandExecutor.swift`
 - `WWIIHexV0/Agents/AgentContexts.swift`
 - `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
@@ -1239,6 +1250,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `WWIIHexV0/Core/VictoryState.swift`
 - `WWIIHexV0/SpriteKit/TerrainStyle.swift`
 - `MapEditor/MapEditorView.swift`
+- `MapEditor/MapEditorExporter.swift`
 - `README.md`
 - `md/flow/flow.md`
 - `md/flow/flowchart.md`
@@ -1260,8 +1272,8 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- 这只是 v2.1 的中立兼容基础，不是完整多势力迁移。
-- `Faction.neutral` 当前不是 playable power，也没有完整外交国家、turn order 或 AI 策略。
+- 这只是 v2.1 的多势力数据基础，不是完整多势力 turn order / 运行时外交迁移。
+- 三国新增势力当前可被数据表达并有基础外交 profile，但还不是完整 playable turn order。
 - `Faction.isHostile(to:)` 当前只是不同且非中立即敌对的轻量规则；后续仍需接 `DiplomacyState` / `PowerRelation`。
 - 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.2 仍需迁移官渡剧本和默认加载入口。
 
@@ -1275,7 +1287,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 对比记录：
 
-- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.1 三国迁移中立兼容基础。
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.1 三国迁移多势力数据基础。
 - 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
 - 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
 - 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。

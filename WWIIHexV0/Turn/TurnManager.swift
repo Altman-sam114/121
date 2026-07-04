@@ -383,7 +383,7 @@ struct TurnManager {
             return state.activeFaction == .germany && state.phase == .germanAI
         case .allies:
             return state.activeFaction == .allies && state.phase == .alliedPlayer
-        case .neutral:
+        case .cao, .yuan, .liuBei, .sun, .liuBiao, .maTeng, .han, .neutral:
             return false
         }
     }

@@ -416,7 +416,7 @@ struct FrontLineManager {
             let factionB = finalSegments
                 .compactMap { map.regions[$0.regionB]?.controller }
                 .first { $0.isHostile(to: factionA) }
-                ?? Faction.allCases.first { $0.isHostile(to: factionA) }
+                ?? Faction.scenarioCases.first { $0.isHostile(to: factionA) }
                 ?? .neutral
 
             return FrontLine(
@@ -490,7 +490,7 @@ struct FrontLineManager {
         guard !counts.isEmpty else {
             return nil
         }
-        return Faction.allCases.max { (counts[$0] ?? 0) < (counts[$1] ?? 0) }
+        return Faction.scenarioCases.max { (counts[$0] ?? 0) < (counts[$1] ?? 0) }
     }
 
     private func frontLineId(theaterId: TheaterId, factionA: Faction, factionB: Faction) -> FrontLineId {

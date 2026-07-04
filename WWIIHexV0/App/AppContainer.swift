@@ -650,7 +650,7 @@ final class AppContainer: ObservableObject {
             return phase == .germanAI
         case .allies:
             return observerModeEnabled && phase == .alliedPlayer
-        case .neutral:
+        case .cao, .yuan, .liuBei, .sun, .liuBiao, .maTeng, .han, .neutral:
             return false
         }
     }
@@ -706,7 +706,7 @@ final class AppContainer: ObservableObject {
             return state.phase == .germanAI
         case .allies:
             return observerEnabled && state.phase == .alliedPlayer
-        case .neutral:
+        case .cao, .yuan, .liuBei, .sun, .liuBiao, .maTeng, .han, .neutral:
             return false
         }
     }
@@ -731,13 +731,16 @@ final class AppContainer: ObservableObject {
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
             )
-        case .neutral:
+        case .cao, .yuan, .liuBei, .sun, .liuBiao, .maTeng, .han, .neutral:
+            let assignedIds = state.divisions
+                .filter { $0.faction == faction && !$0.isDestroyed }
+                .map(\.id)
             agent = GameAgent.sample(
-                id: "neutral_observer",
-                name: "Neutral Observer",
-                faction: .neutral,
+                id: "\(faction.rawValue)_observer",
+                name: "\(faction.displayName) Observer",
+                faction: faction,
                 role: .armyCommander,
-                assignedDivisionIds: []
+                assignedDivisionIds: assignedIds
             )
         }
 
