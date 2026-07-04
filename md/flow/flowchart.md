@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.4 君主/外交/太守/军师/武将指令编排、外交命令、道路和交战兼容层）
+# 三国棋策 Agent Mermaid 核心流程图（v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路和交战兼容层）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交命令、道路与交战兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路与交战兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,7 +12,7 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交命令、道路与交战
+  -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路与交战
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
@@ -33,7 +33,7 @@ v2.4 命名边界：
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
-- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。
 
@@ -71,6 +71,7 @@ flowchart TD
     DIPLO["外交提案<br/>DiplomatAgent.plan<br/>同盟/停战/借道/称臣/讨伐檄文"]:::command
     DCMD["外交命令<br/>Command.proposeDiplomacy<br/>经规则层更新关系/紧张度"]:::command
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给审计"]:::command
+    GCMD["太守生产命令<br/>Command.queueProduction<br/>经规则层校验资源并排产"]:::command
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>重排目标 region，写 StrategistDecisionRecord"]:::command
     GENA["武将军令复核<br/>GeneralAgent.plan<br/>按武将分配复核投入，写 GeneralDecisionRecord"]:::command
     GINF["武将战场影响<br/>GeneralInfluence<br/>道路机动 + 攻防修正"]:::rules
@@ -102,8 +103,9 @@ flowchart TD
     GS --> DIP
 
     PLAYER --> CMD
-    AI --> DEC --> COMP --> RULER --> DIPLO --> DCMD --> GOV --> STRAT --> GENA --> ZD --> WCE --> CMD
+    AI --> DEC --> COMP --> RULER --> DIPLO --> DCMD --> GOV --> GCMD --> STRAT --> GENA --> ZD --> WCE --> CMD
     DCMD --> CMD
+    GCMD --> CMD
     GENA --> GINF
     GINF --> WCE
     GINF --> RE
@@ -266,9 +268,9 @@ flowchart TD
 
 ## 4. AI / 元帅决策链：AI 怎么下命令
 
-这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
+这张图看当前默认 AI 主路径。AI 不直接控制单位，也不直接改地图；元帅先读取降维战场摘要，模拟 LLM 输出 `TheaterDirectiveEnvelope` JSON，经 decoder 校验和 compiler 降级后，形成战区级 `DirectiveEnvelope`。v2.4 君主层随后做姿态塑形并写 `RulerDecisionRecord`，外交层读取国家/集团/关系并写 `DiplomatDecisionRecord`，有效外交提案会转换为 `Command.proposeDiplomacy` 经规则层执行，太守层读取经济/郡县/道路/粮草并写 `GovernorDecisionRecord`，有效生产建议会转换为 `Command.queueProduction` 经规则层执行，军师层再编排目标 region 并写 `StrategistDecisionRecord`，武将层最后复核防区军令并写 `GeneralDecisionRecord`。底层移动和交战再由 `GeneralInfluence` 读取武将快照做道路机动和攻防修正，最终仍由 `WarCommandExecutor`、`RuleEngine` 执行。
 
-当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> DiplomatAgent.plan -> Command.proposeDiplomacy -> GovernorAgent.plan -> StrategistAgent.plan -> GeneralAgent.plan -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过君主、外交、太守、军师和武将层。旧 Agent D 管线仍保留，但默认不走。
+当前默认 AI 主线是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler -> RulerAgent.adjust -> DiplomatAgent.plan -> Command.proposeDiplomacy -> GovernorAgent.plan -> Command.queueProduction -> StrategistAgent.plan -> GeneralAgent.plan -> ZoneDirective -> WarCommandExecutor -> RuleEngine`。旧 v0.37 `TheaterCommanderPool -> ZoneCommanderAgent` 作为 fallback 和显式 `.zoneDirective` 路径保留，这条路径也会在执行前经过君主、外交、太守、军师和武将层。旧 Agent D 管线仍保留，但默认不走。
 
 ```mermaid
 flowchart TD
@@ -289,7 +291,9 @@ flowchart TD
     DRE["外交规则执行<br/>RuleEngine.execute<br/>更新 DiplomaticRelation 状态/紧张度"]:::rules
     DREC["外交审计<br/>DiplomatDecisionRecord + CommandResultSummary<br/>记录提案、对象、执行结果"]:::ui
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给"]:::ai
-    GOVREC["太守审计<br/>GovernorDecisionRecord + EventLog<br/>记录内政重点和建议"]:::ui
+    GCMD["太守生产命令<br/>Command.queueProduction<br/>校验资源并加入生产队列"]:::command
+    GRE["生产规则执行<br/>RuleEngine.execute<br/>扣资源、追加 ProductionOrder"]:::rules
+    GOVREC["太守审计<br/>GovernorDecisionRecord + CommandResultSummary<br/>记录内政重点、建议和执行结果"]:::ui
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>选择主防区，编排 focus/support/convergence"]:::ai
     SREC["军师审计<br/>StrategistDecisionRecord + EventLog<br/>记录目标 region 和理由"]:::ui
     GENA["武将军令复核<br/>GeneralAgent.plan<br/>读取防区武将，复核投入和预备队"]:::ai
@@ -305,8 +309,9 @@ flowchart TD
     START --> CHECK
     CHECK -->|否| STOP
     CHECK -->|是| REFRESH --> TM --> SUM --> LLM --> DEC --> COMP --> ENV
-    ENV --> RULER --> DIPLO --> DCMD --> DRE --> GOV --> STRAT --> GENA --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
+    ENV --> RULER --> DIPLO --> DCMD --> DRE --> GOV --> GCMD --> GRE --> STRAT --> GENA --> TACTIC --> WCE --> BOTTOM --> RE --> RECORD --> END
     DRE --> DREC
+    GRE --> GOVREC
     GENA --> GINF
     GINF --> WCE
     GINF --> RE

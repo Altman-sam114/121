@@ -246,7 +246,7 @@ struct TurnManager {
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
                     + generalAdjustment.diagnostics,
-                preCommandResults: diplomatAdjustment.commandResults
+                preCommandResults: diplomatAdjustment.commandResults + governorAdjustment.commandResults
             )
         } catch {
             return AgentTurnOutcome(
@@ -335,7 +335,7 @@ struct TurnManager {
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
                     + generalAdjustment.diagnostics,
-                preCommandResults: diplomatAdjustment.commandResults
+                preCommandResults: diplomatAdjustment.commandResults + governorAdjustment.commandResults
             )
         } catch {
             return AgentTurnOutcome(
@@ -482,7 +482,13 @@ struct TurnManager {
         state: GameState,
         faction: Faction,
         rulerRecord: RulerDecisionRecord?
-    ) -> (state: GameState, envelope: DirectiveEnvelope, record: GovernorDecisionRecord, diagnostics: [String]) {
+    ) -> (
+        state: GameState,
+        envelope: DirectiveEnvelope,
+        record: GovernorDecisionRecord,
+        commandResults: [CommandResultSummary],
+        diagnostics: [String]
+    ) {
         let governor = governorAgent ?? GovernorAgent.automatic(for: faction, in: state)
         let adjustment = governor.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
@@ -494,14 +500,39 @@ struct TurnManager {
             relatedRecordId: adjustment.record.id
         )
         let regions = adjustment.record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        var commandResults: [CommandResultSummary] = []
+        var diagnostics = [
+            "太守 \(adjustment.record.governorAgentId) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
+        ]
+        if let command = productionCommand(for: adjustment.record) {
+            let result = commandHandler.execute(command, in: nextState)
+            nextState = result.state
+            commandResults.append(.governorCommand(record: adjustment.record, result: result))
+            if result.succeeded {
+                diagnostics.append("太守推荐已经规则层排产：\(command.displayName)。")
+            } else {
+                let reasons = result.validation.errors.map(\.rawValue).joined(separator: ", ")
+                diagnostics.append("太守推荐被规则层拒绝：\(reasons)。")
+            }
+        } else {
+            diagnostics.append("太守未建议新增生产，未生成内政命令。")
+        }
+
         return (
             state: nextState,
             envelope: adjustment.envelope,
             record: adjustment.record,
-            diagnostics: [
-                "太守 \(adjustment.record.governorAgentId) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
-            ]
+            commandResults: commandResults,
+            diagnostics: diagnostics
         )
+    }
+
+    private func productionCommand(for record: GovernorDecisionRecord) -> Command? {
+        guard let kind = record.recommendedProductionKind else {
+            return nil
+        }
+
+        return .queueProduction(kind: kind)
     }
 
     private func applyGeneralPlanning(

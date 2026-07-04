@@ -1840,6 +1840,48 @@ guerrillaWarfare 额外参考 infrastructure
 - 当前战斗敌我判断仍主要来自 `Faction` 兼容层；外交关系变化会影响外交摘要和后续 Agent 语境，但不会自动改变移动/攻击合法性。
 - 真实运行时 AI 回合行为仍等待云端 CI 和后续 Agent C artifact 复判。
 
+## v2.4 - 太守生产命令执行兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `TurnManager.applyGovernorPlanning` 将 `GovernorDecisionRecord.recommendedProductionKind` 转换为 `Command.queueProduction`，通过 `commandHandler.execute` 进入 `RuleEngine`。
+- 太守推荐生产沿用既有 `CommandValidator.validateProduction` 和 `CommandExecutor.executeQueueProduction`，由规则层校验阶段、资源并扣款入队。
+- `CommandResultSummary` 新增太守命令摘要，AI 面板能在 `AgentDecisionRecord.commandResults` 中看到生产建议是否成功或被拒绝。
+- 外交预命令和太守生产预命令都会进入 `executeDirectiveEnvelope` 的 `preCommandResults`，不混入单条 `WarDirectiveRecord`。
+- 文档状态更新为 v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路和交战兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `AGENTS.md`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_governor_production_executor.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+- 未跑 `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`；本轮未修改 Xcode project 文件。
+
+遗留风险：
+
+- 本轮只执行太守推荐生产，不实现真实修路、屯田、治安、民心、郡县状态变化或完整内政 directive schema。
+- 太守推荐依赖现有资源账本和生产队列；运行时经济行为正确性仍等待云端 CI 和后续 Agent C artifact 复判。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

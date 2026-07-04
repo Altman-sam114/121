@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.4 君主/外交/太守/军师/武将指令编排、外交命令、道路和交战兼容层）
+# 三国棋策 Agent 核心流程文档（v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路和交战兼容层）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交命令、道路与交战兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路与交战兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -27,6 +27,7 @@ MapEditor / JSON 数据
   -> DiplomatAgent 外交提案 / DiplomatDecisionRecord
   -> Command.proposeDiplomacy / RuleEngine 外交命令
   -> GovernorAgent 内政建议 / GovernorDecisionRecord
+  -> Command.queueProduction / RuleEngine 生产命令
   -> StrategistAgent 目标编排 / StrategistDecisionRecord
   -> GeneralAgent 武将复核 / GeneralDecisionRecord
   -> GeneralInfluence 武将道路与交战修正
@@ -38,7 +39,7 @@ MapEditor / JSON 数据
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
 
-v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交命令、道路与交战兼容层：
+v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、道路与交战兼容层：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
@@ -58,7 +59,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `GeneralAssignment` 现在保存武将风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
-- `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；太守层当前只给建议，不直接排产或扣资源。
+- `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `recommendedProductionKind` 转换为 `Command.queueProduction`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格和防区压力复核军令，写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
@@ -79,7 +80,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - v0.5 默认战争 AI 上游是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行收口到 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
 - 君主层当前作为 v2.4 上游姿态塑形层：`RulerAgent` 只调整 `DirectiveEnvelope` 并写 `RulerDecisionRecord`，不直接修改 hex、军队或资源。
 - 外交层当前作为 v2.4 上游提案和命令兼容层：`DiplomatAgent` 只追加外交上下文并写 `DiplomatDecisionRecord`；真实关系变化只能由 `Command.proposeDiplomacy -> CommandValidator -> CommandExecutor -> RuleEngine` 执行，不允许 Agent 直接修改关系、集团、hex、军队或资源。
-- 太守层当前作为 v2.4 上游内政建议层：`GovernorAgent` 只写 `GovernorDecisionRecord` 并追加 `DirectiveEnvelope.theaterContext`，不直接修改资源库存或生产队列。
+- 太守层当前作为 v2.4 上游内政建议和生产命令兼容层：`GovernorAgent` 只写 `GovernorDecisionRecord` 并追加 `DirectiveEnvelope.theaterContext`；生产队列变化只能由 `Command.queueProduction -> CommandValidator -> CommandExecutor -> RuleEngine` 执行，不允许 Agent 直接修改资源库存或生产队列。
 - 军师层当前作为 v2.4 上游目标编排层：`StrategistAgent` 只调整 `DirectiveEnvelope` 并写 `StrategistDecisionRecord`，不直接修改 hex、军队或资源。
 - 武将层当前作为 v2.4 上游复核层：`GeneralAgent` 只调整 `DirectiveEnvelope` 并写 `GeneralDecisionRecord`，不直接修改 hex、军队或资源。
 - 武将规则影响当前通过 `GeneralInfluence -> MovementRules / CombatRules` 生效；移动和交战仍由 `CommandValidator`、`RuleEngine` 和 `CommandExecutor` 执行。
@@ -401,6 +402,7 @@ MarshalAgent / TheaterCommanderPool
   -> Command.proposeDiplomacy（若提案有源国家和目标国家）
   -> diplomat-context DirectiveEnvelope
   -> GovernorAgent.plan
+  -> Command.queueProduction（若太守建议生产）
   -> governor-context DirectiveEnvelope
   -> StrategistAgent.plan
   -> strategist-adjusted DirectiveEnvelope
@@ -432,7 +434,8 @@ MarshalAgent / TheaterCommanderPool
 - 选择征兵、修路、屯田、治安或补给等内政重点。
 - 生成 `GovernorDecisionRecord`，写入 `GameState.governorRecords`，并追加 supply 事件日志。
 - 把太守建议追加到 `DirectiveEnvelope.theaterContext`，供军师、武将、AI 面板和 raw JSON 审计读取。
-- 本轮不直接执行 `Command.queueProduction`，也不直接扣资源或修改郡县状态。
+- `TurnManager` 会将 `recommendedProductionKind` 转换为 `Command.queueProduction`，交给 `RuleEngine` 校验执行；执行结果进入 `AgentDecisionRecord.commandResults`。
+- 当前内政执行只覆盖既有生产队列；修路、屯田和治安仍只作为审计重点，不修改道路、郡县或治安状态。
 
 `StrategistAgent` 的职责：
 
@@ -462,7 +465,7 @@ MarshalAgent / TheaterCommanderPool
 
 - 君主层、外交层、太守层、军师层和武将层都不能由 Agent 自身直接修改 `GameState`；外交提案只有经 `TurnManager` 转成 `Command.proposeDiplomacy` 后才可进入执行层。
 - 君主层、外交层、太守层、军师层和武将层都不能绕过 `Command / ZoneDirective -> WarCommandExecutor / RuleEngine`。
-- 君主层、外交层、太守层、军师层和武将层都不能直接修改 `HexTile.controller`、`Division.coord`、`regionToTheater`、`hexToTheater`、`hexToFrontZone`、资源库存或生产队列；外交关系只能由 `Command.proposeDiplomacy -> CommandValidator -> CommandExecutor` 修改。
+- 君主层、外交层、太守层、军师层和武将层都不能直接修改 `HexTile.controller`、`Division.coord`、`regionToTheater`、`hexToTheater`、`hexToFrontZone`、资源库存或生产队列；外交关系只能由 `Command.proposeDiplomacy -> CommandValidator -> CommandExecutor` 修改，生产队列只能由 `Command.queueProduction -> CommandValidator -> CommandExecutor` 修改。
 - 后续若扩展为完整君主 / 外交 / 军师 / 太守 / 武将 Agent，仍必须保持 Codable directive、decoder/validator 和 fallback 边界。
 
 ### 1.8 EconomyState / EconomyRules
@@ -1276,6 +1279,7 @@ AppContainer.runAIIfNeeded
   -> diplomat-context DirectiveEnvelope / ZoneDirective
   -> GovernorAgent.plan
   -> GameState.governorRecords + EventLog
+  -> Command.queueProduction -> RuleEngine.execute
   -> governor-context DirectiveEnvelope / ZoneDirective
   -> StrategistAgent.plan
   -> GameState.strategistRecords + EventLog
@@ -1322,7 +1326,7 @@ TheaterDirective
 
 随后 `TurnManager.applyDiplomatPlanning` 调用 `DiplomatAgent.plan`。它承接君主姿态，读取国家、集团、关系、紧张度和战线压力，提出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等外交提案，并写入 `DiplomatDecisionRecord`。如果提案包含源国家和目标国家，`TurnManager` 会生成 `Command.proposeDiplomacy` 并交给 `commandHandler.execute`，由 `CommandValidator` 校验国家归属、关系和提案合法性，再由 `CommandExecutor` 最小更新 `DiplomaticRelation.status/tension`。这个阶段不执行资源转移、借道通行或完整臣属制度。
 
-随后 `TurnManager.applyGovernorPlanning` 调用 `GovernorAgent.plan`。它承接君主姿态和外交上下文，读取经济总账、郡县、道路、补给和生产队列，选择征兵、修路、屯田、治安或补给重点，并写入 `GovernorDecisionRecord`。这个阶段只追加内政建议和上下文，不执行 `Command.queueProduction`，也不直接修改资源库存或生产队列。
+随后 `TurnManager.applyGovernorPlanning` 调用 `GovernorAgent.plan`。它承接君主姿态和外交上下文，读取经济总账、郡县、道路、补给和生产队列，选择征兵、修路、屯田、治安或补给重点，并写入 `GovernorDecisionRecord`。如果记录包含 `recommendedProductionKind`，`TurnManager` 会生成 `Command.queueProduction` 并交给 `commandHandler.execute`，由 `CommandValidator` 校验阶段与资源，再由 `CommandExecutor` 扣资源并入生产队列。这个阶段不执行修路、屯田或治安状态写入。
 
 随后 `TurnManager.applyStrategistPlanning` 调用 `StrategistAgent.plan`。它承接君主姿态和太守上下文，选择主防区，重排攻击目标 region，补齐 focus/support/convergence 参数，并写入 `StrategistDecisionRecord`。这个阶段仍只返回新的 `DirectiveEnvelope`，不执行底层命令，也不直接修改战术权威状态。
 
@@ -1338,7 +1342,7 @@ GeneralAssignment(commandStyleRawValue / skills / loyalty / satisfaction)
   -> CommandValidator / RuleEngine
 ```
 
-最终战争指令执行仍由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段君主塑形、外交提案命令、太守内政建议、军师目标编排、武将复核、WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑；外交预命令结果进入 `AgentDecisionRecord.commandResults`，不混入某条 `WarDirectiveRecord`。
+最终战争指令执行仍由 `TurnManager.executeDirectiveEnvelope` 统一完成。`.marshalDirective` 和显式 `.zoneDirective` 共享同一段君主塑形、外交提案命令、太守生产命令、军师目标编排、武将复核、WarCommandExecutor 执行、WarDirectiveRecord 记录、endTurn 推进逻辑；外交和太守预命令结果进入 `AgentDecisionRecord.commandResults`，不混入某条 `WarDirectiveRecord`。
 
 Legacy Agent D 仍存在，但只在显式 `.legacyAgentOrder` 分支运行：
 
@@ -1895,15 +1899,15 @@ MapEditorGameResourceBridge.loadDefaultDocument
 ## 10. 当前已知边界
 
 - 真 LLM 尚未接入；当前只用 `SimulatedMarshalLLMClient` 模拟 fenced JSON 输出和解码流程。
-- 默认 AI 上游已是 `MarshalAgent -> TheaterDirectiveEnvelope -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，外交提案执行必须是 `Command.proposeDiplomacy -> RuleEngine`，战争下游执行必须是 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
+- 默认 AI 上游已是 `MarshalAgent -> TheaterDirectiveEnvelope -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，外交提案执行必须是 `Command.proposeDiplomacy -> RuleEngine`，太守生产执行必须是 `Command.queueProduction -> RuleEngine`，战争下游执行必须是 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
 - 元帅层不能直接输出底层 `Command`，不能直接修改地图、单位、hex controller 或动态战区权威。
 - 君主层当前已作为 v2.4 姿态塑形兼容层接入 `DirectiveEnvelope` 与 `WarCommandExecutor` 之间；它只能调整 `ZoneDirective`、写 `RulerDecisionRecord` 和追加外交日志。
 - 外交层当前已作为 v2.4 提案与命令兼容层接在君主层之后；`DiplomatAgent` 只能写 `DiplomatDecisionRecord`、追加上下文和外交日志，关系变化必须通过 `Command.proposeDiplomacy -> CommandValidator -> CommandExecutor`，且当前不执行资源转移、真实借道或完整臣属制度。
-- 太守层当前已作为 v2.4 内政建议兼容层接在外交层之后；它只能写 `GovernorDecisionRecord`、追加上下文和事件日志，不直接执行生产或扣资源。
+- 太守层当前已作为 v2.4 内政建议与生产命令兼容层接在外交层之后；`GovernorAgent` 只能写 `GovernorDecisionRecord`、追加上下文和事件日志，生产队列变化必须通过 `Command.queueProduction -> CommandValidator -> CommandExecutor`，且当前不执行修路、屯田或治安状态写入。
 - 军师层当前已作为 v2.4 目标编排兼容层接在太守层之后；它只能调整 `ZoneDirective`、写 `StrategistDecisionRecord` 和追加事件日志。
 - 武将层当前已作为 v2.4 复核兼容层接在军师层之后；它只能调整 `ZoneDirective`、写 `GeneralDecisionRecord` 和追加事件日志。
 - 武将道路和交战影响当前只通过 `GeneralInfluence` 参与 `MovementRules` / `CombatRules` 计算；不得由 Agent 或 UI 直接改单位位置、兵力或控制权。
-- 君主层、外交层、太守层、军师层和武将层都不能直接修改地图、军队、资源、动态战区或部署归属；外交关系只能经 `Command.proposeDiplomacy -> RuleEngine` 修改，战争行动仍不能绕过 `WarCommandExecutor -> RuleEngine`。
+- 君主层、外交层、太守层、军师层和武将层都不能直接修改地图、军队、资源、生产队列、动态战区或部署归属；外交关系只能经 `Command.proposeDiplomacy -> RuleEngine` 修改，生产队列只能经 `Command.queueProduction -> RuleEngine` 修改，战争行动仍不能绕过 `WarCommandExecutor -> RuleEngine`。
 - `AttackIntensity.infiltration` 已在 `WarCommandExecutor` 中解释为默认低投入上限；`.limitedCounter` 和 `.allOut` 仍主要依赖 tactic profile 与显式 `maxCommittedUnits`。
 - `TacticConditionChecker` 当前总是允许现有战术。
 - 战区互助接口 `requestSupport` / `getAvailableForces` / `notifyThreat` 有模型但没有主流程调用方。
