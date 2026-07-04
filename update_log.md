@@ -1288,6 +1288,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `DataLoader.loadInitialGameState()` 默认先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到旧阿登兼容 JSON。
 - `MapEditorGameResourceBridge` 默认读写 `guandu_200_scenario` + `guandu_200_regions`，让编辑器默认地图和游戏默认入口保持一致。
 - `WWIIHexV0.xcodeproj/project.pbxproj` 将两个官渡 JSON 加入 iOS/macOS 主资源。
+- `WarCommandExecutor.defensiveDestination()` 拆开候选 hex 链式表达式，修复云端 Xcode 16.4 对复杂表达式 type-check 超时的问题，不改变防守目的地排序语义。
 - 文档状态更新为 v2.2 官渡默认剧本预览，并记录旧阿登数据保留为 fallback / 历史回归参考。
 
 关键系统：
@@ -1296,6 +1297,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `WWIIHexV0/Data/guandu_200_scenario.json`
 - `WWIIHexV0/Data/guandu_200_regions.json`
 - `MapEditor/MapEditorGameResourceBridge.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
 - `WWIIHexV0.xcodeproj/project.pbxproj`
 - `AGENTS.md`
 - `README.md`
