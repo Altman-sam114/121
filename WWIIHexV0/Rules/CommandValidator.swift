@@ -71,7 +71,7 @@ struct CommandValidator {
             return .invalid(.targetNotFound)
         }
 
-        guard target.faction != attacker.faction else {
+        guard target.faction.isHostile(to: attacker.faction) else {
             return .invalid(.invalidTargetFaction)
         }
 

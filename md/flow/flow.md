@@ -57,6 +57,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `GeneralAssignment` 现在保存武将风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
+- 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `recommendedProductionKind` 转换为 `Command.queueProduction`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 校验资源并排入生产队列。
@@ -75,6 +76,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `RegionDataSet` 中 owner/controller 缺省或 null 会映射为 `.neutral`，不会再 fallback 给 `.allies`。
 - Theater / FrontLine / WarDeployment / Region visibility 这类派生层使用 `Faction.scenarioCases` 识别地图上的三国势力；`Faction.allCases` 当前只保留旧二元回合兼容含义。
 - 规则/AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`；`Faction.opponent` 只作为旧兼容 helper，不应作为新代码敌我关系来源。
+- `MovementRules.isEnemyZoneOfControl`、`CommandValidator.validateAttack`、`SupplyRules.canSupplyPass` 和 `EconomyRules` 的安全补员邻接判断当前都已经接入 `Faction.isHostile(to:)`；完整借道/同盟通行仍待后续外交制度。
 - `DiplomacyState.initial` 能为三国势力生成基础 country / bloc profile；默认关系当前只把曹袁设为 `atWar`，汉室/中立和其他势力默认 `neutral`。
 - 玩家、AI、后续聊天命令最终都必须经过 `Command` / `ZoneDirective -> WarCommandExecutor -> RuleEngine`，不能直接改 `GameState`。
 - v0.5 默认战争 AI 上游是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行收口到 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
@@ -459,6 +461,7 @@ MarshalAgent / TheaterCommanderPool
 - 读取 `commandStyleRawValue`、`skills`、忠诚和满意度快照，不依赖 UI 或外部 registry。
 - `MovementRules.effectiveMovementLimit` 会在单位使用道路网络且武将状态可靠时提供 1-2 点道路机动加成。
 - `CombatRules.effectiveAttack` 和 `effectiveDefense` 会按武将技能、风格质量、地形、道路/攻城场景给小幅攻防修正。
+- 道路 ZOC、攻击目标、粮道通行和安全补员邻接统一按 `Faction.isHostile(to:)` 判断敌对；中立势力不会只因 `faction != activeFaction` 阻断道路、粮道或被合法攻击。
 - 这些修正只改变规则计算，不直接执行移动、攻击或状态写入。
 
 上游 Agent 边界：

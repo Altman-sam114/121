@@ -1882,6 +1882,48 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只执行太守推荐生产，不实现真实修路、屯田、治安、民心、郡县状态变化或完整内政 directive schema。
 - 太守推荐依赖现有资源账本和生产队列；运行时经济行为正确性仍等待云端 CI 和后续 Agent C artifact 复判。
 
+## v2.4 - 道路与交战敌对边界兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `MovementRules.isEnemyZoneOfControl` 改为使用 `Faction.isHostile(to:)` 判断敌控区，并忽略已毁灭军队。
+- `CommandValidator.validateAttack` 改为只允许攻击敌对势力军队，避免中立/汉室仅因阵营不同被视为合法攻击目标。
+- `SupplyRules.canSupplyPass` 的军队阻断改为只看敌对军队，粮道不会被非敌对单位误断。
+- `EconomyRules` 的安全补员邻接判断改为只看敌对军队，避免非敌对邻接误阻止后方补员。
+- 文档补充道路 ZOC、攻击目标、粮道阻断和安全补员邻接都按 `Faction.isHostile(to:)` 收口。
+
+关键系统：
+
+- `WWIIHexV0/Rules/MovementRules.swift`
+- `WWIIHexV0/Rules/CommandValidator.swift`
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_hostile_road_combat_boundary.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 当前 `Faction.isHostile(to:)` 仍是“不同且双方非中立即敌对”的最小兼容规则，尚未接入完整 `DiplomacyState` 借道/同盟通行。
+- `origin/main` 推送仍受 GitHub 443 网络连接失败影响，云端 CI 暂未触发；本地已有上一笔未推送提交。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
