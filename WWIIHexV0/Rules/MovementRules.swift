@@ -20,6 +20,10 @@ struct MovementRules {
         generalInfluence.effectiveMovementLimit(for: division, in: state)
     }
 
+    func generalInfluenceSummary(for division: Division, in state: GameState) -> GeneralMovementInfluenceSummary {
+        generalInfluence.movementSummary(for: division, in: state)
+    }
+
     func movementRange(for division: Division, in state: GameState) -> Set<HexCoord> {
         Set(shortestPaths(from: division, in: state).keys.filter { state.division(at: $0) == nil })
     }

@@ -35,18 +35,64 @@ struct GeneralCombatInfluenceSummary: Equatable {
     }
 }
 
+struct GeneralMovementInfluenceSummary: Equatable {
+    let generalId: String?
+    let generalName: String?
+    let baseMovement: Int
+    let effectiveMovement: Int
+    let roadBonus: Int
+
+    var logFragment: String? {
+        guard roadBonus != 0 else {
+            return nil
+        }
+        return "general road mobility \(displayName) movement \(signed(roadBonus)) (limit \(baseMovement)->\(effectiveMovement))"
+    }
+
+    private var displayName: String {
+        generalName ?? generalId ?? "general"
+    }
+
+    private func signed(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : "\(value)"
+    }
+}
+
 struct GeneralInfluence {
     func effectiveMovementLimit(for division: Division, in state: GameState) -> Int {
         division.movement + roadMobilityBonus(for: division, in: state)
     }
 
     func roadMobilityBonus(for division: Division, in state: GameState) -> Int {
-        guard let assignment = assignment(for: division, in: state),
-              usesRoadNetwork(division: division, assignment: assignment, in: state),
+        guard let assignment = assignment(for: division, in: state) else {
+            return 0
+        }
+        return roadMobilityBonus(for: division, assignment: assignment, in: state)
+    }
+
+    func movementSummary(for division: Division, in state: GameState) -> GeneralMovementInfluenceSummary {
+        let assignment = assignment(for: division, in: state)
+        let roadBonus = assignment.map {
+            roadMobilityBonus(for: division, assignment: $0, in: state)
+        } ?? 0
+        return GeneralMovementInfluenceSummary(
+            generalId: assignment?.generalId,
+            generalName: assignment?.generalDisplayName,
+            baseMovement: division.movement,
+            effectiveMovement: division.movement + roadBonus,
+            roadBonus: roadBonus
+        )
+    }
+
+    private func roadMobilityBonus(
+        for division: Division,
+        assignment: GeneralAssignment,
+        in state: GameState
+    ) -> Int {
+        guard usesRoadNetwork(division: division, assignment: assignment, in: state),
               commandQuality(assignment) >= 45 else {
             return 0
         }
-
         var bonus = 1
         if hasAnySkill(["logistics", "rapid_exploitation", "armor_expert", "cavalry_charge"], in: assignment) {
             bonus += 1

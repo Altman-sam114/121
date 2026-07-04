@@ -43,8 +43,10 @@ struct CommandExecutor {
             return
         }
 
+        let movingDivision = state.divisions[index]
         let origin = state.divisions[index].coord
         let sourceZoneId = state.warDeploymentState.zoneId(for: origin, map: state.map)
+        let generalInfluence = movementRules.generalInfluenceSummary(for: movingDivision, in: state)
         if let direction = directionForMove(from: origin, to: destination, division: state.divisions[index], in: state) {
             state.divisions[index].facing = direction
         }
@@ -71,7 +73,13 @@ struct CommandExecutor {
             )
         }
 
-        state.appendEvent("\(state.divisions[index].name) moved to \(destination.q),\(destination.r).")
+        state.appendEvent(
+            movementLog(
+                divisionName: state.divisions[index].name,
+                destination: destination,
+                generalInfluence: generalInfluence
+            )
+        )
     }
 
     private func executeAttack(attackerId: String, targetId: String, in state: inout GameState) {
@@ -404,6 +412,22 @@ struct CommandExecutor {
 
         if outcome.wasDestroyed {
             parts.append("\(subjectName) was destroyed")
+        }
+
+        return parts.joined(separator: "; ") + "."
+    }
+
+    private func movementLog(
+        divisionName: String,
+        destination: HexCoord,
+        generalInfluence: GeneralMovementInfluenceSummary
+    ) -> String {
+        var parts = [
+            "\(divisionName) moved to \(destination.q),\(destination.r)"
+        ]
+
+        if let influence = generalInfluence.logFragment {
+            parts.append(influence)
         }
 
         return parts.joined(separator: "; ") + "."
