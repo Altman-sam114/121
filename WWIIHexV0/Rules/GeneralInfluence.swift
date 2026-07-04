@@ -1,5 +1,30 @@
 import Foundation
 
+struct GeneralCombatInfluenceSummary: Equatable {
+    let attackerGeneralId: String?
+    let defenderGeneralId: String?
+    let attackBonus: Int
+    let defenseBonus: Int
+
+    var logFragment: String? {
+        var parts: [String] = []
+        if attackBonus != 0 {
+            parts.append("\(attackerGeneralId ?? "attacker") attack \(signed(attackBonus))")
+        }
+        if defenseBonus != 0 {
+            parts.append("\(defenderGeneralId ?? "defender") defense \(signed(defenseBonus))")
+        }
+        guard !parts.isEmpty else {
+            return nil
+        }
+        return "general influence \(parts.joined(separator: ", "))"
+    }
+
+    private func signed(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : "\(value)"
+    }
+}
+
 struct GeneralInfluence {
     func effectiveMovementLimit(for division: Division, in state: GameState) -> Int {
         division.movement + roadMobilityBonus(for: division, in: state)
@@ -62,6 +87,17 @@ struct GeneralInfluence {
             bonus += 1
         }
         return clamp(bonus, min: -1, max: 2)
+    }
+
+    func combatSummary(attacker: Division, defender: Division, in state: GameState) -> GeneralCombatInfluenceSummary {
+        let attackerAssignment = assignment(for: attacker, in: state)
+        let defenderAssignment = assignment(for: defender, in: state)
+        return GeneralCombatInfluenceSummary(
+            attackerGeneralId: attackerAssignment?.generalId,
+            defenderGeneralId: defenderAssignment?.generalId,
+            attackBonus: attackBonus(attacker: attacker, defender: defender, in: state),
+            defenseBonus: defenseBonus(defender: defender, attackedBy: attacker, in: state)
+        )
     }
 
     private func assignment(for division: Division, in state: GameState) -> GeneralAssignment? {

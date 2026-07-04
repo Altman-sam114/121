@@ -1924,6 +1924,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 当前 `Faction.isHostile(to:)` 仍是“不同且双方非中立即敌对”的最小兼容规则，尚未接入完整 `DiplomacyState` 借道/同盟通行。
 - `origin/main` 推送仍受 GitHub 443 网络连接失败影响，云端 CI 暂未触发；本地已有上一笔未推送提交。
 
+## v2.4 - 武将交战日志审计兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `GeneralCombatInfluenceSummary`，用同一套 `GeneralInfluence.attackBonus` / `defenseBonus` 生成只读交战审计摘要。
+- `CombatRules` 暴露 `generalInfluenceSummary(attacker:defender:in:)`，供执行层读取武将攻防修正。
+- `CommandExecutor` 在攻击和反击日志中追加武将修正片段，只有攻防修正非 0 时输出，避免噪声。
+- 文档补充：武将交战影响不仅改变规则计算，也会进入事件日志，便于 UI、人工和 Agent C 复判。
+
+关键系统：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_combat_log_audit.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 日志当前使用武将 id，而不是本地化姓名；后续若需要玩家级战报可接入 `GeneralRegistry` 或 UI 层名称映射。
+- 本轮只做交战日志审计，不实现完整战报面板、技能树、单挑或士气。
+- `origin/main` 推送仍受 GitHub 443 网络连接失败影响，云端 CI 暂未触发；本地已有两个未推送提交。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

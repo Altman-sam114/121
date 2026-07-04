@@ -83,6 +83,7 @@ struct CommandExecutor {
         let attacker = state.divisions[attackerIndex]
         let defender = state.divisions[targetIndex]
         let damage = combatRules.attackDamage(attacker: attacker, defender: defender, in: state)
+        let generalInfluence = combatRules.generalInfluenceSummary(attacker: attacker, defender: defender, in: state)
         let attackerFacing = attacker.coord.direction(to: defender.coord) ?? attacker.facing
 
         state.divisions[attackerIndex].hasActed = true
@@ -95,7 +96,8 @@ struct CommandExecutor {
                 prefix: "\(attacker.name) attacked \(defender.name)",
                 subjectName: defender.name,
                 damage: damage,
-                outcome: attackOutcome
+                outcome: attackOutcome,
+                generalInfluence: generalInfluence
             )
         )
 
@@ -115,6 +117,11 @@ struct CommandExecutor {
         if !attackOutcome.shouldRetreat,
            combatRules.canCounterAttack(defender: updatedDefender, attacker: updatedAttacker) {
             let counterDamage = combatRules.counterAttackDamage(defender: updatedDefender, attacker: updatedAttacker, in: state)
+            let counterGeneralInfluence = combatRules.generalInfluenceSummary(
+                attacker: updatedDefender,
+                defender: updatedAttacker,
+                in: state
+            )
             applyCombatDamage(counterDamage, to: attackerId, in: &state)
 
             let counterOutcome = resolveCombatResult(for: updatedAttacker, damage: counterDamage, in: &state)
@@ -123,7 +130,8 @@ struct CommandExecutor {
                     prefix: "\(updatedDefender.name) counterattacked \(updatedAttacker.name)",
                     subjectName: updatedAttacker.name,
                     damage: counterDamage,
-                    outcome: counterOutcome
+                    outcome: counterOutcome,
+                    generalInfluence: counterGeneralInfluence
                 )
             )
 
@@ -375,11 +383,16 @@ struct CommandExecutor {
         prefix: String,
         subjectName: String,
         damage: CombatDamage,
-        outcome: CombatResultSummary
+        outcome: CombatResultSummary,
+        generalInfluence: GeneralCombatInfluenceSummary
     ) -> String {
         var parts = [
             "\(prefix): strength -\(damage.strengthDamage)"
         ]
+
+        if let influence = generalInfluence.logFragment {
+            parts.append(influence)
+        }
 
         if outcome.shouldRetreat {
             parts.append("\(subjectName) triggered automatic retreat")

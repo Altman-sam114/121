@@ -113,6 +113,14 @@ struct CombatRules {
         )
     }
 
+    func generalInfluenceSummary(
+        attacker: Division,
+        defender: Division,
+        in state: GameState
+    ) -> GeneralCombatInfluenceSummary {
+        generalInfluence.combatSummary(attacker: attacker, defender: defender, in: state)
+    }
+
     func hasRiverBetween(_ a: HexCoord, _ b: HexCoord, in state: GameState) -> Bool {
         guard a.distance(to: b) == 1,
               let direction = a.direction(to: b),
