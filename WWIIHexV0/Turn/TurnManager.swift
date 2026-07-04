@@ -245,7 +245,8 @@ struct TurnManager {
                     + diplomatAdjustment.diagnostics
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
-                    + generalAdjustment.diagnostics
+                    + generalAdjustment.diagnostics,
+                preCommandResults: diplomatAdjustment.commandResults
             )
         } catch {
             return AgentTurnOutcome(
@@ -333,7 +334,8 @@ struct TurnManager {
                     + diplomatAdjustment.diagnostics
                     + governorAdjustment.diagnostics
                     + strategistAdjustment.diagnostics
-                    + generalAdjustment.diagnostics
+                    + generalAdjustment.diagnostics,
+                preCommandResults: diplomatAdjustment.commandResults
             )
         } catch {
             return AgentTurnOutcome(
@@ -418,7 +420,13 @@ struct TurnManager {
         state: GameState,
         faction: Faction,
         rulerRecord: RulerDecisionRecord?
-    ) -> (state: GameState, envelope: DirectiveEnvelope, record: DiplomatDecisionRecord, diagnostics: [String]) {
+    ) -> (
+        state: GameState,
+        envelope: DirectiveEnvelope,
+        record: DiplomatDecisionRecord,
+        commandResults: [CommandResultSummary],
+        diagnostics: [String]
+    ) {
         let diplomat = diplomatAgent ?? DiplomatAgent.automatic(for: faction, in: state)
         let adjustment = diplomat.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
@@ -429,13 +437,43 @@ struct TurnManager {
             relatedRecordId: adjustment.record.id
         )
         let target = adjustment.record.targetCountryId?.rawValue ?? "无对象"
+        var commandResults: [CommandResultSummary] = []
+        var diagnostics = [
+            "外交官 \(adjustment.record.diplomatAgentId) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
+        ]
+        if let command = diplomacyCommand(for: adjustment.record) {
+            let result = commandHandler.execute(command, in: nextState)
+            nextState = result.state
+            commandResults.append(.diplomatCommand(record: adjustment.record, result: result))
+            if result.succeeded {
+                diagnostics.append("外交提案已经规则层执行：\(command.displayName)。")
+            } else {
+                let reasons = result.validation.errors.map(\.rawValue).joined(separator: ", ")
+                diagnostics.append("外交提案被规则层拒绝：\(reasons)。")
+            }
+        } else {
+            diagnostics.append("外交提案缺少源国家或目标国家，未生成外交命令。")
+        }
+
         return (
             state: nextState,
             envelope: adjustment.envelope,
             record: adjustment.record,
-            diagnostics: [
-                "外交官 \(adjustment.record.diplomatAgentId) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
-            ]
+            commandResults: commandResults,
+            diagnostics: diagnostics
+        )
+    }
+
+    private func diplomacyCommand(for record: DiplomatDecisionRecord) -> Command? {
+        guard let sourceCountryId = record.sourceCountryId,
+              let targetCountryId = record.targetCountryId else {
+            return nil
+        }
+
+        return .proposeDiplomacy(
+            sourceCountryId: sourceCountryId,
+            targetCountryId: targetCountryId,
+            proposal: record.proposal
         )
     }
 
@@ -502,10 +540,11 @@ struct TurnManager {
         rawJSON: String,
         parsedIntent: String,
         providerSuffix: String,
-        additionalDiagnostics: [String]
+        additionalDiagnostics: [String],
+        preCommandResults: [CommandResultSummary] = []
     ) -> AgentTurnOutcome {
         var nextState = state
-        var commandResults: [CommandResultSummary] = []
+        var commandResults: [CommandResultSummary] = preCommandResults
         var directiveRecords: [WarDirectiveRecord] = []
         var errors = additionalDiagnostics
         if envelope.directives.isEmpty {

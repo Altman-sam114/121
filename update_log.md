@@ -1790,6 +1790,56 @@ guerrillaWarfare 额外参考 infrastructure
 - 外交建议只进入 `DirectiveEnvelope.theaterContext`、AI raw JSON、外交日志和 UI 审计；后续若要真实生效，必须新增结构化外交 directive、validator 和 executor。
 - 完整多势力 turn order、完整外交系统和发布级 UI 仍待后续版本推进。
 
+## v2.4 - 外交命令执行兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `Command.proposeDiplomacy(sourceCountryId:targetCountryId:proposal:)`，让外交提案和玩家/AI 其它动作一样进入底层命令管线。
+- `CommandValidator.validateDiplomacy` 校验阶段、源国家、目标国家、当前行动势力、既有关系和提案合法性，并新增 `countryNotFound`、`diplomaticRelationNotFound`、`invalidDiplomaticTarget`、`invalidDiplomaticProposal` 等拒绝原因。
+- `DiplomacyState.applyProposal` 以既有 `DiplomaticStatus` 和 tension 做兼容映射：同盟、停战、借道、称臣、讨伐檄文、奉表勤王都能产生最小状态或紧张度变化，但不新增 vassal/truce/rawValue schema。
+- `CommandExecutor.executeDiplomaticProposal` 通过 `DiplomacyState.applyProposal` 修改 `DiplomaticRelation` 并追加 diplomacy 事件日志；外交 Agent、UI 和 MapEditor 仍不得直接改关系。
+- `TurnManager.applyDiplomatPlanning` 将有源国家和目标国家的 `DiplomatDecisionRecord` 转成 `Command.proposeDiplomacy` 经 `commandHandler.execute` 执行，执行结果写入 `AgentDecisionRecord.commandResults`，不混入单条 `WarDirectiveRecord`。
+- `WarCommandExecutor` 和 `CommandResultSummary` 同步识别外交命令，确保新增命令不会破坏战区指令执行和 AI 面板命令结果展示。
+- 文档状态更新为 v2.4 君主/外交/太守/军师/武将指令编排、外交命令、道路和交战兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Commands/Command.swift`
+- `WWIIHexV0/Commands/CommandValidation.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Core/DiplomacyState.swift`
+- `WWIIHexV0/Rules/CommandValidator.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `AGENTS.md`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomatic_command_executor.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+- 未跑 `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`；本轮未修改 Xcode project 文件。
+
+遗留风险：
+
+- 本轮是外交执行兼容层，不实现真实借道通行、贡赋资源转移、臣属体系、完整外交谈判或完整多势力 turn order。
+- 当前战斗敌我判断仍主要来自 `Faction` 兼容层；外交关系变化会影响外交摘要和后续 Agent 语境，但不会自动改变移动/攻击合法性。
+- 真实运行时 AI 回合行为仍等待云端 CI 和后续 Agent C artifact 复判。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

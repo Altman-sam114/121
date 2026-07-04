@@ -7,6 +7,11 @@ enum Command: Codable, Equatable {
     case allowRetreat(divisionId: String)
     case resupply(divisionId: String)
     case queueProduction(kind: ProductionKind)
+    case proposeDiplomacy(
+        sourceCountryId: CountryId,
+        targetCountryId: CountryId,
+        proposal: DiplomaticProposal
+    )
     case endTurn
 
     static func rest(divisionId: String) -> Command {
@@ -31,6 +36,8 @@ enum Command: Codable, Equatable {
             return "补给(\(divisionId))"
         case .queueProduction(let kind):
             return "募兵(\(kind.displayName))"
+        case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
+            return "外交(\(sourceCountryId.rawValue) -> \(targetCountryId.rawValue): \(proposal.displayName))"
         case .endTurn:
             return "结束回合"
         }
@@ -47,6 +54,8 @@ enum Command: Codable, Equatable {
             return attackerId
         case .queueProduction:
             return nil
+        case .proposeDiplomacy:
+            return nil
         case .endTurn:
             return nil
         }
@@ -61,6 +70,7 @@ enum Command: Codable, Equatable {
              .hold,
              .allowRetreat,
              .queueProduction,
+             .proposeDiplomacy,
              .endTurn:
             return false
         }

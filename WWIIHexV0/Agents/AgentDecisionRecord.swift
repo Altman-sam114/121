@@ -86,6 +86,24 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             errors: result.validation.errors.map(\.rawValue)
         )
     }
+
+    static func diplomatCommand(
+        record: DiplomatDecisionRecord,
+        result: CommandResult
+    ) -> CommandResultSummary {
+        CommandResultSummary(
+            id: "diplomat_\(record.id)_command",
+            orderIndex: nil,
+            divisionId: nil,
+            orderType: nil,
+            commandDisplayName: result.command.displayName,
+            mappingSucceeded: true,
+            validationSucceeded: result.validation.isValid,
+            executed: result.succeeded,
+            message: result.message,
+            errors: result.validation.errors.map(\.rawValue)
+        )
+    }
 }
 
 struct AgentDecisionRecord: Identifiable, Codable, Equatable {

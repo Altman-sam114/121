@@ -24,6 +24,13 @@ struct CommandExecutor {
             executeResupply(divisionId: divisionId, in: &nextState)
         case .queueProduction(let kind):
             executeQueueProduction(kind: kind, in: &nextState)
+        case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
+            executeDiplomaticProposal(
+                sourceCountryId: sourceCountryId,
+                targetCountryId: targetCountryId,
+                proposal: proposal,
+                in: &nextState
+            )
         case .endTurn:
             executeEndTurn(in: &nextState)
         }
@@ -157,6 +164,33 @@ struct CommandExecutor {
 
     private func executeQueueProduction(kind: ProductionKind, in state: inout GameState) {
         _ = EconomyRules().queueProduction(kind: kind, faction: state.activeFaction, in: &state)
+    }
+
+    private func executeDiplomaticProposal(
+        sourceCountryId: CountryId,
+        targetCountryId: CountryId,
+        proposal: DiplomaticProposal,
+        in state: inout GameState
+    ) {
+        let sourceName = state.diplomacyState.countries
+            .first { $0.id == sourceCountryId }?
+            .name ?? sourceCountryId.rawValue
+        let targetName = state.diplomacyState.countries
+            .first { $0.id == targetCountryId }?
+            .name ?? targetCountryId.rawValue
+        guard let relation = state.diplomacyState.applyProposal(
+            proposal,
+            sourceCountryId: sourceCountryId,
+            targetCountryId: targetCountryId,
+            turn: state.turn
+        ) else {
+            return
+        }
+
+        state.appendEvent(
+            "\(sourceName) 对 \(targetName) 执行外交：\(proposal.displayName)，关系 \(relation.status.displayName)，紧张度 \(relation.tension)。",
+            category: .diplomacy
+        )
     }
 
     private func executeEndTurn(in state: inout GameState) {

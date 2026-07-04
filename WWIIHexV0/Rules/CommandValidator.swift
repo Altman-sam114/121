@@ -17,6 +17,13 @@ struct CommandValidator {
             return validateRecoveryCommand(divisionId: divisionId, in: state)
         case .queueProduction(let kind):
             return validateProduction(kind: kind, in: state)
+        case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
+            return validateDiplomacy(
+                sourceCountryId: sourceCountryId,
+                targetCountryId: targetCountryId,
+                proposal: proposal,
+                in: state
+            )
         case .endTurn:
             return validateEndTurn(in: state)
         }
@@ -133,6 +140,75 @@ struct CommandValidator {
         }
 
         return .valid
+    }
+
+    private func validateDiplomacy(
+        sourceCountryId: CountryId,
+        targetCountryId: CountryId,
+        proposal: DiplomaticProposal,
+        in state: GameState
+    ) -> CommandValidation {
+        guard phaseAllowsCommands(in: state) else {
+            return .invalid(.wrongPhase)
+        }
+
+        guard sourceCountryId != targetCountryId else {
+            return .invalid(.invalidDiplomaticTarget)
+        }
+
+        guard let sourceCountry = state.diplomacyState.countries.first(where: { $0.id == sourceCountryId }),
+              let targetCountry = state.diplomacyState.countries.first(where: { $0.id == targetCountryId }) else {
+            return .invalid(.countryNotFound)
+        }
+
+        guard sourceCountry.faction == state.activeFaction else {
+            return .invalid(.wrongFaction)
+        }
+
+        guard sourceCountry.faction != targetCountry.faction else {
+            return .invalid(.invalidDiplomaticTarget)
+        }
+
+        guard let relation = state.diplomacyState.relation(between: sourceCountryId, and: targetCountryId) else {
+            return .invalid(.diplomaticRelationNotFound)
+        }
+
+        guard isDiplomaticProposal(
+            proposal,
+            legalFor: relation,
+            sourceCountry: sourceCountry,
+            targetCountry: targetCountry
+        ) else {
+            return .invalid(.invalidDiplomaticProposal)
+        }
+
+        return .valid
+    }
+
+    private func isDiplomaticProposal(
+        _ proposal: DiplomaticProposal,
+        legalFor relation: DiplomaticRelation,
+        sourceCountry: CountryProfile,
+        targetCountry: CountryProfile
+    ) -> Bool {
+        switch proposal {
+        case .alliance:
+            return relation.status == .neutral || relation.status == .coBelligerent
+        case .truce:
+            return relation.status == .hostile || relation.status == .atWar
+        case .borrowPassage:
+            return relation.status == .neutral ||
+                relation.status == .coBelligerent ||
+                relation.status == .allied
+        case .vassalage:
+            return relation.status == .neutral || relation.status == .hostile
+        case .warAppeal:
+            return relation.status == .neutral ||
+                relation.status == .hostile ||
+                relation.status == .atWar
+        case .tribute:
+            return sourceCountry.faction == .han || targetCountry.faction == .han
+        }
     }
 
     private func phaseAllowsCommands(in state: GameState) -> Bool {

@@ -332,6 +332,72 @@ struct DiplomacyState: Codable, Equatable {
         return relations.first { $0.id == key }
     }
 
+    @discardableResult
+    mutating func applyProposal(
+        _ proposal: DiplomaticProposal,
+        sourceCountryId: CountryId,
+        targetCountryId: CountryId,
+        turn: Int
+    ) -> DiplomaticRelation? {
+        let key = DiplomaticRelation(
+            firstCountryId: sourceCountryId,
+            secondCountryId: targetCountryId,
+            status: .neutral
+        ).id
+        guard let index = relations.firstIndex(where: { $0.id == key }) else {
+            return nil
+        }
+
+        var relation = relations[index]
+        let previousStatus = relation.status
+        switch proposal {
+        case .alliance:
+            if relation.status == .neutral {
+                relation.status = .coBelligerent
+                relation.tension = min(relation.tension, 25)
+            } else if relation.status == .coBelligerent {
+                relation.status = .allied
+                relation.tension = min(relation.tension, 15)
+            } else {
+                relation.tension = min(relation.tension, 10)
+            }
+        case .truce:
+            relation.status = .neutral
+            relation.tension = min(relation.tension, 35)
+        case .borrowPassage:
+            relation.tension = max(0, relation.tension - 10)
+        case .vassalage:
+            if relation.status == .hostile {
+                relation.status = .neutral
+            }
+            relation.tension = min(relation.tension, 30)
+        case .warAppeal:
+            if relation.status == .neutral {
+                relation.status = .hostile
+            }
+            relation.tension = max(relation.tension, relation.status == .atWar ? 100 : 85)
+        case .tribute:
+            if relation.status == .hostile || relation.status == .atWar {
+                relation.status = .neutral
+                relation.tension = min(relation.tension, 35)
+            } else if relation.status == .neutral {
+                relation.status = .coBelligerent
+                relation.tension = min(relation.tension, 20)
+            } else {
+                relation.tension = min(relation.tension, 20)
+            }
+        }
+
+        if relation.status != previousStatus {
+            relation.sinceTurn = max(1, turn)
+        }
+
+        relations[index] = relation
+        relations.sort { $0.id < $1.id }
+        lastUpdatedTurn = turn
+        return relation
+    }
+
     func hostileCountryIds(to faction: Faction) -> [CountryId] {
         let ownCountryIds = Set(countries(for: faction).map(\.id))
         var hostileCountryIds: Set<CountryId> = []
