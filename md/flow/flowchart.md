@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.3 三国围城和粮草规则兼容层）
+# 三国棋策 Agent Mermaid 核心流程图（v2.3 三国兵种克制规则兼容层）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.3 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化和围城/粮草最小规则，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.3 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则和兵种克制最小规则，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,7 +12,7 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.3 接入官渡默认剧本、三国兵种模板、战术显示和围城/粮草最小规则
+  -> v2.3 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草和兵种克制最小规则
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
@@ -32,6 +32,7 @@ v2.3 命名边界：
 - `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
+- `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。
 

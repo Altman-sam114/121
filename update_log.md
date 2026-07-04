@@ -1457,6 +1457,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只完成围城/粮草最小规则，不新增士气、疲劳、独立粮仓库存、多回合围城进度、兵种克制和多势力 turn order。
 - city region 围城判定当前是 v2.3 简化：同一城池 region 内断粮且敌邻的守军会被视作围城；后续若需要可收紧到具体 city / fortress hex。
 
+## v2.3 - 兵种克制最小规则
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `Division.isSiegeCapable`，把旧 `artillery` 和三国 `siegeEngine` 统一视为攻城能力单位。
+- `Division.isArtillery` 保留为兼容名并转接到 `isSiegeCapable`，避免影响旧 AI、UI、经济补员和 fallback 数据。
+- `CombatRules.effectiveAttack` 对攻城能力单位攻击 city / fortress terrain、`cityName` 或 `fortressName` hex 时增加攻坚修正。
+- v2.3 兵种克制当前形成最小闭环：骑兵/旧装甲攻平原有加成、进困难地形有移动和攻击惩罚；弓弩/器械 range 来自 component stats；攻城器械/旧炮兵对城池和关隘有效。
+- 文档状态更新为 v2.3 三国兵种、战术审计显示、围城、粮草和兵种克制规则兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Core/Division.swift`
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `md/prompt/v2.0-三国迁移/v2.3_unit_counter_rules.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 文档和改动 Swift 文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成兵种克制最小规则，不新增完整克制矩阵、水战、士气、疲劳、武将技能和多势力 turn order。
+- 旧 `artillery` fallback 也获得攻城加成；后续若要区分野战火力和攻城器械，需要新增更细 component 或模板字段。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

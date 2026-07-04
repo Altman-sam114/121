@@ -70,6 +70,9 @@ struct CombatRules {
         if attacker.isArmor && defenderTile.baseTerrain.armorSlowdownCost > 0 {
             multiplier -= 0.1
         }
+        if attacker.isSiegeCapable && isCityOrFortress(defenderTile) {
+            multiplier += 0.25
+        }
 
         return max(1, Int((Double(attacker.attack) * multiplier).rounded()))
     }
@@ -119,6 +122,13 @@ struct CombatRules {
 
     private func clamp(_ value: Int, min minValue: Int, max maxValue: Int) -> Int {
         Swift.max(minValue, Swift.min(maxValue, value))
+    }
+
+    private func isCityOrFortress(_ tile: HexTile) -> Bool {
+        tile.baseTerrain == .city ||
+            tile.baseTerrain == .fortress ||
+            tile.cityName != nil ||
+            tile.fortressName != nil
     }
 
     private func lossRatio(strengthDamage: Int, defender: Division) -> Double {

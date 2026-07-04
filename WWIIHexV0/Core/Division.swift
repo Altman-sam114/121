@@ -390,6 +390,10 @@ struct Division: Identifiable, Codable, Equatable {
     }
 
     var isArtillery: Bool {
+        isSiegeCapable
+    }
+
+    var isSiegeCapable: Bool {
         components.contains {
             ($0.type == .artillery || $0.type == .siegeEngine)
                 && $0.weight >= 0.50

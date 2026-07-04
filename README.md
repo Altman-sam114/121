@@ -1,6 +1,6 @@
 # 三国棋策 Agent — iOS / macOS AI Agent 战棋迁移版
 
-> **当前状态：v2.3 三国兵种、战术审计显示、围城和粮草规则兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
+> **当前状态：v2.3 三国兵种、战术审计显示、围城、粮草和兵种克制规则兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
 
 ---
 
@@ -13,7 +13,7 @@
 - Hex 仍是移动、攻击、占领、视野、补给落点的战术权威。
 - Region 显示为郡县/州，是人口、钱粮、军械、城池和胜利点的战略聚合层。
 - Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
-- 当前阶段只做官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化和围城/粮草最小规则；完整多势力 turn order、完整官渡大地图、正式君主/军师/武将 Agent 将按 v2.4+ 分阶段推进。
+- 当前阶段只做官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则；完整多势力 turn order、完整官渡大地图、正式君主/军师/武将 Agent 将按 v2.4+ 分阶段推进。
 
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、军师、太守、武将等 Agent。
