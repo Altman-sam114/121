@@ -75,49 +75,49 @@ struct GameState: Codable, Equatable {
             divisions: [
                 .panzer(
                     id: "ger_panzer_1",
-                    name: "1st Panzer Division",
+                    name: "曹军骑兵军 1",
                     faction: .germany,
                     coord: HexCoord(q: 9, r: 3)
                 ),
                 .motorized(
                     id: "ger_motorized_1",
-                    name: "2nd Motorized Division",
+                    name: "曹军轻骑营 1",
                     faction: .germany,
                     coord: HexCoord(q: 9, r: 4)
                 ),
                 .infantry(
                     id: "ger_infantry_1",
-                    name: "26th Infantry Division",
+                    name: "曹军步卒营 1",
                     faction: .germany,
                     coord: HexCoord(q: 10, r: 5)
                 ),
                 .artillery(
                     id: "ger_artillery_1",
-                    name: "7th Artillery Division",
+                    name: "曹军器械营 1",
                     faction: .germany,
                     coord: HexCoord(q: 10, r: 3)
                 ),
                 .infantry(
                     id: "all_infantry_1",
-                    name: "101st Infantry Division",
+                    name: "袁军步卒营 1",
                     faction: .allies,
                     coord: HexCoord(q: 4, r: 5)
                 ),
                 .infantry(
                     id: "all_anti_tank_1",
-                    name: "9th Anti-Tank Battalion",
+                    name: "袁军精锐营 1",
                     faction: .allies,
                     coord: HexCoord(q: 5, r: 5)
                 ),
                 .artillery(
                     id: "all_artillery_1",
-                    name: "4th Allied Artillery Group",
+                    name: "袁军器械营 1",
                     faction: .allies,
                     coord: HexCoord(q: 3, r: 5)
                 ),
                 .infantry(
                     id: "all_garrison_1",
-                    name: "Bastogne Garrison",
+                    name: "袁军守备营 1",
                     faction: .allies,
                     coord: HexCoord(q: 5, r: 6)
                 )
@@ -129,7 +129,7 @@ struct GameState: Codable, Equatable {
                     turn: 1,
                     faction: .germany,
                     phase: .germanAI,
-                    message: "Ardennes V0 scenario initialized."
+                    message: "三国迁移预览场景已初始化。"
                 )
             ]
         )

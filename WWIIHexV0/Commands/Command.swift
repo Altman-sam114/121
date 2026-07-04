@@ -20,19 +20,19 @@ enum Command: Codable, Equatable {
     var displayName: String {
         switch self {
         case .move(let divisionId, let destination):
-            return "Move(\(divisionId) -> \(destination.q),\(destination.r))"
+            return "进军(\(divisionId) -> \(destination.q),\(destination.r))"
         case .attack(let attackerId, let targetId):
-            return "Attack(\(attackerId) -> \(targetId))"
+            return "攻击(\(attackerId) -> \(targetId))"
         case .hold(let divisionId):
-            return "Hold(\(divisionId))"
+            return "固守(\(divisionId))"
         case .allowRetreat(let divisionId):
-            return "AllowRetreat(\(divisionId))"
+            return "准许撤退(\(divisionId))"
         case .resupply(let divisionId):
-            return "Resupply(\(divisionId))"
+            return "补给(\(divisionId))"
         case .queueProduction(let kind):
-            return "QueueProduction(\(kind.displayName))"
+            return "募兵(\(kind.displayName))"
         case .endTurn:
-            return "End Turn"
+            return "结束回合"
         }
     }
 

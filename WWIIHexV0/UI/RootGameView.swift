@@ -25,7 +25,7 @@ struct RootGameView: View {
                     .padding(.top, 8)
                     .padding(.horizontal, 8)
 
-                    Picker("Map Layer", selection: Binding(
+                    Picker("地图图层", selection: Binding(
                         get: { container.mapDisplayLayer },
                         set: { container.setMapDisplayLayer($0) }
                     )) {
@@ -38,7 +38,7 @@ struct RootGameView: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 8)
 
-                    Toggle("Observer", isOn: Binding(
+                    Toggle("观察", isOn: Binding(
                         get: { container.observerModeEnabled },
                         set: { container.setObserverModeEnabled($0) }
                     ))
@@ -83,7 +83,7 @@ struct RootGameView: View {
                     onClose: { isGeneralProfilePresented = false }
                 )
             } else {
-                Text("No general selected.")
+                Text("未选择武将。")
                     .font(.headline)
                     .padding()
             }
@@ -95,7 +95,7 @@ struct RootGameView: View {
             renderState: BoardSceneAdapter.renderState(from: container),
             onHexTapped: container.handleBoardTap
         )
-        .accessibilityLabel("Ardennes V0 hex board")
+        .accessibilityLabel("三国 hex 战场")
     }
 
     private func infoOverlay(isLandscape: Bool, size: CGSize) -> some View {
@@ -121,7 +121,7 @@ struct RootGameView: View {
 
     private var compactPanelWithTabs: some View {
         VStack(spacing: 0) {
-            Picker("Panel", selection: $selectedCompactPanel) {
+            Picker("面板", selection: $selectedCompactPanel) {
                 ForEach(CompactInfoPanel.allCases) { panel in
                     Text(panel.rawValue).tag(panel)
                 }
@@ -219,12 +219,12 @@ struct RootGameView: View {
 }
 
 private enum CompactInfoPanel: String, CaseIterable, Identifiable {
-    case unit = "Unit"
-    case region = "Region"
-    case general = "General"
-    case log = "Log"
-    case economy = "Economy"
-    case diplomacy = "Diplomacy"
+    case unit = "军队"
+    case region = "郡县"
+    case general = "武将"
+    case log = "战报"
+    case economy = "钱粮"
+    case diplomacy = "外交"
     case agent = "AI"
 
     var id: String {

@@ -77,17 +77,17 @@ enum BaseTerrain: String, Codable, Equatable, CaseIterable {
     var displayName: String {
         switch self {
         case .plain:
-            return "Plain"
+            return "平原"
         case .forest:
-            return "Forest"
+            return "林地"
         case .mountain:
-            return "Mountain"
+            return "山地"
         case .hill:
-            return "Hill"
+            return "丘陵"
         case .city:
-            return "City"
+            return "城池"
         case .fortress:
-            return "Fortress"
+            return "关隘"
         }
     }
 }

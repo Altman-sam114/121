@@ -14,7 +14,7 @@ struct HUDView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Ardennes V0")
+                Text(SanguoDisplayLexicon.gameTitle)
                     .font(.headline)
 
                 Spacer()
@@ -24,7 +24,7 @@ struct HUDView: View {
                 }
 
                 Button(action: onEndTurn) {
-                    Label("End Turn", systemImage: "forward.end")
+                    Label("结束回合", systemImage: "forward.end")
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
@@ -34,23 +34,23 @@ struct HUDView: View {
 
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 8) {
                 GridRow {
-                    metric("Turn", "\(gameState.turn) / \(gameState.maxTurns)")
-                    metric("Faction", gameState.activeFaction.displayName)
+                    metric("回合", "\(gameState.turn) / \(gameState.maxTurns)")
+                    metric("势力", gameState.activeFaction.displayName)
                 }
 
                 GridRow {
-                    metric("Phase", gameState.phase.displayName)
-                    metric("Victory", victoryText)
+                    metric("阶段", gameState.phase.displayName)
+                    metric("胜负", victoryText)
                 }
 
                 GridRow {
-                    metric("Manpower", "\(activeLedger.stockpile.manpower)")
-                    metric("Industry", "\(activeLedger.stockpile.industry)")
+                    metric("人口", "\(activeLedger.stockpile.manpower)")
+                    metric("军械", "\(activeLedger.stockpile.industry)")
                 }
 
                 GridRow {
-                    metric("Supplies", "\(activeLedger.stockpile.supplies)")
-                    metric("Queue", "\(activeLedger.productionQueue.count)")
+                    metric("粮草", "\(activeLedger.stockpile.supplies)")
+                    metric("队列", "\(activeLedger.productionQueue.count)")
                 }
             }
         }
@@ -75,9 +75,9 @@ struct HUDView: View {
 
     private var victoryText: String {
         guard let winner = gameState.victoryState.winner else {
-            return "Ongoing"
+            return "未分胜负"
         }
-        return "\(winner.displayName) Victory"
+        return "\(winner.displayName) 胜利"
     }
 
     private var activeLedger: FactionEconomyLedger {

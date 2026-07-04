@@ -1158,6 +1158,108 @@ guerrillaWarfare 额外参考 infrastructure
 - 未做运行时 UI 点击和 SpriteKit 视觉验证，按钮行为、sheet 展示、计划线位置仍需后续人工或授权轻量运行确认。
 - 当前工作树混有其他版本改动，合并前必须重新做文件/API/schema/project 冲突审查。
 
+## v2.0 - 三国迁移审计与兼容显示层
+
+完成日期：2026-07-04
+
+核心更新：
+
+- 项目文档入口从二战原型口径改为“三国棋策 Agent”迁移口径，明确当前仍是 v2.0 兼容层。
+- 新增 `md/prompt/v2.0-三国迁移/v2.0_audit_and_contract.md`，记录迁移目标、非目标、兼容合同、硬编码审计摘要、后续版本拆分和验证边界。
+- 在不改变 Codable/rawValue 的前提下，迁移主要玩家可见术语：
+  - `Faction.germany/allies` 显示为曹操势力 / 袁绍势力。
+  - `Division` 显示为军队/步卒营/骑兵军/器械营。
+  - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
+  - `manpower/industry/supplies` 显示为人口/军械/粮草。
+- 主 UI 面板、SpriteKit 可见短标签、战报、HUD、军令、经济、武将、AI 决策面板完成首轮三国化显示收束。
+- `Command`、`DirectiveType`、`TacticName`、`SupplyState`、`BaseTerrain`、`CityLevel`、`ProductionKind` 增加或调整三国显示名。
+
+关键系统：
+
+- `WWIIHexV0/Core/Faction.swift`
+- `WWIIHexV0/Core/Division.swift`
+- `WWIIHexV0/Core/EconomyState.swift`
+- `WWIIHexV0/Core/SupplyState.swift`
+- `WWIIHexV0/Core/Terrain.swift`
+- `WWIIHexV0/Core/GamePhase.swift`
+- `WWIIHexV0/Core/MapDisplayLayer.swift`
+- `WWIIHexV0/Core/VictoryState.swift`
+- `WWIIHexV0/Core/WarDeploymentTypes.swift`
+- `WWIIHexV0/Commands/Command.swift`
+- `WWIIHexV0/Commands/WarDirective.swift`
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `WWIIHexV0/SpriteKit/HexNode.swift`
+- `WWIIHexV0/UI/`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+
+验证记录：
+
+- 只做 `md/test/test.md` 允许的轻量检查；具体命令和结果见本轮交付。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行重测试。
+
+遗留风险：
+
+- 当前仍是显示层与文档兼容迁移，不是正式三国剧本。
+- `Faction` 仍只有 `germany/allies`，`Faction.opponent` 仍是二元敌我假设。
+- 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.1-v2.2 必须分阶段迁移。
+- 未做运行时 UI 和 SpriteKit 截图验证，显示是否完全无残留需后续授权运行检查。
+
+## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
+
+完成日期：2026-07-04
+
+性质：
+
+- 这是协作制度和验证骨架变更，不是业务功能质量提升，也不代表 v2.0 三国迁移已通过运行时重测试。
+
+对比记录：
+
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.0 三国迁移兼容层。
+- 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
+- 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
+- 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。
+- 当前 artifact：此前没有 Agent C 可追溯结果包；本轮新增 manifest、failure summary、JUnit 摘要、build log、`.xcresult`（若生成）。
+- AITRANS 可复用：main 直推、未加密 CI 结果包、manifest 核对、Agent C 下载复判、失败后追加修复 commit。
+- AITRANS 不复用：漫画探针、GGUF、模型 Release、大数据输出、密码 artifact、`smalldata_test` / `develop` / `codeb/...` / PR 候选分支制度。
+
+核心更新：
+
+- `AGENTS.md` 加入 `agenta` / `a:` / `A:`、`agentb` / `b:` / `B:`、`agentc` / `c:` / `C:` 召唤规则和 A/B/C 最终回复第一行身份要求。
+- `AGENTS.md`、`md/flow/flow.md`、`md/flow/flowchart.md`、`md/test/test.md` 统一写入 `main` 直推、云端重验证、Agent C artifact 验收和失败追加修复 commit 规则。
+- 新增 `md/prompt/README.md`，记录阶段 prompt 索引、Agent A 提示词最低要求、main push 和 CI artifact 要求。
+- 新增 `.github/workflows/ci-results.yml`，在 `main` push 和 `workflow_dispatch` 时运行，上传未加密 CI 结果包。
+- `README.md` 新增简短“协作与云端验证”小节，不替代 `AGENTS.md`。
+
+云端 workflow 当前边界：
+
+- 执行 `git diff --check`、`plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`、Core/Commands/Rules/Agents/Turn Swift parse、`xcodebuild build -scheme WWIIHexV0 -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO`。
+- 默认不跑云端 XCTest / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；`testOutcome` 记录为 `skipped`，后续需要稳定 simulator / probe 策略后再扩展。
+
+关键文件：
+
+- `AGENTS.md`
+- `README.md`
+- `md/test/test.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `.github/workflows/ci-results.yml`
+- `update_log.md`
+
+验证记录：
+
+- 本地轻量检查和云端结果以后续本轮交付记录为准。
+
+遗留风险：
+
+- 第一次 push 后才可确认 GitHub-hosted macOS runner、Xcode 版本和 iOS generic build 是否与当前工程完全兼容。
+- 当前 workflow 尚未覆盖 XCTest / Probe / 模拟器 UI test；业务行为正确性仍需后续扩展云端验证或人工授权专项验证。
+
 ## 历史维护记录
 
 以下提交不作为正式 v 版本，但影响项目资料完整性：

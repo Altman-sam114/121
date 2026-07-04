@@ -1,6 +1,6 @@
-# WWIIHexV0 Mermaid 核心流程图
+# 三国棋策 Agent Mermaid 核心流程图（v2.0 迁移兼容层）
 
-> 本图参照 `md/flow/flow.md`。每个图块都用“中文解释 + 关键代码名”标注：先看中文理解逻辑，再用代码名回到源码定位。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.0 阶段图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -10,12 +10,19 @@
 地图编辑器/JSON 数据
   -> 游戏启动加载为 GameState
   -> hex 是真实战术权威
-  -> region / theater / front / deploy 都是从 hex 和单位位置派生出来的战略层
-  -> economy 是 faction 级经济总账，收入仍从真实控制的 hex/region 聚合
-  -> v0.5 元帅层是战略意图层，不替代战术权威
+  -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
+  -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
+  -> v2.0 先迁移显示词和兼容合同，不替换规则权威
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
+
+v2.0 命名边界：
+
+- `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
+- `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营。
+- `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
+- 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。
 
 图里颜色含义：
 
@@ -432,5 +439,49 @@ flowchart TD
     classDef command fill:#fae8ff,stroke:#a21caf,color:#2a0a2f
     classDef rules fill:#ccfbf1,stroke:#0f766e,color:#042f2e
     classDef ui fill:#e5e7eb,stroke:#4b5563,color:#111827
+    classDef warn fill:#ffedd5,stroke:#f97316,color:#431407
+```
+
+## 9. 云端迭代与 Agent C 结果包验收
+
+这张图说明当前协作制度：本机只做轻量检查，重验证由 `main` push 后的 GitHub Actions 结果包承接。Agent C 不能只看 Agent B 的文字说明，必须下载并核对最新 `origin/main` run 的 artifact。
+
+```mermaid
+flowchart TD
+    HUMAN["人工目标<br/>可用 a: / b: / c: 召唤角色"]:::input
+    A["Agent A<br/>读入口文档和源码<br/>写阶段提示词"]:::agent
+    B0["Agent B 同步 main<br/>git fetch origin<br/>git pull --ff-only origin main"]:::git
+    B1["Agent B 实现<br/>只改本轮相关文件<br/>不做业务外扩"]:::agent
+    LITE["本机轻量检查<br/>git diff --check<br/>Markdown/YAML/JSON/plist/swift parse"]:::check
+    COMMIT["main commit<br/>提交本轮实现和文档"]:::git
+    PUSH["push origin main<br/>触发 GitHub Actions"]:::git
+    CI["GitHub Actions ci-results<br/>静态检查 + xcodebuild build<br/>生成日志和 xcresult"]:::cloud
+    ART["未加密 CI 结果包<br/>manifest / failure summary / junit / xcodebuild.log / xcresult"]:::artifact
+    C0["Agent C 下载 artifact<br/>gh auth login<br/>缓存到 /private/tmp/..."]:::agent
+    C1{"manifest 是否匹配<br/>main 最新 commit / run id / attempt?"}:::decision
+    C2{"CI 与日志是否可验收?"}:::decision
+    FAIL["退回清单<br/>说明失败日志、风险和修复范围"]:::stop
+    FIX["Agent B 在 main 上<br/>追加修复 commit"]:::git
+    PASS["Agent C 通过<br/>更新 flow / update_log<br/>人工复核进入下一轮"]:::done
+
+    HUMAN --> A --> B0 --> B1 --> LITE --> COMMIT --> PUSH --> CI --> ART --> C0 --> C1
+    C1 -->|不匹配| FAIL --> FIX --> PUSH
+    C1 -->|匹配| C2
+    C2 -->|失败| FAIL
+    C2 -->|通过| PASS
+
+    WARN["边界<br/>不使用 smalldata_test / develop / codeb / PR 作为默认流程<br/>不复制 AITRANS 漫画探针、GGUF、模型包等项目特例"]:::warn
+    PUSH -.守住.-> WARN
+    ART -.守住.-> WARN
+
+    classDef input fill:#fef3c7,stroke:#d97706,color:#1f1600
+    classDef agent fill:#ede9fe,stroke:#7c3aed,color:#1f143d
+    classDef git fill:#dbeafe,stroke:#2563eb,color:#0f172a
+    classDef check fill:#ccfbf1,stroke:#0f766e,color:#042f2e
+    classDef cloud fill:#e0f2fe,stroke:#0284c7,color:#082f49
+    classDef artifact fill:#dcfce7,stroke:#16a34a,color:#052e16
+    classDef decision fill:#fff7ed,stroke:#ea580c,color:#1f1300
+    classDef stop fill:#fee2e2,stroke:#b91c1c,color:#111827
+    classDef done fill:#dcfce7,stroke:#15803d,color:#052e16
     classDef warn fill:#ffedd5,stroke:#f97316,color:#431407
 ```

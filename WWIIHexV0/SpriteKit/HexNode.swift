@@ -91,7 +91,7 @@ final class HexNode: SKNode {
                 zPosition: 6
             )
             addLabel(
-                text: "FORT",
+                text: "关",
                 y: -layout.hexSize * 0.22,
                 fontSize: max(7, layout.hexSize * 0.14),
                 color: TerrainStyle.textColor(for: displayState.terrain),
@@ -112,7 +112,7 @@ final class HexNode: SKNode {
 
         if let supplySourceFaction {
             addLabel(
-                text: supplySourceFaction == .allies ? "SUP A" : "SUP G",
+                text: "粮 \(supplySourceFaction.shortDisplayName)",
                 y: layout.hexSize * 0.36,
                 fontSize: max(6, layout.hexSize * 0.13),
                 color: TerrainStyle.textColor(for: displayState.terrain),

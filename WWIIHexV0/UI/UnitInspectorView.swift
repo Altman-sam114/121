@@ -7,13 +7,13 @@ struct UnitInspectorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Unit Details")
+            Text("军队详情")
                 .font(.headline)
 
             if let division {
                 unitDetails(division)
             } else {
-                Text("No unit selected.")
+                Text("未选择军队。")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -25,65 +25,65 @@ struct UnitInspectorView: View {
 
     private func unitDetails(_ division: Division) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(division.name)
+            Text(division.thematicDisplayName)
                 .font(.subheadline.weight(.semibold))
 
-            LabeledContent("Faction") {
+            LabeledContent("势力") {
                 Text(division.faction.displayName)
             }
 
-            LabeledContent("Mode") {
-                Text(division.faction == playerFaction ? "Player" : "Read-only")
+            LabeledContent("指挥") {
+                Text(division.faction == playerFaction ? "玩家" : "只读")
             }
 
             if let strategicState {
-                LabeledContent("Hex") {
+                LabeledContent("地格") {
                     Text("\(strategicState.coord.q),\(strategicState.coord.r)")
                 }
 
-                LabeledContent("Region") {
-                    Text(strategicState.regionId?.rawValue ?? "None")
+                LabeledContent("郡县") {
+                    Text(strategicState.regionId?.rawValue ?? "无")
                 }
 
-                LabeledContent("Dynamic Theater") {
-                    Text(strategicState.dynamicTheaterId?.rawValue ?? "None")
+                LabeledContent("动态方面") {
+                    Text(strategicState.dynamicTheaterId?.rawValue ?? "无")
                 }
 
-                LabeledContent("FrontZone") {
-                    Text(strategicState.frontZoneId?.rawValue ?? "None")
+                LabeledContent("防区") {
+                    Text(strategicState.frontZoneId?.rawValue ?? "无")
                 }
 
-                LabeledContent("Deploy") {
+                LabeledContent("部署") {
                     Text(strategicState.deploymentRole.displayName)
                 }
 
-                LabeledContent("FrontLine") {
+                LabeledContent("战线") {
                     Text(frontLineSummary(strategicState.frontLineIds))
                         .multilineTextAlignment(.trailing)
                 }
             }
 
-            LabeledContent("Strength") {
+            LabeledContent("兵力") {
                 Text(division.inspectorStrengthText)
             }
 
-            LabeledContent("Retreat Mode") {
+            LabeledContent("军令") {
                 Text(division.retreatMode.displayName)
             }
 
-            LabeledContent("Supply") {
+            LabeledContent("粮草") {
                 Text(division.supplyState.displayName)
             }
 
-            LabeledContent("Has Acted") {
-                Text(division.hasActed ? "Yes" : "No")
+            LabeledContent("已行动") {
+                Text(division.hasActed ? "是" : "否")
             }
 
-            LabeledContent("Status") {
+            LabeledContent("状态") {
                 Text(division.inspectorStatusText)
             }
 
-            LabeledContent("Components") {
+            LabeledContent("兵种") {
                 Text(componentSummary(for: division))
                     .multilineTextAlignment(.trailing)
             }
@@ -92,12 +92,12 @@ struct UnitInspectorView: View {
 
     private func componentSummary(for division: Division) -> String {
         division.components
-            .map { "\($0.type.displayCode) \(Int(($0.weight * 100).rounded()))%" }
+            .map { "\($0.type.shortDisplayCode) \(Int(($0.weight * 100).rounded()))%" }
             .joined(separator: " / ")
     }
 
     private func frontLineSummary(_ ids: [FrontLineId]) -> String {
-        ids.isEmpty ? "None" : ids.map(\.rawValue).joined(separator: ", ")
+        ids.isEmpty ? "无" : ids.map(\.rawValue).joined(separator: ", ")
     }
 }
 
@@ -110,66 +110,14 @@ private extension Division {
         var statuses: [String] = []
 
         if isRetreating {
-            statuses.append("Retreating")
+            statuses.append("撤退中")
         }
 
         if isDestroyed {
-            statuses.append("Destroyed")
+            statuses.append("溃散")
         }
 
-        return statuses.isEmpty ? "Ready" : statuses.joined(separator: ", ")
-    }
-}
-
-private extension RetreatMode {
-    var displayName: String {
-        switch self {
-        case .retreatable:
-            return "Retreatable"
-        case .hold:
-            return "Hold"
-        }
-    }
-}
-
-private extension ComponentType {
-    var displayCode: String {
-        switch self {
-        case .tank:
-            return "ARM"
-        case .motorizedInfantry:
-            return "MOT"
-        case .infantry:
-            return "INF"
-        case .artillery:
-            return "ART"
-        }
-    }
-}
-
-private extension SupplyState {
-    var displayName: String {
-        switch self {
-        case .supplied:
-            return "Supplied"
-        case .lowSupply:
-            return "Low Supply"
-        case .encircled:
-            return "Encircled"
-        }
-    }
-}
-
-private extension UnitDeploymentRole {
-    var displayName: String {
-        switch self {
-        case .frontUnit:
-            return "FRONT"
-        case .depthUnit:
-            return "DEPTH"
-        case .garrisonUnit:
-            return "GARRISON"
-        }
+        return statuses.isEmpty ? "待命" : statuses.joined(separator: ", ")
     }
 }
 

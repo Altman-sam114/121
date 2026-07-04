@@ -27,10 +27,10 @@ struct GeneralProfileView: View {
         .background(.ultraThinMaterial)
         .safeAreaInset(edge: .top) {
             HStack {
-                Text("General Profile")
+                Text("武将档案")
                     .font(.headline)
                 Spacer()
-                Button("Close", systemImage: "xmark", action: onClose)
+                Button("关闭", systemImage: "xmark", action: onClose)
                     .buttonStyle(.bordered)
             }
             .padding(12)
@@ -45,7 +45,7 @@ struct GeneralProfileView: View {
                 .frame(width: 112, height: 144)
                 .background(PlatformStyles.selectionTint)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .accessibilityLabel("\(general.localizedName) portrait placeholder")
+                .accessibilityLabel("\(general.localizedName) 头像占位")
 
             Text(general.localizedName)
                 .font(.title3.weight(.semibold))
@@ -64,24 +64,24 @@ struct GeneralProfileView: View {
 
     private var biographyBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Biography")
+            Text("传略")
                 .font(.headline)
             Text(general.biography)
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            LabeledContent("Command Style") {
+            LabeledContent("统军风格") {
                 Text(styleLabel(general.commandStyle))
             }
             if let zone {
-                LabeledContent("Assigned Zone") {
+                LabeledContent("所属防区") {
                     Text(zone.name)
                         .multilineTextAlignment(.trailing)
                 }
             }
             if hqUnderAttack {
-                Label("HQ region contested", systemImage: "exclamationmark.triangle.fill")
+                Label("帅帐所在郡县受威胁", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
@@ -90,11 +90,11 @@ struct GeneralProfileView: View {
 
     private var statusBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Relationship")
+            Text("关系")
                 .font(.headline)
-            metricBar(title: "Loyalty", value: assignment?.loyalty ?? general.baseLoyalty)
-            metricBar(title: "Satisfaction", value: assignment?.satisfaction ?? general.baseSatisfaction)
-            LabeledContent("Player Interventions") {
+            metricBar(title: "忠诚", value: assignment?.loyalty ?? general.baseLoyalty)
+            metricBar(title: "满意", value: assignment?.satisfaction ?? general.baseSatisfaction)
+            LabeledContent("玩家干预") {
                 Text("\(assignment?.interventionCount ?? 0)")
             }
         }
@@ -102,10 +102,10 @@ struct GeneralProfileView: View {
 
     private var skillsBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Skills")
+            Text("技能")
                 .font(.headline)
             if general.skills.isEmpty {
-                Text("No explicit skills configured.")
+                Text("未配置显式技能。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -126,15 +126,15 @@ struct GeneralProfileView: View {
 
     private var assignedUnitsBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Assigned Units")
+            Text("麾下军队")
                 .font(.headline)
             if assignedDivisions.isEmpty {
-                Text("No active divisions assigned.")
+                Text("暂无军队归属。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(assignedDivisions, id: \.id) { division in
-                    LabeledContent(division.name) {
+                    LabeledContent(division.thematicDisplayName) {
                         Text("\(division.strength)/\(division.maxStrength)")
                     }
                     .font(.caption)
@@ -165,11 +165,11 @@ struct GeneralProfileView: View {
     private func styleLabel(_ style: ZoneCommanderAgentConfig.CommandStyle) -> String {
         switch style {
         case .aggressive:
-            return "Aggressive"
+            return "进取"
         case .balanced:
-            return "Balanced"
+            return "持重"
         case .cautious:
-            return "Cautious"
+            return "谨慎"
         }
     }
 }

@@ -18,6 +18,32 @@ enum ComponentType: String, Codable, Equatable, CaseIterable {
             return EffectiveStats(attack: 7, defense: 2, movement: 2, range: 2, vision: 2)
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .tank:
+            return "骑兵"
+        case .motorizedInfantry:
+            return "轻骑"
+        case .infantry:
+            return "步卒"
+        case .artillery:
+            return "器械"
+        }
+    }
+
+    var shortDisplayCode: String {
+        switch self {
+        case .tank:
+            return "骑"
+        case .motorizedInfantry:
+            return "轻"
+        case .infantry:
+            return "步"
+        case .artillery:
+            return "械"
+        }
+    }
 }
 
 struct DivisionComponent: Codable, Equatable {
@@ -36,6 +62,24 @@ struct EffectiveStats: Codable, Equatable {
 enum RetreatMode: String, Codable, Equatable, CaseIterable {
     case retreatable
     case hold
+
+    var displayName: String {
+        switch self {
+        case .retreatable:
+            return "可退"
+        case .hold:
+            return "固守"
+        }
+    }
+
+    var shortDisplayCode: String {
+        switch self {
+        case .retreatable:
+            return "退"
+        case .hold:
+            return "守"
+        }
+    }
 }
 
 struct Division: Identifiable, Codable, Equatable {
@@ -309,6 +353,32 @@ struct Division: Identifiable, Codable, Equatable {
 
     var isArtillery: Bool {
         components.contains { $0.type == .artillery && $0.weight >= 0.50 }
+    }
+
+    var thematicDisplayName: String {
+        if name.unicodeScalars.contains(where: { $0.value > 127 }) {
+            return name
+        }
+
+        let serial = id.split(separator: "_").last.flatMap { Int(String($0)) }.map { " \($0)" } ?? ""
+        return "\(faction.shortDisplayName)\(thematicUnitKindName)\(serial)"
+    }
+
+    var thematicTypeName: String {
+        thematicUnitKindName
+    }
+
+    private var thematicUnitKindName: String {
+        if isArtillery {
+            return "器械营"
+        }
+        if isArmor {
+            return "骑兵军"
+        }
+        if components.contains(where: { $0.type == .motorizedInfantry && $0.weight >= 0.40 }) {
+            return "轻骑营"
+        }
+        return "步卒营"
     }
 
     private func weightedStat(_ keyPath: KeyPath<EffectiveStats, Int>) -> Int {

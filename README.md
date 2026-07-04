@@ -1,23 +1,24 @@
-# WWIIHexV0 — iOS / macOS 二战 AI 战略战棋游戏
+# 三国棋策 Agent — iOS / macOS AI Agent 战棋迁移版
 
-> **当前状态：v0.5 元帅决策链分支 `v0.5-marshal-decision-chain`。默认战争 AI 已加入“元帅 -> 模拟 LLM JSON -> decoder -> compiler -> ZoneDirective”决策链；下游仍收口到 `WarCommandExecutor -> RuleEngine`。统治者层只作为后续上游预留，当前 v0.5 主链路不调用 `RulerAgent`，也不恢复 Cabinet / Minister。历史测试基线曾达到 v0.37 Probe 18/0、Stage Regression 69/0、Full 226/0；当前工作流默认不跑 Xcode / XCTest / 模拟器测试，只按 `md/test/test.md` 做轻量检查。**
+> **当前状态：v2.0 三国迁移兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division` 等源码兼容名，但主界面显示词、资源名、军队/武将/郡县/方面术语已开始迁移到三国语义。底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
 
 ---
 
 ## 项目定位
 
-一款 iOS / macOS 回合制二战策略游戏，目标结合战棋（六角格操作感）、大战略（省份占领、补给、前线）与角色扮演（LLM 驱动的将领 AI）。
+一款正在从二战原型迁移为三国题材的 iOS / macOS 回合制 AI Agent 战棋。目标结合六角格战术操作、郡县/方面军战略调度、粮草与城池争夺，以及君主、军师、太守、武将等 Agent 的结构化决策。
 
-**核心参考：**
-- 《统一指挥2》：六角格战棋、补给、攻击（战术层参照）
-- 《钢铁雄心4》：大战略、省份占领、前线、补给、生产、国家管理（战略层参照）
-- EasyTech《钢铁命令》：战役推进、将领、战术操作
-- 《世界征服者4》：移动端轻量化策略体验
+**迁移目标：**
+- 首发方向以“官渡前夜 200”一类区域剧本为目标，不一次性做全中国沙盒。
+- Hex 仍是移动、攻击、占领、视野、补给落点的战术权威。
+- Region 显示为郡县/州，是人口、钱粮、军械、城池和胜利点的战略聚合层。
+- Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
+- 当前阶段只做兼容显示层和迁移合同；多势力、三国地图、围城、正式君主/军师/武将 Agent 将按 v2.1+ 分阶段推进。
 
 **核心创新：本地部署 LLM 驱动游戏 AI**
-- 将领、元帅已进入当前指挥链；国家统治者、部长只作为后续方向预留
-- agent 根据视野、战况摘要、性格和历史背景输出结构化 JSON 命令
-- 游戏规则系统负责校验并执行，LLM 不直接绕过规则修改状态
+- 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、军师、太守、武将等 Agent。
+- Agent 根据视野、战况摘要、性格和历史背景输出结构化 JSON / Codable directive。
+- 游戏规则系统负责校验并执行，AI 不直接绕过规则修改状态。
 
 ---
 
@@ -64,6 +65,14 @@ ZoneDirective / WarCommandExecutor / RuleEngine
 | UI 框架 | SwiftUI（面板、按钮、日志、单位详情） |
 | 地图渲染 | SpriteKit（六角格地图、单位显示、移动/攻击反馈） |
 | AI 接口 | `DecisionProvider` 协议（MockAI 已实现，预留本地 LLM） |
+
+---
+
+## 协作与云端验证
+
+当前协作制度固定为 `main` 直推和云端结果包验收：Agent B 基于最新 `origin/main` 实现，本机只跑 `md/test/test.md` 允许的轻量检查，提交后直接 push 到 `origin/main` 触发 `.github/workflows/ci-results.yml`。GitHub Actions 负责云端重验证并上传未加密 CI 结果包，内含 manifest、失败摘要、JUnit 摘要、构建日志和 `.xcresult`（如生成）。
+
+Agent C 不只阅读文字汇报，必须用 `gh auth login` 后下载最新 `origin/main` run 的 artifact，核对 `ci-artifact-manifest.json` 中的 branch、commit、run id 和 attempt，再决定通过或退回 Agent B 在 `main` 上追加修复 commit。
 
 ---
 
@@ -341,8 +350,8 @@ md/
 - 元帅层和未来统治者层不得绕过 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
 - 当前 v0.5 只模拟 LLM JSON 接口，不接真实模型；真实 LLM 接入必须保留 decoder 校验与 fallback。
 
-**轻量检查**（每轮先读 [`md/test/test.md`](md/test/test.md)，默认禁止 Xcode / XCTest / 模拟器 / 性能类测试）：
+**轻量检查与云端验证**（每轮先读 [`md/test/test.md`](md/test/test.md)，默认本机禁止 Xcode / XCTest / 模拟器 / 性能类测试；重验证由 GitHub Actions 结果包承接）：
 ```bash
 rg -n "[[:blank:]]+$" AGENTS.md README.md update_log.md md/test/test.md md/flow/flow.md
 ```
-旧测试口径残留、JSON / project / scheme 检查按 `md/test/test.md` 追加执行。未获人工授权时，不跑历史 Probe / Stage / Full。
+旧测试口径残留、JSON / project / scheme 检查按 `md/test/test.md` 追加执行。未获人工授权时，本机不跑历史 Probe / Stage / Full；需要重验证时 push 到 `origin/main`，由 `ci-results` workflow 上传 artifact 给 Agent C 复判。

@@ -17,6 +17,17 @@ enum UnitDeploymentRole: String, Codable, Equatable {
     case frontUnit
     case depthUnit
     case garrisonUnit
+
+    var displayName: String {
+        switch self {
+        case .frontUnit:
+            return "前锋"
+        case .depthUnit:
+            return "后队"
+        case .garrisonUnit:
+            return "守备"
+        }
+    }
 }
 
 struct NavalZone: Codable, Equatable, Identifiable {

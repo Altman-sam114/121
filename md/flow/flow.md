@@ -1,8 +1,8 @@
-# WWIIHexV0 核心流程文档（v0.5 元帅决策链分支）
+# 三国棋策 Agent 核心流程文档（v2.0 迁移兼容层）
 
-> 本文是项目当前核心逻辑的接手文档。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，主游戏和地图编辑器如何共同维护同一套地图语义，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.0 阶段仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等源码兼容名和旧 JSON 数据入口；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
-资料依据：`AGENT.md`、`README.md`、`update_log.md`、`md/test/test.md`、v0.355/v0.36/v0.37 阶段文档、最近 git 记录，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
+资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
 ---
 
@@ -30,6 +30,14 @@ MapEditor / JSON 数据
   -> StrategicStateSynchronizer
   -> UI overlay / 日志 / WarDirectiveRecord
 ```
+
+v2.0 迁移层当前只改变显示语义和阶段合同：
+
+- 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
+- `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
+- `Division` 当前显示为军队/步卒营/骑兵军/器械营，但 `Division.coord` 仍是单位位置权威。
+- `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
+- 地图和默认 JSON 仍是阿登兼容数据；正式三国剧本、三国势力枚举和多势力外交属于 v2.1+ / v2.2+。
 
 最关键的铁律：
 
@@ -1713,9 +1721,46 @@ MapEditorGameResourceBridge.loadDefaultDocument
 
 ---
 
-## 11. 轻量检查入口与历史回归参考
+## 11. 协作与云端验证流程
 
-检查规范以 `md/test/test.md` 为准。当前默认不跑 Xcode / XCTest / 模拟器 / 性能类验证，只做轻量语法、格式和配置检查。
+当前协作制度不是业务规则链路，但会影响每轮实现和验收的真实交付边界：
+
+```text
+人工提出目标或用 a:/b:/c: 召唤角色
+  -> Agent A 本地分析，写阶段提示词
+  -> Agent B 同步最新 origin/main，在 main 上实现
+  -> Agent B 本机只跑轻量检查
+  -> Agent B commit 并 push 到 origin/main
+  -> GitHub Actions ci-results 在 main 最新 commit 上运行
+  -> 生成未加密 CI 结果包
+  -> Agent C gh auth login 后下载 artifact
+  -> Agent C 核对 manifest / JUnit / log / xcresult
+     -> 失败：退回 Agent B 在 main 上追加修复 commit
+     -> 通过：确认 main 最新 run 可验收，并补齐核心文档
+```
+
+固定规则：
+
+- `main` 是默认唯一上传、提交、推送和云端验证分支。
+- 暂不把 `smalldata_test`、`develop`、`codeb/...` 或 PR 写成默认流程。
+- Agent B push 前必须确认当前分支是 `main`，远端目标是 `origin/main`，提交范围只包含本轮相关文件。
+- Agent C 只验收 `origin/main` 最新 commit 对应的 run 和 artifact，不验收旧 run、旧 artifact 或文字替代结果。
+- CI 结果包缓存默认放在 `/private/tmp/three-kingdoms-agent-c-review-<run_id>/`，等待人工确认后再清理。
+
+`ci-results` workflow 的当前重验证边界：
+
+- 静态检查：`git diff --check`、`plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`、Core/Commands/Rules/Agents/Turn 的 `swiftc -parse`。
+- 构建检查：`xcodebuild build -project WWIIHexV0.xcodeproj -scheme WWIIHexV0 -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO`。
+- 产物：`ci-artifact-manifest.json`、`ci-failure-summary.md`、`junit.xml`、`xcodebuild.log`、`.xcresult`（若生成）。
+- 当前默认不跑云端 XCTest / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；manifest 中 `testOutcome` 记录为 `skipped`，后续等 runner 和 simulator 策略稳定后再扩展。
+
+这次制度来自 AITRANS 的通用云端验收骨架，但只复用 main 直推、未加密 artifact、manifest 核对、Agent C 下载复判和失败追加修复，不复制漫画探针、GGUF、模型 Release、大数据输出或密码包流程。
+
+---
+
+## 12. 轻量检查入口与历史回归参考
+
+检查规范以 `md/test/test.md` 为准。当前默认本机不跑 Xcode / XCTest / 模拟器 / 性能类验证，只做轻量语法、格式和配置检查；重验证默认由 `ci-results` workflow 在云端执行并上传结果包。
 
 历史上这些回归曾用于守住核心语义，但现在只作只读参考，不作为每轮默认执行项：
 
@@ -1742,7 +1787,7 @@ MapEditorGameResourceBridge.loadDefaultDocument
 
 ---
 
-## 12. v1.0 UI / AI / Playtest 分支收口
+## 13. v1.0 UI / AI / Playtest 分支收口
 
 v1.0 分支名：`v1.0-ui-ai-playtest`。
 
@@ -1789,7 +1834,7 @@ Marshal / ZoneDirective
 
 ---
 
-## 13. v0.4 将军养成、将军 UI 与玩家双轨命令
+## 14. v0.4 将军养成、将军 UI 与玩家双轨命令
 
 v0.4 分支名：`v0.4-generals-command-ui-final`。
 

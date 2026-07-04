@@ -17,24 +17,24 @@ struct AgentPanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("AI Decision")
+            Text("AI 决策")
                 .font(.headline)
 
             LabeledContent("Agent") {
-                Text(record?.agentId ?? "guderian")
+                Text(record?.agentId ?? "sanguo_mock_general")
             }
 
-            LabeledContent("Provider") {
-                Text(record?.provider ?? "MockAI")
+            LabeledContent("来源") {
+                Text(record?.provider ?? "MockStrategy")
             }
 
-            LabeledContent("Intent") {
-                Text(record?.parsedIntent ?? "No decision submitted")
+            LabeledContent("意图") {
+                Text(record?.parsedIntent ?? "暂无决策")
                     .multilineTextAlignment(.trailing)
             }
 
             if let contextSummary = record?.contextSummary {
-                LabeledContent("Context") {
+                LabeledContent("摘要") {
                     Text(contextSummary)
                         .multilineTextAlignment(.trailing)
                 }
@@ -42,21 +42,21 @@ struct AgentPanelView: View {
 
             if let rulerRecord {
                 Divider()
-                LabeledContent("Ruler") {
+                LabeledContent("君主") {
                     Text(rulerRecord.rulerAgentId)
                 }
-                LabeledContent("Posture") {
+                LabeledContent("姿态") {
                     Text(rulerRecord.posture.displayName)
                 }
                 if let zoneId = rulerRecord.preferredFrontZoneId {
-                    LabeledContent("Focus") {
+                    LabeledContent("重点") {
                         Text(zoneId.rawValue)
                     }
                 }
             }
 
             if let record, !record.commandResults.isEmpty {
-                Text("Command Results")
+                Text("命令结果")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -76,7 +76,7 @@ struct AgentPanelView: View {
             }
 
             if !directiveRecords.isEmpty {
-                Text("Zone Directives")
+                Text("防区指令")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -113,7 +113,7 @@ struct AgentPanelView: View {
             }
 
             if let record, !record.errors.isEmpty {
-                Text("Errors")
+                Text("错误")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -145,18 +145,18 @@ struct AgentPanelView: View {
     }
 
     private func directiveSummary(_ directive: WarDirectiveRecord) -> String {
-        let type = directive.directiveType?.rawValue ?? "diagnostic"
-        let tactic = directive.tactic?.rawValue ?? directive.category?.rawValue ?? "none"
+        let type = directive.directiveType?.displayName ?? "诊断"
+        let tactic = directive.tactic?.displayName ?? directive.category?.displayName ?? "无"
         let executed = directive.commandResults.filter(\.executed).count
         let rejected = directive.commandResults.count - executed
         let targets = directive.targetRegionIds.map(\.rawValue).joined(separator: ", ")
-        let targetText = targets.isEmpty ? "no target" : targets
-        return "\(type) / \(tactic) / \(executed) ok, \(rejected) rejected / \(targetText)"
+        let targetText = targets.isEmpty ? "无目标" : targets
+        return "\(type) / \(tactic) / \(executed) 成功, \(rejected) 拒绝 / \(targetText)"
     }
 
     private func resultLine(_ result: CommandResultSummary) -> String {
         if !result.mappingSucceeded {
-            return "Mapping failed: \(result.errors.joined(separator: ", "))"
+            return "映射失败：\(result.errors.joined(separator: ", "))"
         }
 
         if result.executed {
@@ -164,7 +164,7 @@ struct AgentPanelView: View {
         }
 
         if !result.errors.isEmpty {
-            return "Rejected: \(result.errors.joined(separator: ", "))"
+            return "被拒绝：\(result.errors.joined(separator: ", "))"
         }
 
         return result.message
@@ -173,7 +173,7 @@ struct AgentPanelView: View {
     private var rawJSONPlaceholder: String {
         """
         {
-          "agentId": "guderian",
+          "agentId": "sanguo_mock_general",
           "status": "placeholder",
           "orders": []
         }

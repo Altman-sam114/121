@@ -6,30 +6,30 @@ struct UnitTooltipView: View {
     var body: some View {
         if let division {
             VStack(alignment: .leading, spacing: 6) {
-                Text(division.name)
+                Text(division.thematicDisplayName)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(2)
 
                 Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 4) {
                     GridRow {
-                        label("Type")
+                        label("兵种")
                         value(division.tooltipTypeCode)
                     }
                     GridRow {
-                        label("Strength")
+                        label("兵力")
                         value("\(division.strength)/\(division.maxStrength)")
                     }
                     GridRow {
-                        label("Supply")
-                        value(division.supplyState.tooltipDisplayName)
+                        label("粮草")
+                        value(division.supplyState.shortDisplayName)
                     }
                     GridRow {
-                        label("Retreat")
-                        value(division.retreatMode.tooltipDisplayName)
+                        label("军令")
+                        value(division.retreatMode.displayName)
                     }
                     GridRow {
-                        label("Acted")
-                        value(division.hasActed ? "Yes" : "No")
+                        label("行动")
+                        value(division.hasActed ? "已" : "未")
                     }
                 }
             }
@@ -42,7 +42,7 @@ struct UnitTooltipView: View {
             }
             .padding(10)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(division.name), \(division.tooltipTypeCode), strength \(division.strength) of \(division.maxStrength)")
+            .accessibilityLabel("\(division.thematicDisplayName), \(division.tooltipTypeCode), 兵力 \(division.strength) / \(division.maxStrength)")
         }
     }
 
@@ -63,38 +63,14 @@ struct UnitTooltipView: View {
 private extension Division {
     var tooltipTypeCode: String {
         if isArtillery {
-            return "ART"
+            return "械"
         }
         if isArmor {
-            return "ARM"
+            return "骑"
         }
         if components.contains(where: { $0.type == .motorizedInfantry && $0.weight >= 0.40 }) {
-            return "MOT"
+            return "轻"
         }
-        return "INF"
-    }
-}
-
-private extension RetreatMode {
-    var tooltipDisplayName: String {
-        switch self {
-        case .retreatable:
-            return "Retreatable"
-        case .hold:
-            return "Hold"
-        }
-    }
-}
-
-private extension SupplyState {
-    var tooltipDisplayName: String {
-        switch self {
-        case .supplied:
-            return "Supplied"
-        case .lowSupply:
-            return "Low"
-        case .encircled:
-            return "Encircled"
-        }
+        return "步"
     }
 }

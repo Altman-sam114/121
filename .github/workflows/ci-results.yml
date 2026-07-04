@@ -1,0 +1,240 @@
+name: ci-results
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PROJECT_NAME: Three Kingdoms Agent
+  PROJECT_SLUG: three-kingdoms-agent
+  CI_VERSION: v2.0-cloud-validation
+  XCODE_PROJECT: WWIIHexV0.xcodeproj
+  XCODE_SCHEME: WWIIHexV0
+  XCODE_DESTINATION: generic/platform=iOS
+  RESULT_BUNDLE_PATH: ci-results/WWIIHexV0.xcresult
+  BUILD_LOG_PATH: ci-results/xcodebuild.log
+
+jobs:
+  ci-results:
+    name: Build and package CI results
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare metadata
+        id: meta
+        shell: bash
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          branch_slug="${GITHUB_REF_NAME//\//-}"
+          artifact_name="${PROJECT_SLUG}-ci-${CI_VERSION}-${branch_slug}-${short_sha}-run${GITHUB_RUN_ID}-attempt${GITHUB_RUN_ATTEMPT}"
+          echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "branch_slug=${branch_slug}" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Run checks and build
+        id: run_ci
+        shell: bash
+        env:
+          SHORT_SHA: ${{ steps.meta.outputs.short_sha }}
+          ARTIFACT_NAME: ${{ steps.meta.outputs.artifact_name }}
+          BASE_SHA: ${{ github.event.before }}
+        run: |
+          set +e
+
+          mkdir -p ci-results
+          rm -rf "$RESULT_BUNDLE_PATH" .derivedData-ci
+
+          zero_sha="0000000000000000000000000000000000000000"
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "$zero_sha" ] && git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            git diff --check "$BASE_SHA" "$GITHUB_SHA" > ci-results/git-diff-check.log 2>&1
+          elif git rev-parse HEAD^ >/dev/null 2>&1; then
+            git diff --check HEAD^ HEAD > ci-results/git-diff-check.log 2>&1
+          else
+            git diff --check > ci-results/git-diff-check.log 2>&1
+          fi
+          git_diff_status=$?
+
+          plutil -lint "$XCODE_PROJECT/project.pbxproj" > ci-results/plutil-project.log 2>&1
+          plutil_status=$?
+
+          git ls-files \
+            'WWIIHexV0/Core/*.swift' \
+            'WWIIHexV0/Commands/*.swift' \
+            'WWIIHexV0/Rules/*.swift' \
+            'WWIIHexV0/Agents/*.swift' \
+            'WWIIHexV0/Turn/*.swift' > ci-results/swift-files.txt
+          if [ -s ci-results/swift-files.txt ]; then
+            xargs xcrun swiftc -parse < ci-results/swift-files.txt > ci-results/swift-parse.log 2>&1
+            swift_parse_status=$?
+          else
+            echo "No Swift files selected for parse check." > ci-results/swift-parse.log
+            swift_parse_status=0
+          fi
+
+          xcodebuild_bin="/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild"
+          if [ ! -x "$xcodebuild_bin" ]; then
+            xcodebuild_bin="$(xcrun -f xcodebuild)"
+          fi
+
+          "$xcodebuild_bin" \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -destination "$XCODE_DESTINATION" \
+            -derivedDataPath .derivedData-ci \
+            -resultBundlePath "$RESULT_BUNDLE_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            build > "$BUILD_LOG_PATH" 2>&1
+          build_status=$?
+
+          if [ "$git_diff_status" -eq 0 ] && [ "$plutil_status" -eq 0 ] && [ "$swift_parse_status" -eq 0 ]; then
+            static_checks_outcome="success"
+          else
+            static_checks_outcome="failure"
+          fi
+
+          if [ "$build_status" -eq 0 ]; then
+            build_outcome="success"
+          else
+            build_outcome="failure"
+          fi
+
+          test_outcome="skipped"
+          overall_outcome="success"
+          if [ "$static_checks_outcome" != "success" ] || [ "$build_outcome" != "success" ]; then
+            overall_outcome="failure"
+          fi
+
+          {
+            echo "# CI Failure Summary"
+            echo
+            echo "- Overall outcome: ${overall_outcome}"
+            echo "- Static checks outcome: ${static_checks_outcome}"
+            echo "- Build outcome: ${build_outcome}"
+            echo "- Test outcome: ${test_outcome}"
+            echo
+            echo "## Logs"
+            echo
+            echo "- git diff check: ci-results/git-diff-check.log"
+            echo "- project plist lint: ci-results/plutil-project.log"
+            echo "- Swift parse: ci-results/swift-parse.log"
+            echo "- xcodebuild: ${BUILD_LOG_PATH}"
+            echo
+            if [ "$overall_outcome" = "success" ]; then
+              echo "No failure detected in this workflow run."
+            else
+              echo "At least one CI phase failed. Inspect the logs above and the manifest for exact phase outcomes."
+            fi
+            echo
+            echo "XCTest, Probe, Smoke, Stage Regression, Dynamic Theater Regression and Full suites are not part of this default cloud workflow yet."
+          } > ci-results/ci-failure-summary.md
+
+          export GIT_DIFF_STATUS="$git_diff_status"
+          export PLUTIL_STATUS="$plutil_status"
+          export SWIFT_PARSE_STATUS="$swift_parse_status"
+          export BUILD_STATUS="$build_status"
+          export STATIC_CHECKS_OUTCOME="$static_checks_outcome"
+          export BUILD_OUTCOME="$build_outcome"
+          export TEST_OUTCOME="$test_outcome"
+          export OVERALL_OUTCOME="$overall_outcome"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from xml.sax.saxutils import escape
+
+          results_dir = Path("ci-results")
+          checks = [
+              ("git_diff_check", "git diff --check", int(os.environ["GIT_DIFF_STATUS"]), "ci-results/git-diff-check.log"),
+              ("project_plist_lint", "plutil project.pbxproj", int(os.environ["PLUTIL_STATUS"]), "ci-results/plutil-project.log"),
+              ("swift_parse", "swiftc -parse core command rule agent turn files", int(os.environ["SWIFT_PARSE_STATUS"]), "ci-results/swift-parse.log"),
+              ("xcodebuild_build", "xcodebuild build", int(os.environ["BUILD_STATUS"]), os.environ["BUILD_LOG_PATH"]),
+          ]
+
+          failures = sum(1 for _, _, status, _ in checks if status != 0)
+          junit = [
+              '<?xml version="1.0" encoding="UTF-8"?>',
+              f'<testsuite name="ci-results" tests="{len(checks) + 1}" failures="{failures}" skipped="1">',
+          ]
+          for key, name, status, log_path in checks:
+              junit.append(f'  <testcase classname="ci-results" name="{escape(key)}">')
+              if status != 0:
+                  junit.append(f'    <failure message="{escape(name)} failed">See {escape(log_path)}</failure>')
+              junit.append("  </testcase>")
+          junit.append('  <testcase classname="ci-results" name="xctest_and_probes">')
+          junit.append('    <skipped message="Not part of default cloud workflow yet"/>')
+          junit.append("  </testcase>")
+          junit.append("</testsuite>")
+          (results_dir / "junit.xml").write_text("\n".join(junit) + "\n", encoding="utf-8")
+
+          def outcome(status):
+              return "success" if status == 0 else "failure"
+
+          manifest = {
+              "version": os.environ["CI_VERSION"],
+              "branch": os.environ["GITHUB_REF_NAME"],
+              "commitSha": os.environ["GITHUB_SHA"],
+              "shortSha": os.environ["SHORT_SHA"],
+              "runId": os.environ["GITHUB_RUN_ID"],
+              "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "workflowName": os.environ["GITHUB_WORKFLOW"],
+              "createdAt": datetime.now(timezone.utc).isoformat(),
+              "projectName": os.environ["PROJECT_NAME"],
+              "scheme": os.environ["XCODE_SCHEME"],
+              "destination": os.environ["XCODE_DESTINATION"],
+              "resultBundlePath": os.environ["RESULT_BUNDLE_PATH"],
+              "junitPath": "ci-results/junit.xml",
+              "buildLogPath": os.environ["BUILD_LOG_PATH"],
+              "failureSummaryPath": "ci-results/ci-failure-summary.md",
+              "staticChecksOutcome": os.environ["STATIC_CHECKS_OUTCOME"],
+              "buildOutcome": os.environ["BUILD_OUTCOME"],
+              "testOutcome": os.environ["TEST_OUTCOME"],
+              "overallOutcome": os.environ["OVERALL_OUTCOME"],
+              "artifactName": os.environ["ARTIFACT_NAME"],
+              "projectSpecificReports": [
+                  {"name": key, "path": log_path, "outcome": outcome(status)}
+                  for key, _, status, log_path in checks
+              ],
+          }
+          (results_dir / "ci-artifact-manifest.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          echo "$overall_outcome" > ci-results/ci-status.txt
+
+      - name: Upload CI results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}
+          path: ci-results
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Fail job on unsuccessful checks
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -f ci-results/ci-status.txt ]; then
+            echo "ci-results/ci-status.txt missing"
+            exit 1
+          fi
+          if [ "$(cat ci-results/ci-status.txt)" != "success" ]; then
+            echo "CI checks failed. Download the artifact for logs."
+            exit 1
+          fi

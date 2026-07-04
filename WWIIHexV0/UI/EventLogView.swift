@@ -5,13 +5,13 @@ struct EventLogView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Event Log")
+            Text("战报")
                 .font(.headline)
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
                     if recentEntries.isEmpty {
-                        Text("No events yet.")
+                        Text("暂无战报。")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(recentEntries) { item in
@@ -55,12 +55,12 @@ struct EventLogView: View {
     }
 
     private func metadata(for entry: GameLogEntry) -> String {
-        let faction = entry.faction?.displayName ?? "System"
-        let phase = entry.phase?.displayName ?? "Setup"
+        let faction = entry.faction?.displayName ?? "系统"
+        let phase = entry.phase?.displayName ?? "开局"
         if let relatedRecordId = entry.relatedRecordId {
-            return "Turn \(entry.turn) - \(faction) - \(phase) - \(relatedRecordId)"
+            return "回合 \(entry.turn) - \(faction) - \(phase) - \(relatedRecordId)"
         }
-        return "Turn \(entry.turn) - \(faction) - \(phase)"
+        return "回合 \(entry.turn) - \(faction) - \(phase)"
     }
 }
 
@@ -121,15 +121,15 @@ private enum LogDisplayCategory {
         let message = entry.message
         let text = message.lowercased()
 
-        if text.contains("retreat") || text.contains("routed") || text.contains("routing") {
+        if text.contains("retreat") || text.contains("routed") || text.contains("routing") || text.contains("撤退") {
             self = .retreat
-        } else if text.contains("reinforce") || text.contains("replacement") || text.contains("replenish") {
+        } else if text.contains("reinforce") || text.contains("replacement") || text.contains("replenish") || text.contains("补员") {
             self = .reinforcement
-        } else if text.contains("encircle") || text.contains("encircled") {
+        } else if text.contains("encircle") || text.contains("encircled") || text.contains("合围") || text.contains("包围") {
             self = .encirclement
-        } else if text.contains("attack") || text.contains("damage") || text.contains("combat") || text.contains("hit") {
+        } else if text.contains("attack") || text.contains("damage") || text.contains("combat") || text.contains("hit") || text.contains("进攻") || text.contains("战斗") {
             self = .combat
-        } else if text.contains("supply") || text.contains("supplied") {
+        } else if text.contains("supply") || text.contains("supplied") || text.contains("粮草") || text.contains("粮道") {
             self = .supply
         } else {
             self = .event
@@ -139,25 +139,25 @@ private enum LogDisplayCategory {
     var displayName: String {
         switch self {
         case .combat:
-            return "Combat"
+            return "战斗"
         case .retreat:
-            return "Retreat"
+            return "撤退"
         case .reinforcement:
-            return "Reinforce"
+            return "补员"
         case .encirclement:
-            return "Encircle"
+            return "合围"
         case .supply:
-            return "Supply"
+            return "粮草"
         case .frontChange:
-            return "Front"
+            return "战线"
         case .theaterChange:
-            return "Theater"
+            return "方面"
         case .regionOwnerChange:
-            return "Region"
+            return "郡县"
         case .diplomacy:
-            return "Diplomacy"
+            return "外交"
         case .event:
-            return "Event"
+            return "事件"
         }
     }
 

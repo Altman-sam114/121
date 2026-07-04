@@ -47,13 +47,13 @@ enum CityLevel: String, Codable, Equatable, CaseIterable {
     var displayName: String {
         switch self {
         case .none:
-            return "None"
+            return "无"
         case .village:
-            return "Village"
+            return "乡邑"
         case .town:
-            return "Town"
+            return "县城"
         case .metropolis:
-            return "Metropolis"
+            return "州郡重镇"
         }
     }
 
@@ -98,15 +98,15 @@ enum ProductionKind: String, Codable, Equatable, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .infantryDivision:
-            return "Infantry Division"
+            return "步卒营"
         case .panzerDivision:
-            return "Panzer Division"
+            return "骑兵军"
         case .motorizedDivision:
-            return "Motorized Division"
+            return "轻骑营"
         case .artilleryDivision:
-            return "Artillery Group"
+            return "器械营"
         case .supplyStockpile:
-            return "Supply Stockpile"
+            return "粮草辎重"
         }
     }
 

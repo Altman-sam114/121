@@ -3,11 +3,29 @@ import Foundation
 enum DirectiveType: String, Codable, Equatable, CaseIterable {
     case defend
     case attack
+
+    var displayName: String {
+        switch self {
+        case .defend:
+            return "固守"
+        case .attack:
+            return "进攻"
+        }
+    }
 }
 
 enum CommandCategory: String, Codable, Equatable, CaseIterable {
     case offense
     case defense
+
+    var displayName: String {
+        switch self {
+        case .offense:
+            return "攻势"
+        case .defense:
+            return "守势"
+        }
+    }
 }
 
 enum TacticName: String, Codable, Equatable, CaseIterable {
@@ -40,6 +58,35 @@ enum TacticName: String, Codable, Equatable, CaseIterable {
              .defenseInDepth,
              .lastStand:
             return .defense
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .standardAttack:
+            return "正攻"
+        case .blitzkrieg:
+            return "疾袭"
+        case .spearhead:
+            return "突击"
+        case .breakthrough:
+            return "破阵"
+        case .pincerMovement:
+            return "合围"
+        case .fireCoverage:
+            return "箭雨压制"
+        case .feint:
+            return "佯攻"
+        case .guerrillaWarfare:
+            return "奇袭"
+        case .holdPosition:
+            return "据守"
+        case .elasticDefense:
+            return "诱敌退守"
+        case .defenseInDepth:
+            return "层层设防"
+        case .lastStand:
+            return "死守"
         }
     }
 }
