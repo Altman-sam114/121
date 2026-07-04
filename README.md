@@ -13,7 +13,7 @@
 - Hex 仍是移动、攻击、占领、视野、补给落点的战术权威。
 - Region 显示为郡县/州，是人口、钱粮、军械、城池和胜利点的战略聚合层。
 - Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
-- 当前阶段已完成官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则，并开始把君主、外交官、太守、军师和武将层接入 AI 回合的 directive 编排；外交官提案可经 `Command.proposeDiplomacy -> RuleEngine` 最小更新外交状态和紧张度，太守建议的生产项可经 `Command.queueProduction -> RuleEngine` 进入生产队列，武将分配已能影响道路机动与交战攻防修正，移动日志会以中文片段记录武将道路机动摘要，交战日志会以中文片段记录武将姓名和攻防修正摘要；道路敌控区、攻击目标、粮道阻断和安全补员邻接判断已统一使用 `Faction.isHostile(to:)`。完整多势力 turn order、完整官渡大地图、借道/贡赋/称臣/修路屯田等完整制度和发布级 UI 将按 v2.4+ 分阶段推进。
+- 当前阶段已完成官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则，并开始把君主、外交官、太守、军师和武将层接入 AI 回合的 directive 编排；外交官提案可经 `Command.proposeDiplomacy -> RuleEngine` 最小更新外交状态和紧张度，太守建议的生产项可经 `Command.queueProduction -> RuleEngine` 进入生产队列，武将分配已能影响道路机动与交战攻防修正，核心移动、交战、姿态、回合和动态方面事件日志已开始中文化；道路敌控区、攻击目标、粮道阻断和安全补员邻接判断已统一使用 `Faction.isHostile(to:)`。完整多势力 turn order、完整官渡大地图、借道/贡赋/称臣/修路屯田等完整制度和发布级 UI 将按 v2.4+ 分阶段推进。
 
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、外交官、太守、军师、武将等 Agent。
@@ -115,7 +115,7 @@ WWIIHexV0/
 - **v2.4 太守内政与生产命令层**：`GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、粮草和生产队列，写入 `GovernorDecisionRecord`；`TurnManager` 会把 `recommendedProductionKind` 转换为 `Command.queueProduction`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 校验资源并排入生产队列。
 - **v2.4 军师目标编排层**：`StrategistAgent.plan` 承接君主姿态，重排目标 region、focus/support/convergence 和强度倾向，写入 `StrategistDecisionRecord`；它不生成底层 `Command`，不直接修改战术状态。
 - **v2.4 武将复核层**：`GeneralAgent.plan` 读取 `FrontZone.generalAssignment` 与武将 registry，对军师后的 `ZoneDirective` 做忠诚/满意度/风格收束，写入 `GeneralDecisionRecord`；它不绕过执行器，也不直接移动军队。
-- **v2.4 武将道路/交战规则**：`GeneralAssignment` 保存武将姓名、风格和技能快照；`GeneralInfluence` 让武将影响 `MovementRules` 的道路机动上限，以及 `CombatRules` 的攻击/防御修正；`CommandExecutor` 会在移动日志中追加中文武将道路机动摘要，并在战斗和反击日志中追加中文武将姓名与攻防修正摘要；道路敌控区、攻击目标、粮道阻断和安全补员邻接统一按 `Faction.isHostile(to:)` 判断，不再靠旧二元 `!= faction` 推断敌我。
+- **v2.4 武将道路/交战规则**：`GeneralAssignment` 保存武将姓名、风格和技能快照；`GeneralInfluence` 让武将影响 `MovementRules` 的道路机动上限，以及 `CombatRules` 的攻击/防御修正；`CommandExecutor` 会在移动日志中追加中文武将道路机动摘要，并在战斗和反击日志中追加中文武将姓名与攻防修正摘要；核心移动、攻击、反击、姿态、回合推进和动态方面事件日志已开始中文化；道路敌控区、攻击目标、粮道阻断和安全补员邻接统一按 `Faction.isHostile(to:)` 判断，不再靠旧二元 `!= faction` 推断敌我。
 
 | 文件 | 职责 | 关键类型/协议 |
 |------|------|--------------|

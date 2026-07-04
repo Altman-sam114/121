@@ -1220,12 +1220,12 @@ struct WarCommandExecutor {
             )
         }
         state.appendEvent(
-            "Hex \(hex.q),\(hex.r) reassigned to dynamic theater \(advancingTheaterId.rawValue).",
+            "格 \(hex.q),\(hex.r) 转入动态方面 \(advancingTheaterId.rawValue)。",
             category: .theaterChange,
             relatedRecordId: relatedRecordId
         )
         state.appendEvent(
-            "Front changed around region \(regionId.rawValue).",
+            "郡县 \(regionId.rawValue) 周边前线发生变化。",
             category: .frontChange,
             relatedRecordId: relatedRecordId
         )

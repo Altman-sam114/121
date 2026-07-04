@@ -57,7 +57,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
-- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名，便于玩家和 Agent C 复判“哪个武将影响了道路与交战”。
+- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；核心移动、攻击、反击、姿态、回合推进和动态方面事件日志已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
@@ -1159,7 +1159,7 @@ oldZoneId = warDeploymentState.zoneId(for: destination)
 如果 oldZoneId != sourceZoneId:
   WarDeploymentManager.advanceHex(destination, from: oldZoneId, to: sourceZoneId)
 
-appendEvent("Hex q,r reassigned to dynamic theater ...")
+appendEvent("格 q,r 转入动态方面 ...")
 ```
 
 `shouldAdvanceDynamicTheater` 当前判断：
@@ -1253,7 +1253,7 @@ activeFaction:
 
 resetActionsForActiveFaction
 StrategicStateBootstrapper.refreshRuntimeState
-appendEvent("Turn advanced ...")
+appendEvent("推进到第 ... 回合，... 行动。")
 ```
 
 ---

@@ -2084,6 +2084,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只中文化武将影响片段，不代表所有事件日志完成中文化。
 - 未做运行时 UI 烟测，日志宽度、换行和实际面板可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 核心行动日志中文化兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `CommandExecutor` 的移动、攻击、反击、兵力损失、自动撤退、额外兵力损失、歼灭、死守、允许撤退和回合推进日志改为中文。
+- `CommandExecutor` 的动态方面推进审计日志改为中文。
+- `WarCommandExecutor` 中同源的动态方面推进和前线变化审计日志改为中文。
+- 保持移动、战斗、撤退、占领、动态方面推进、前线更新和 AI 指令执行规则不变；本轮只改善玩家可见和审计日志文本。
+
+关键系统：
+
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_core_action_log_localization.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不是全项目文案清零；Legacy Agent D、MockAI、部分历史文档、调试文案和更深层审计文本仍可能保留英文。
+- 未做运行时 UI 烟测，日志宽度、换行和实际面板可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

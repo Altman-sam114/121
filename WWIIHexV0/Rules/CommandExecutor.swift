@@ -101,7 +101,7 @@ struct CommandExecutor {
         let attackOutcome = resolveCombatResult(for: defender, damage: damage, in: &state)
         state.appendEvent(
             combatLog(
-                prefix: "\(attacker.name) attacked \(defender.name)",
+                prefix: "\(attacker.name) 攻击 \(defender.name)",
                 subjectName: defender.name,
                 damage: damage,
                 outcome: attackOutcome,
@@ -135,7 +135,7 @@ struct CommandExecutor {
             let counterOutcome = resolveCombatResult(for: updatedAttacker, damage: counterDamage, in: &state)
             state.appendEvent(
                 combatLog(
-                    prefix: "\(updatedDefender.name) counterattacked \(updatedAttacker.name)",
+                    prefix: "\(updatedDefender.name) 反击 \(updatedAttacker.name)",
                     subjectName: updatedAttacker.name,
                     damage: counterDamage,
                     outcome: counterOutcome,
@@ -156,7 +156,7 @@ struct CommandExecutor {
 
         state.divisions[index].retreatMode = .hold
         state.divisions[index].hasActed = true
-        state.appendEvent("\(state.divisions[index].name) set stance to HOLD: no retreat, +20% defense, +20% losses.")
+        state.appendEvent("\(state.divisions[index].name) 进入死守：不主动撤退，防御 +20%，承受损失 +20%。")
     }
 
     private func executeAllowRetreat(divisionId: String, in state: inout GameState) {
@@ -166,7 +166,7 @@ struct CommandExecutor {
 
         state.divisions[index].retreatMode = .retreatable
         state.divisions[index].hasActed = true
-        state.appendEvent("\(state.divisions[index].name) set stance to RETREATABLE: auto-retreat after severe losses.")
+        state.appendEvent("\(state.divisions[index].name) 允许撤退：遭受重创时自动后撤。")
     }
 
     private func executeResupply(divisionId: String, in state: inout GameState) {
@@ -236,7 +236,7 @@ struct CommandExecutor {
 
         resetActionsForActiveFaction(in: &state)
         state = StrategicStateBootstrapper().refreshRuntimeState(state)
-        state.appendEvent("Turn advanced to \(state.turn), \(state.activeFaction.displayName) active.")
+        state.appendEvent("推进到第 \(state.turn) 回合，\(state.activeFaction.displayName) 行动。")
     }
 
     private func resetActionsForActiveFaction(in state: inout GameState) {
@@ -361,7 +361,7 @@ struct CommandExecutor {
         }
 
         state.appendEvent(
-            "Hex \(hex.q),\(hex.r) reassigned to dynamic theater \(advancingTheaterId.rawValue).",
+            "格 \(hex.q),\(hex.r) 转入动态方面 \(advancingTheaterId.rawValue)。",
             category: .theaterChange,
             relatedRecordId: nil
         )
@@ -395,7 +395,7 @@ struct CommandExecutor {
         generalInfluence: GeneralCombatInfluenceSummary
     ) -> String {
         var parts = [
-            "\(prefix): strength -\(damage.strengthDamage)"
+            "\(prefix)：兵力 -\(damage.strengthDamage)"
         ]
 
         if let influence = generalInfluence.logFragment {
@@ -403,18 +403,18 @@ struct CommandExecutor {
         }
 
         if outcome.shouldRetreat {
-            parts.append("\(subjectName) triggered automatic retreat")
+            parts.append("\(subjectName) 触发自动撤退")
         }
 
         if outcome.extraStrengthDamage > 0 {
-            parts.append("extra strength -\(outcome.extraStrengthDamage)")
+            parts.append("额外兵力 -\(outcome.extraStrengthDamage)")
         }
 
         if outcome.wasDestroyed {
-            parts.append("\(subjectName) was destroyed")
+            parts.append("\(subjectName) 被歼灭")
         }
 
-        return parts.joined(separator: "; ") + "."
+        return parts.joined(separator: "；") + "。"
     }
 
     private func movementLog(
@@ -423,14 +423,14 @@ struct CommandExecutor {
         generalInfluence: GeneralMovementInfluenceSummary
     ) -> String {
         var parts = [
-            "\(divisionName) moved to \(destination.q),\(destination.r)"
+            "\(divisionName) 行军至 \(destination.q),\(destination.r)"
         ]
 
         if let influence = generalInfluence.logFragment {
             parts.append(influence)
         }
 
-        return parts.joined(separator: "; ") + "."
+        return parts.joined(separator: "；") + "。"
     }
 }
 

@@ -71,3 +71,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_name_snapshot.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_road_log_audit.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_log_localization.md`
+- `md/prompt/v2.0-三国迁移/v2.4_core_action_log_localization.md`
