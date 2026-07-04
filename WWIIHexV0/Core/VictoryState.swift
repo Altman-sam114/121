@@ -51,6 +51,8 @@ struct VictoryState: Codable, Equatable {
             eliminatedGermanDivisions += 1
         case .allies:
             eliminatedAlliedDivisions += 1
+        case .neutral:
+            break
         }
     }
 }

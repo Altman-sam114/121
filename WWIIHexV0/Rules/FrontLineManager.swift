@@ -413,13 +413,18 @@ struct FrontLineManager {
             }
             let type: FrontLineType = hasEncirclement ? .encirclement : (hasBreakthrough ? .breakthrough : .normal)
             let state = operationalState(maxPressure: maxPressure, hasEncirclement: hasEncirclement)
+            let factionB = finalSegments
+                .compactMap { map.regions[$0.regionB]?.controller }
+                .first { $0.isHostile(to: factionA) }
+                ?? Faction.allCases.first { $0.isHostile(to: factionA) }
+                ?? .neutral
 
             return FrontLine(
-                id: frontLineId(theaterId: theaterId, factionA: factionA, factionB: factionA.opponent),
+                id: frontLineId(theaterId: theaterId, factionA: factionA, factionB: factionB),
                 theaterId: theaterId,
                 opposingTheaterIds: Array(opposingTheaterIds),
                 factionA: factionA,
-                factionB: factionA.opponent,
+                factionB: factionB,
                 segments: finalSegments,
                 type: type,
                 state: state

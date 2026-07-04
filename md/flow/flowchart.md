@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.0 迁移兼容层）
+# 三国棋策 Agent Mermaid 核心流程图（v2.1 中立兼容基础）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.0 阶段图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.1 当前只完成中立兼容基础，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,14 +12,17 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.0 先迁移显示词和兼容合同，不替换规则权威
+  -> v2.1 先迁移显示词和中立兼容基础，不替换规则权威
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行后再同步刷新战略层和 UI
 ```
 
-v2.0 命名边界：
+v2.1 命名边界：
 
 - `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
+- `Faction.neutral` 可解码并用于 region owner/controller；默认 `Faction.allCases` 仍只枚举当前可行动双方，中立不参与回合、经济初始化或 AI 行动。
+- null / 缺省的 `RegionDataSet` owner/controller 会映射到 `.neutral`，不会再 fallback 给 `.allies`。
+- 规则和 AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`，不在新代码里继续依赖二元 `opponent`。
 - `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国地图、多势力枚举、多方外交和君主/军师/武将 Agent schema 后续分阶段实现。

@@ -451,6 +451,8 @@ private extension Faction {
             return "德军"
         case .allies:
             return "盟军"
+        case .neutral:
+            return "中立"
         }
     }
 }

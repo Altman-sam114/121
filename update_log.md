@@ -1209,6 +1209,62 @@ guerrillaWarfare 额外参考 infrastructure
 - 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.1-v2.2 必须分阶段迁移。
 - 未做运行时 UI 和 SpriteKit 截图验证，显示是否完全无残留需后续授权运行检查。
 
+## v2.1 - 中立势力兼容基础与敌对判断去二元化小步
+
+完成日期：2026-07-04
+
+核心更新：
+
+- `Faction` 新增 `.neutral`，用于数据层中立 owner/controller；默认 `Faction.allCases` 仍只枚举当前可行动的 `.germany` / `.allies`，避免中立进入旧二元回合、经济初始化和默认 AI 行动。
+- `RegionDataSet.toRegions()` 修正 owner/controller 缺省或 null 时的旧 fallback：现在映射为 `.neutral`，不再错误回退到 `.allies`。
+- `Faction.opponent` 保留为旧兼容 helper，但规则和 AI 摘要的核心敌对判断改用 `Faction.isHostile(to:)`。
+- `CommandExecutor`、`AppContainer`、`TurnManager`、`VictoryState` 补齐 `.neutral` 分支：中立不触发 AI、不作为默认回合参与者、不计入当前二元胜负统计。
+- `SupplyRules`、`RegionSupplyRules`、`RegionCombatRules`、`WarCommandExecutor`、`AgentContexts`、`ZoneCommanderAgent`、`FrontLineManager` 改用 hostile 判断处理敌控、敌军、敌方目标和前线对手。
+- `TerrainStyle`、`MapEditorView` 增加中立显示 fallback。
+- 新增 `md/prompt/v2.0-三国迁移/v2.1_neutral_faction_foundation.md`，记录本轮目标、非目标、兼容边界和后续风险。
+
+关键系统：
+
+- `WWIIHexV0/Core/Faction.swift`
+- `WWIIHexV0/Data/RegionDataSet.swift`
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `WWIIHexV0/Rules/RegionSupplyRules.swift`
+- `WWIIHexV0/Rules/RegionCombatRules.swift`
+- `WWIIHexV0/Rules/FrontLineManager.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Agents/AgentContexts.swift`
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/Core/VictoryState.swift`
+- `WWIIHexV0/SpriteKit/TerrainStyle.swift`
+- `MapEditor/MapEditorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- SpriteKit 相关 parse 通过：`swiftc -parse WWIIHexV0/Core/Faction.swift WWIIHexV0/Core/Terrain.swift WWIIHexV0/Core/SupplyState.swift WWIIHexV0/Core/WarDeploymentTypes.swift WWIIHexV0/SpriteKit/TerrainStyle.swift`。
+- MapEditor 相关 parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift MapEditor/*.swift`。
+- 文档尾随空白扫描无命中。
+- 冲突标记扫描无命中。
+- `git diff --check` 通过，无输出。
+- 旧默认测试口径扫描无命中。
+- `.opponent` call site 扫描无命中；`Faction.opponent` 仍保留为旧兼容属性。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行重测试。
+
+遗留风险：
+
+- 这只是 v2.1 的中立兼容基础，不是完整多势力迁移。
+- `Faction.neutral` 当前不是 playable power，也没有完整外交国家、turn order 或 AI 策略。
+- `Faction.isHostile(to:)` 当前只是不同且非中立即敌对的轻量规则；后续仍需接 `DiplomacyState` / `PowerRelation`。
+- 默认 JSON、DataLoader、MapEditor、测试和历史文档仍大量保留阿登/二战语义；v2.2 仍需迁移官渡剧本和默认加载入口。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
@@ -1219,7 +1275,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 对比记录：
 
-- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.0 三国迁移兼容层。
+- 项目类型：Swift + SwiftUI + SpriteKit 的 iOS / macOS Xcode 项目，当前处于 v2.1 三国迁移中立兼容基础。
 - 当前分支：`main` 存在并跟踪 `origin/main`；历史分支仍保留，但本轮不纳入默认流程。
 - 当前 Agent C 流程：从本地文档/轻量检查验收升级为下载 GitHub Actions 未加密结果包复判。
 - 当前测试状态：本机默认只跑轻量检查；云端新增 `ci-results` workflow 承接 `xcodebuild build` 重验证。

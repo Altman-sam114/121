@@ -3,14 +3,30 @@ import Foundation
 enum Faction: String, Codable, Equatable, CaseIterable {
     case germany
     case allies
+    case neutral
 
+    /// Active turn factions in the current v2.1 compatibility layer.
+    /// `.neutral` is decodable for data ownership, but it is not a turn participant yet.
+    static let allCases: [Faction] = [.germany, .allies]
+
+    /// Legacy two-side helper. New multi-faction code should use diplomacy relations.
     var opponent: Faction {
         switch self {
         case .germany:
             return .allies
         case .allies:
             return .germany
+        case .neutral:
+            return .neutral
         }
+    }
+
+    var isNeutral: Bool {
+        self == .neutral
+    }
+
+    func isHostile(to other: Faction) -> Bool {
+        self != other && !isNeutral && !other.isNeutral
     }
 
     var legacyDisplayName: String {
@@ -19,6 +35,8 @@ enum Faction: String, Codable, Equatable, CaseIterable {
             return "Germany"
         case .allies:
             return "Allies"
+        case .neutral:
+            return "Neutral"
         }
     }
 
@@ -41,6 +59,8 @@ enum SanguoDisplayLexicon {
             return "曹操势力"
         case .allies:
             return "袁绍势力"
+        case .neutral:
+            return "中立"
         }
     }
 
@@ -50,6 +70,8 @@ enum SanguoDisplayLexicon {
             return "曹军"
         case .allies:
             return "袁军"
+        case .neutral:
+            return "中立"
         }
     }
 }

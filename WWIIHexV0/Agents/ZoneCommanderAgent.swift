@@ -912,6 +912,15 @@ struct MarshalAgentConfig: Codable, Equatable, Identifiable {
                 strategicBias: .balanced,
                 theaterGroupZoneIds: zoneIds
             )
+        case .neutral:
+            return MarshalAgentConfig(
+                id: "marshal_neutral",
+                name: "Neutral Observer",
+                faction: .neutral,
+                personality: "Non-belligerent observer; does not issue operational plans.",
+                strategicBias: .defensive,
+                theaterGroupZoneIds: []
+            )
         }
     }
 }
@@ -986,7 +995,7 @@ struct MarshalBattlefieldSummarizer {
             .map { frontSummary(for: $0, faction: faction, state: state) }
 
         let heldObjectives = objectiveNames(controlledBy: faction, state: state)
-        let lostObjectives = objectiveNames(controlledBy: faction.opponent, state: state)
+        let lostObjectives = objectiveNamesHostile(to: faction, state: state)
         let recentEvents = Array(state.eventLog.suffix(maxRecentEvents)).map(\.message)
 
         return MarshalBattlefieldSummary(
@@ -1021,7 +1030,7 @@ struct MarshalBattlefieldSummarizer {
         let enemyStrength = enemyRegionIds.reduce(0) { total, regionId in
             total + state.divisions
                 .filter {
-                    $0.faction != faction
+                    $0.faction.isHostile(to: faction)
                         && !$0.isDestroyed
                         && $0.location(in: state.map) == regionId
                 }
@@ -1051,7 +1060,7 @@ struct MarshalBattlefieldSummarizer {
             garrisonUnitCount: zone.unitsGarrison.count,
             supplyWarningCount: supplyWarnings,
             keyObjectivesHeld: objectiveNames(in: frontRegionIds, controlledBy: faction, state: state),
-            keyObjectivesLost: objectiveNames(in: enemyRegionIds, controlledBy: faction.opponent, state: state),
+            keyObjectivesLost: objectiveNames(in: enemyRegionIds, hostileTo: faction, state: state),
             status: status(for: zone, ratio: ratio, supplyWarnings: supplyWarnings)
         )
     }
@@ -1131,7 +1140,7 @@ struct MarshalBattlefieldSummarizer {
 
     private func hasEnemyPresence(in regionId: RegionId, zone: FrontZone, state: GameState) -> Bool {
         state.divisions.contains { division in
-            division.faction != zone.faction
+            division.faction.isHostile(to: zone.faction)
                 && !division.isDestroyed
                 && division.location(in: state.map) == regionId
         }
@@ -1140,6 +1149,13 @@ struct MarshalBattlefieldSummarizer {
     private func objectiveNames(controlledBy faction: Faction, state: GameState) -> [String] {
         state.map.objectives
             .filter { state.map.tile(at: $0.coord)?.controller == faction }
+            .map(\.name)
+            .sorted()
+    }
+
+    private func objectiveNamesHostile(to faction: Faction, state: GameState) -> [String] {
+        state.map.objectives
+            .filter { state.map.tile(at: $0.coord)?.controller?.isHostile(to: faction) ?? false }
             .map(\.name)
             .sorted()
     }
@@ -1153,6 +1169,24 @@ struct MarshalBattlefieldSummarizer {
         return state.map.objectives
             .filter { objective in
                 guard state.map.tile(at: objective.coord)?.controller == faction,
+                      let regionId = state.map.region(for: objective.coord) else {
+                    return false
+                }
+                return regionSet.contains(regionId)
+            }
+            .map(\.name)
+            .sorted()
+    }
+
+    private func objectiveNames(
+        in regionIds: [RegionId],
+        hostileTo faction: Faction,
+        state: GameState
+    ) -> [String] {
+        let regionSet = Set(regionIds)
+        return state.map.objectives
+            .filter { objective in
+                guard state.map.tile(at: objective.coord)?.controller?.isHostile(to: faction) == true,
                       let regionId = state.map.region(for: objective.coord) else {
                     return false
                 }

@@ -650,6 +650,8 @@ final class AppContainer: ObservableObject {
             return phase == .germanAI
         case .allies:
             return observerModeEnabled && phase == .alliedPlayer
+        case .neutral:
+            return false
         }
     }
 
@@ -704,6 +706,8 @@ final class AppContainer: ObservableObject {
             return state.phase == .germanAI
         case .allies:
             return observerEnabled && state.phase == .alliedPlayer
+        case .neutral:
+            return false
         }
     }
 
@@ -726,6 +730,14 @@ final class AppContainer: ObservableObject {
                 faction: .allies,
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
+            )
+        case .neutral:
+            agent = GameAgent.sample(
+                id: "neutral_observer",
+                name: "Neutral Observer",
+                faction: .neutral,
+                role: .armyCommander,
+                assignedDivisionIds: []
             )
         }
 

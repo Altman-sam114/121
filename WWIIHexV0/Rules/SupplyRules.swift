@@ -134,7 +134,7 @@ struct SupplyRules {
             return false
         }
 
-        if tile.isCapturable && tile.controller == faction.opponent {
+        if tile.isCapturable && (tile.controller?.isHostile(to: faction) ?? false) {
             return false
         }
 
@@ -214,7 +214,7 @@ struct SupplyRules {
             return false
         }
 
-        if tile.isCapturable && tile.controller == faction.opponent {
+        if tile.isCapturable && (tile.controller?.isHostile(to: faction) ?? false) {
             return false
         }
 

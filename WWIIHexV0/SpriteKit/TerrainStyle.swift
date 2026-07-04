@@ -44,6 +44,8 @@ enum TerrainStyle {
             return SKColor(red: 0.23, green: 0.24, blue: 0.25, alpha: 1)
         case .allies:
             return SKColor(red: 0.12, green: 0.36, blue: 0.68, alpha: 1)
+        case .neutral:
+            return SKColor(red: 0.48, green: 0.44, blue: 0.36, alpha: 1)
         }
     }
 
@@ -53,6 +55,8 @@ enum TerrainStyle {
             return SKColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1)
         case .allies:
             return SKColor(red: 0.04, green: 0.18, blue: 0.36, alpha: 1)
+        case .neutral:
+            return SKColor(red: 0.22, green: 0.20, blue: 0.17, alpha: 1)
         }
     }
 
@@ -70,6 +74,8 @@ enum TerrainStyle {
             return SKColor(red: 0.20, green: 0.85, blue: 0.45, alpha: 1)
         case (.allies, .garrisonUnit):
             return SKColor(red: 0.42, green: 0.38, blue: 0.95, alpha: 1)
+        case (.neutral, .frontUnit), (.neutral, .depthUnit), (.neutral, .garrisonUnit):
+            return SKColor(red: 0.58, green: 0.53, blue: 0.43, alpha: 1)
         }
     }
 
@@ -79,6 +85,8 @@ enum TerrainStyle {
             return SKColor(red: 0.08, green: 0.08, blue: 0.08, alpha: 1)
         case .allies:
             return SKColor(red: 0.04, green: 0.20, blue: 0.62, alpha: 1)
+        case .neutral:
+            return SKColor(red: 0.50, green: 0.45, blue: 0.34, alpha: 1)
         case nil:
             return SKColor(red: 0.88, green: 0.82, blue: 0.45, alpha: 1)
         }

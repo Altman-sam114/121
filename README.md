@@ -1,6 +1,6 @@
 # 三国棋策 Agent — iOS / macOS AI Agent 战棋迁移版
 
-> **当前状态：v2.0 三国迁移兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division` 等源码兼容名，但主界面显示词、资源名、军队/武将/郡县/方面术语已开始迁移到三国语义。底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
+> **当前状态：v2.1 三国迁移中立兼容基础进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division` 等源码兼容名，但已新增 `Faction.neutral` 承接数据层中立归属，主界面显示词、资源名、军队/武将/郡县/方面术语已开始迁移到三国语义。底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
 
 ---
 
@@ -13,7 +13,7 @@
 - Hex 仍是移动、攻击、占领、视野、补给落点的战术权威。
 - Region 显示为郡县/州，是人口、钱粮、军械、城池和胜利点的战略聚合层。
 - Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
-- 当前阶段只做兼容显示层和迁移合同；多势力、三国地图、围城、正式君主/军师/武将 Agent 将按 v2.1+ 分阶段推进。
+- 当前阶段只做兼容显示层、中立归属和敌对判断基础；完整多势力、三国地图、围城、正式君主/军师/武将 Agent 将按 v2.1+ 分阶段推进。
 
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、军师、太守、武将等 Agent。
@@ -238,7 +238,7 @@ WWIIHexV0/
 **省份设计：**
 - 德方控制：german_east_depot（补给源）、eifel_approach、schnee_eifel
 - 盟方控制：allied_west_depot（补给源）、bastogne（主目标 VP5）、bastogne_fortress、st_vith、western_approach
-- 中立（原 allies 领土中立化，owner/controller null 映射回退 .allies）：meuse_approach、houffalize、luxembourg_road、ardennes_forest_north/central/south、northern_ridge、southern_ridge、northern_frontier
+- 中立（owner/controller null 映射为 `.neutral`，不再回退到任一参战方）：meuse_approach、houffalize、luxembourg_road、ardennes_forest_north/central/south、northern_ridge、southern_ridge、northern_frontier
 - 路径：german_east_depot→bastogne=2，allied_west_depot→bastogne=3
 
 | `Tests/ArdennesV02DataTests.swift` | 17 测试：解码/region 数/hexToRegion 覆盖/validate/邻接双向/repHex/路径连通/补给源/目标/关键省/控制权 |

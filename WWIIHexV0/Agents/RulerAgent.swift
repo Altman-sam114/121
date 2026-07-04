@@ -358,6 +358,16 @@ extension RulerAgent {
                 coalitionDiscipline: 82,
                 riskTolerance: 48
             )
+        case .neutral:
+            config = RulerAgentConfig(
+                id: country?.rulerAgentId ?? "ruler_neutral",
+                name: "Neutral Council",
+                faction: faction,
+                countryId: country?.id,
+                aggression: 0,
+                coalitionDiscipline: 100,
+                riskTolerance: 0
+            )
         }
         return RulerAgent(config: config)
     }
