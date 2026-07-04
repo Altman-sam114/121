@@ -3,6 +3,7 @@ import SwiftUI
 struct AgentPanelView: View {
     let record: AgentDecisionRecord?
     let rulerRecord: RulerDecisionRecord?
+    let governorRecord: GovernorDecisionRecord?
     let strategistRecord: StrategistDecisionRecord?
     let generalRecords: [GeneralDecisionRecord]
     let directiveRecords: [WarDirectiveRecord]
@@ -10,12 +11,14 @@ struct AgentPanelView: View {
     init(
         record: AgentDecisionRecord?,
         rulerRecord: RulerDecisionRecord? = nil,
+        governorRecord: GovernorDecisionRecord? = nil,
         strategistRecord: StrategistDecisionRecord? = nil,
         generalRecords: [GeneralDecisionRecord] = [],
         directiveRecords: [WarDirectiveRecord] = []
     ) {
         self.record = record
         self.rulerRecord = rulerRecord
+        self.governorRecord = governorRecord
         self.strategistRecord = strategistRecord
         self.generalRecords = generalRecords
         self.directiveRecords = directiveRecords
@@ -59,6 +62,30 @@ struct AgentPanelView: View {
                         Text(zoneId.rawValue)
                     }
                 }
+            }
+
+            if let governorRecord {
+                Divider()
+                LabeledContent("太守") {
+                    Text(governorRecord.governorAgentId)
+                }
+                LabeledContent("内政") {
+                    Text(governorRecord.focus.displayName)
+                }
+                if let kind = governorRecord.recommendedProductionKind {
+                    LabeledContent("建议") {
+                        Text(kind.displayName)
+                    }
+                }
+                if !governorRecord.focusRegionIds.isEmpty {
+                    LabeledContent("郡县") {
+                        Text(governorRecord.focusRegionIds.map(\.rawValue).joined(separator: ", "))
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                Text(governorRecord.rationale)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if let strategistRecord {

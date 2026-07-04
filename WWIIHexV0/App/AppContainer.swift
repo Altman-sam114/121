@@ -72,6 +72,7 @@ final class AppContainer: ObservableObject {
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: bootstrappedState, registry: generalRegistry),
             marshalAgent: Self.buildMarshalAgent(faction: .germany, state: bootstrappedState),
+            governorAgent: GovernorAgent.automatic(for: .germany, in: bootstrappedState),
             generalAgent: GeneralAgent(registry: generalRegistry)
         )
         return AppContainer(

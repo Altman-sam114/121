@@ -83,6 +83,40 @@ struct StrategistDecisionRecord: Identifiable, Codable, Equatable {
     }
 }
 
+struct GovernorDecisionRecord: Identifiable, Codable, Equatable {
+    let id: String
+    let turn: Int
+    let faction: Faction
+    let governorAgentId: String
+    let focus: GovernorDomesticFocus
+    let focusRegionIds: [RegionId]
+    let recommendedProductionKind: ProductionKind?
+    let resourceSummary: String
+    let rationale: String
+
+    init(
+        id: String,
+        turn: Int,
+        faction: Faction,
+        governorAgentId: String,
+        focus: GovernorDomesticFocus,
+        focusRegionIds: [RegionId],
+        recommendedProductionKind: ProductionKind?,
+        resourceSummary: String,
+        rationale: String
+    ) {
+        self.id = id
+        self.turn = turn
+        self.faction = faction
+        self.governorAgentId = governorAgentId
+        self.focus = focus
+        self.focusRegionIds = focusRegionIds
+        self.recommendedProductionKind = recommendedProductionKind
+        self.resourceSummary = resourceSummary
+        self.rationale = rationale
+    }
+}
+
 struct GeneralDecisionRecord: Identifiable, Codable, Equatable {
     let id: String
     let turn: Int

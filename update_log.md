@@ -1693,6 +1693,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 武将攻防修正当前是小幅整数加成，未做本机运行时 AI 回合烟测；真实行为正确性等待云端 CI 和后续 Agent C artifact 复判。
 - 三国新增势力武将可进入数据和分配种子，但完整多势力 turn order 仍未迁移。
 
+## v2.4 - 太守内政建议审计兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 deterministic `GovernorAgent`，在君主姿态之后、军师目标编排之前读取经济总账、受控郡县、道路、粮草、补给状态和生产队列。
+- 新增 `GovernorDomesticFocus` 和 `GovernorDecisionRecord`，记录征兵、修路、屯田、治安或补给等内政重点、重点郡县、建议生产和 rationale。
+- `GameState` 新增 `governorRecords`，旧存档缺字段时默认空数组兼容，并提供 `latestGovernorRecord` 与 append helper。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 路径中调用 `GovernorAgent.plan`，把太守建议写入事件日志、AI raw JSON 和 `DirectiveEnvelope.theaterContext`。
+- `AgentPanelView` 显示太守 agent、内政重点、重点郡县、建议生产和理由。
+- `AppContainer.bootstrap()` 显式传入默认太守 agent，`WWIIHexV0.xcodeproj/project.pbxproj` 将 `GovernorAgent.swift` 接入主目标源码。
+- 文档状态更新为 v2.4 君主/太守/军师/武将指令编排、道路和交战兼容层。
+
+关键系统：
+
+- `WWIIHexV0/Agents/GovernorAgent.swift`
+- `WWIIHexV0/Core/GameState.swift`
+- `WWIIHexV0/Core/WarDirectiveRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0.xcodeproj/project.pbxproj`
+- `md/prompt/v2.0-三国迁移/v2.4_governor_domestic_audit.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift`。
+- `plutil -lint WWIIHexV0.xcodeproj/project.pbxproj`：通过。
+- 文档和改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只完成太守内政建议与审计，不自动执行生产、不实现修路/屯田/治安状态变化，也不新增完整内政 directive validator / executor。
+- 太守建议只进入 `DirectiveEnvelope.theaterContext`、AI raw JSON 和 UI 审计；后续若要真实排产，必须经 `Command.queueProduction -> CommandValidator -> EconomyRules.queueProduction`。
+- 外交 Agent、完整多势力 turn order 和发布级 UI 仍待后续版本推进。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -17,6 +17,7 @@ struct GameState: Codable, Equatable {
     var selectedUnitSummary: String?
     var eventLog: [GameLogEntry]
     var warDirectiveRecords: [WarDirectiveRecord]
+    var governorRecords: [GovernorDecisionRecord]
     var strategistRecords: [StrategistDecisionRecord]
     var generalRecords: [GeneralDecisionRecord]
     var playerCommandState: PlayerCommandState
@@ -38,6 +39,7 @@ struct GameState: Codable, Equatable {
         selectedUnitSummary: String?,
         eventLog: [GameLogEntry],
         warDirectiveRecords: [WarDirectiveRecord] = [],
+        governorRecords: [GovernorDecisionRecord] = [],
         strategistRecords: [StrategistDecisionRecord] = [],
         generalRecords: [GeneralDecisionRecord] = [],
         playerCommandState: PlayerCommandState = .empty
@@ -58,6 +60,7 @@ struct GameState: Codable, Equatable {
         self.selectedUnitSummary = selectedUnitSummary
         self.eventLog = eventLog
         self.warDirectiveRecords = warDirectiveRecords
+        self.governorRecords = governorRecords
         self.strategistRecords = strategistRecords
         self.generalRecords = generalRecords
         self.playerCommandState = playerCommandState
@@ -158,6 +161,7 @@ struct GameState: Codable, Equatable {
         case selectedUnitSummary
         case eventLog
         case warDirectiveRecords
+        case governorRecords
         case strategistRecords
         case generalRecords
         case playerCommandState
@@ -182,10 +186,15 @@ struct GameState: Codable, Equatable {
             selectedUnitSummary: try container.decodeIfPresent(String.self, forKey: .selectedUnitSummary),
             eventLog: try container.decode([GameLogEntry].self, forKey: .eventLog),
             warDirectiveRecords: try container.decodeIfPresent([WarDirectiveRecord].self, forKey: .warDirectiveRecords) ?? [],
+            governorRecords: try container.decodeIfPresent([GovernorDecisionRecord].self, forKey: .governorRecords) ?? [],
             strategistRecords: try container.decodeIfPresent([StrategistDecisionRecord].self, forKey: .strategistRecords) ?? [],
             generalRecords: try container.decodeIfPresent([GeneralDecisionRecord].self, forKey: .generalRecords) ?? [],
             playerCommandState: try container.decodeIfPresent(PlayerCommandState.self, forKey: .playerCommandState) ?? .empty
         )
+    }
+
+    var latestGovernorRecord: GovernorDecisionRecord? {
+        governorRecords.last
     }
 
     var latestStrategistRecord: StrategistDecisionRecord? {
@@ -226,6 +235,13 @@ struct GameState: Codable, Equatable {
         strategistRecords.append(record)
         if strategistRecords.count > 40 {
             strategistRecords.removeFirst(strategistRecords.count - 40)
+        }
+    }
+
+    mutating func appendGovernorRecord(_ record: GovernorDecisionRecord) {
+        governorRecords.append(record)
+        if governorRecords.count > 40 {
+            governorRecords.removeFirst(governorRecords.count - 40)
         }
     }
 
