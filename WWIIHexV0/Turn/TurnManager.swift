@@ -30,6 +30,7 @@ struct TurnManager {
     let commanderPool: TheaterCommanderPool?
     let marshalAgent: MarshalAgent?
     let rulerAgent: RulerAgent?
+    let strategistAgent: StrategistAgent?
     let warCommandExecutor: WarCommandExecutor
 
     init(
@@ -43,6 +44,7 @@ struct TurnManager {
         commanderPool: TheaterCommanderPool? = nil,
         marshalAgent: MarshalAgent? = nil,
         rulerAgent: RulerAgent? = nil,
+        strategistAgent: StrategistAgent? = nil,
         warCommandExecutor: WarCommandExecutor? = nil
     ) {
         self.agent = agent
@@ -55,6 +57,7 @@ struct TurnManager {
         self.commanderPool = commanderPool
         self.marshalAgent = marshalAgent
         self.rulerAgent = rulerAgent
+        self.strategistAgent = strategistAgent
         self.warCommandExecutor = warCommandExecutor ?? WarCommandExecutor(commandHandler: commandHandler)
     }
 
@@ -190,16 +193,22 @@ struct TurnManager {
             let diagnostics = directiveDiagnostics(for: faction, state: state)
             let envelope = makeZoneDirectiveEnvelope(state: state, faction: faction, issuerId: agent.id)
             let rulerAdjustment = applyRulerAdjustment(to: envelope, state: state, faction: faction)
-            let rawJSON = try Self.canonicalDirectiveJSON(rulerAdjustment.envelope)
-            return executeDirectiveEnvelope(
-                rulerAdjustment.envelope,
+            let strategistAdjustment = applyStrategistPlanning(
+                to: rulerAdjustment.envelope,
                 state: rulerAdjustment.state,
+                faction: faction,
+                rulerRecord: rulerAdjustment.record
+            )
+            let rawJSON = try Self.canonicalDirectiveJSON(strategistAdjustment.envelope)
+            return executeDirectiveEnvelope(
+                strategistAdjustment.envelope,
+                state: strategistAdjustment.state,
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: "ruler-shaped zone directives",
-                providerSuffix: "RulerDirective",
-                additionalDiagnostics: diagnostics + rulerAdjustment.diagnostics
+                parsedIntent: "ruler-and-strategist-shaped zone directives",
+                providerSuffix: "RulerStrategistDirective",
+                additionalDiagnostics: diagnostics + rulerAdjustment.diagnostics + strategistAdjustment.diagnostics
             )
         } catch {
             return AgentTurnOutcome(
@@ -235,23 +244,31 @@ struct TurnManager {
             let compiledJSON = try Self.canonicalDirectiveJSON(resolution.directiveEnvelope)
             let rulerAdjustment = applyRulerAdjustment(to: resolution.directiveEnvelope, state: state, faction: faction)
             let rulerJSON = try Self.canonicalDirectiveJSON(rulerAdjustment.envelope)
+            let strategistAdjustment = applyStrategistPlanning(
+                to: rulerAdjustment.envelope,
+                state: rulerAdjustment.state,
+                faction: faction,
+                rulerRecord: rulerAdjustment.record
+            )
+            let strategistJSON = try Self.canonicalDirectiveJSON(strategistAdjustment.envelope)
             let rawJSON = [
                 resolution.rawTheaterJSON,
                 "Compiled ZoneDirective JSON:\n\(compiledJSON)",
-                "Ruler-adjusted ZoneDirective JSON:\n\(rulerJSON)"
+                "Ruler-adjusted ZoneDirective JSON:\n\(rulerJSON)",
+                "Strategist-adjusted ZoneDirective JSON:\n\(strategistJSON)"
             ]
             .compactMap { $0 }
             .joined(separator: "\n\n")
 
             return executeDirectiveEnvelope(
-                rulerAdjustment.envelope,
-                state: rulerAdjustment.state,
+                strategistAdjustment.envelope,
+                state: strategistAdjustment.state,
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "ruler-shaped marshal directives",
-                providerSuffix: "RulerMarshalDirective",
-                additionalDiagnostics: diagnostics + resolution.diagnostics + rulerAdjustment.diagnostics
+                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "ruler-and-strategist-shaped marshal directives",
+                providerSuffix: "RulerStrategistMarshalDirective",
+                additionalDiagnostics: diagnostics + resolution.diagnostics + rulerAdjustment.diagnostics + strategistAdjustment.diagnostics
             )
         } catch {
             return AgentTurnOutcome(
@@ -285,7 +302,7 @@ struct TurnManager {
         to envelope: DirectiveEnvelope,
         state: GameState,
         faction: Faction
-    ) -> (state: GameState, envelope: DirectiveEnvelope, diagnostics: [String]) {
+    ) -> (state: GameState, envelope: DirectiveEnvelope, record: RulerDecisionRecord, diagnostics: [String]) {
         let ruler = rulerAgent ?? RulerAgent.automatic(for: faction, in: state)
         let adjustment = ruler.adjust(envelope: envelope, in: state)
         var nextState = state
@@ -298,8 +315,35 @@ struct TurnManager {
         return (
             state: nextState,
             envelope: adjustment.envelope,
+            record: adjustment.record,
             diagnostics: [
                 "君主 \(adjustment.record.rulerAgentId) 以\(adjustment.record.posture.displayName)姿态塑形指令；优先防区 \(targetSummary)。"
+            ]
+        )
+    }
+
+    private func applyStrategistPlanning(
+        to envelope: DirectiveEnvelope,
+        state: GameState,
+        faction: Faction,
+        rulerRecord: RulerDecisionRecord?
+    ) -> (state: GameState, envelope: DirectiveEnvelope, record: StrategistDecisionRecord, diagnostics: [String]) {
+        let strategist = strategistAgent ?? StrategistAgent.automatic(for: faction, in: state)
+        let adjustment = strategist.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
+        var nextState = state
+        nextState.appendStrategistRecord(adjustment.record)
+        nextState.appendEvent(
+            "\(adjustment.record.strategistAgentId) 编排 \(faction.displayName) 军令：\(adjustment.record.intent)",
+            category: .event,
+            relatedRecordId: adjustment.record.id
+        )
+        let targetSummary = adjustment.record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        return (
+            state: nextState,
+            envelope: adjustment.envelope,
+            record: adjustment.record,
+            diagnostics: [
+                "军师 \(adjustment.record.strategistAgentId) 编排目标 \(targetSummary.isEmpty ? "无" : targetSummary)。"
             ]
         )
     }

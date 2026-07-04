@@ -3,15 +3,18 @@ import SwiftUI
 struct AgentPanelView: View {
     let record: AgentDecisionRecord?
     let rulerRecord: RulerDecisionRecord?
+    let strategistRecord: StrategistDecisionRecord?
     let directiveRecords: [WarDirectiveRecord]
 
     init(
         record: AgentDecisionRecord?,
         rulerRecord: RulerDecisionRecord? = nil,
+        strategistRecord: StrategistDecisionRecord? = nil,
         directiveRecords: [WarDirectiveRecord] = []
     ) {
         self.record = record
         self.rulerRecord = rulerRecord
+        self.strategistRecord = strategistRecord
         self.directiveRecords = directiveRecords
     }
 
@@ -53,6 +56,27 @@ struct AgentPanelView: View {
                         Text(zoneId.rawValue)
                     }
                 }
+            }
+
+            if let strategistRecord {
+                Divider()
+                LabeledContent("军师") {
+                    Text(strategistRecord.strategistAgentId)
+                }
+                if let zoneId = strategistRecord.selectedFrontZoneId {
+                    LabeledContent("主防区") {
+                        Text(zoneId.rawValue)
+                    }
+                }
+                if !strategistRecord.focusRegionIds.isEmpty {
+                    LabeledContent("目标") {
+                        Text(strategistRecord.focusRegionIds.map(\.rawValue).joined(separator: ", "))
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                Text(strategistRecord.rationale)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if let record, !record.commandResults.isEmpty {

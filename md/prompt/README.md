@@ -59,3 +59,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.3_siege_grain_rules.md`
 - `md/prompt/v2.0-三国迁移/v2.3_unit_counter_rules.md`
 - `md/prompt/v2.0-三国迁移/v2.4_ruler_posture_shaping.md`
+- `md/prompt/v2.0-三国迁移/v2.4_strategist_directive_planning.md`

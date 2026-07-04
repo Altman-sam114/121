@@ -17,6 +17,7 @@ struct GameState: Codable, Equatable {
     var selectedUnitSummary: String?
     var eventLog: [GameLogEntry]
     var warDirectiveRecords: [WarDirectiveRecord]
+    var strategistRecords: [StrategistDecisionRecord]
     var playerCommandState: PlayerCommandState
 
     init(
@@ -36,6 +37,7 @@ struct GameState: Codable, Equatable {
         selectedUnitSummary: String?,
         eventLog: [GameLogEntry],
         warDirectiveRecords: [WarDirectiveRecord] = [],
+        strategistRecords: [StrategistDecisionRecord] = [],
         playerCommandState: PlayerCommandState = .empty
     ) {
         self.scenarioId = scenarioId
@@ -54,6 +56,7 @@ struct GameState: Codable, Equatable {
         self.selectedUnitSummary = selectedUnitSummary
         self.eventLog = eventLog
         self.warDirectiveRecords = warDirectiveRecords
+        self.strategistRecords = strategistRecords
         self.playerCommandState = playerCommandState
     }
 
@@ -152,6 +155,7 @@ struct GameState: Codable, Equatable {
         case selectedUnitSummary
         case eventLog
         case warDirectiveRecords
+        case strategistRecords
         case playerCommandState
     }
 
@@ -174,8 +178,13 @@ struct GameState: Codable, Equatable {
             selectedUnitSummary: try container.decodeIfPresent(String.self, forKey: .selectedUnitSummary),
             eventLog: try container.decode([GameLogEntry].self, forKey: .eventLog),
             warDirectiveRecords: try container.decodeIfPresent([WarDirectiveRecord].self, forKey: .warDirectiveRecords) ?? [],
+            strategistRecords: try container.decodeIfPresent([StrategistDecisionRecord].self, forKey: .strategistRecords) ?? [],
             playerCommandState: try container.decodeIfPresent(PlayerCommandState.self, forKey: .playerCommandState) ?? .empty
         )
+    }
+
+    var latestStrategistRecord: StrategistDecisionRecord? {
+        strategistRecords.last
     }
 
     func division(id: String) -> Division? {
@@ -199,6 +208,13 @@ struct GameState: Codable, Equatable {
 
     mutating func removeDivision(id: String) {
         divisions.removeAll { $0.id == id }
+    }
+
+    mutating func appendStrategistRecord(_ record: StrategistDecisionRecord) {
+        strategistRecords.append(record)
+        if strategistRecords.count > 40 {
+            strategistRecords.removeFirst(strategistRecords.count - 40)
+        }
     }
 
     mutating func appendEvent(
