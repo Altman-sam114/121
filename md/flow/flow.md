@@ -64,7 +64,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
-- `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、补战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
+- `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、优先从已有官道或外部官道入口连缀最多两格战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格和防区压力复核军令，写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
 - `CommandValidationError` 保留英文 rawValue 作为 Codable / 测试兼容身份，同时提供中文 `displayName`；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 使用中文展示值写入 `CommandResult`、事件日志、`WarDirectiveRecord.diagnostics` 和 AI 面板命令结果。
@@ -442,7 +442,7 @@ MarshalAgent / TheaterCommanderPool
 - 选择征兵、修路、屯田、治安或补给等内政重点。
 - 生成 `GovernorDecisionRecord`，写入 `GameState.governorRecords`，并追加 supply 事件日志。
 - 把太守建议追加到 `DirectiveEnvelope.theaterContext`，供军师、武将、AI 面板和 raw JSON 审计读取。
-- `TurnManager` 会将 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，交给 `RuleEngine` 校验执行；执行时消耗资源、最多补两格战术道路，并把该郡县基础设施提升 1 点，上限 5。
+- `TurnManager` 会将 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，交给 `RuleEngine` 校验执行；执行时消耗资源，优先从已有官道、外部官道入口或郡县核心连缀最多两格战术道路，并把该郡县基础设施提升 1 点，上限 5。
 - `TurnManager` 会将 `recommendedProductionKind` 转换为 `Command.queueProduction`，交给 `RuleEngine` 校验执行；修路和生产的执行结果都会进入 `AgentDecisionRecord.commandResults`。
 - 当前内政执行只覆盖修路最小命令和既有生产队列；屯田和治安仍只作为审计重点，不修改郡县状态。
 
@@ -1339,7 +1339,7 @@ TheaterDirective
 
 随后 `TurnManager.applyDiplomatPlanning` 调用 `DiplomatAgent.plan`。它承接君主姿态，读取国家、集团、关系、紧张度和战线压力，提出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等外交提案，并写入 `DiplomatDecisionRecord`。如果提案包含源国家和目标国家，`TurnManager` 会生成 `Command.proposeDiplomacy` 并交给 `commandHandler.execute`，由 `CommandValidator` 校验国家归属、关系和提案合法性，再由 `CommandExecutor` 最小更新 `DiplomaticRelation.status/tension`。这个阶段不执行资源转移、借道通行或完整臣属制度。
 
-随后 `TurnManager.applyGovernorPlanning` 调用 `GovernorAgent.plan`。它承接君主姿态和外交上下文，读取经济总账、郡县、道路、补给和生产队列，选择征兵、修路、屯田、治安或补给重点，并写入 `GovernorDecisionRecord`。如果焦点是 `roadRepair` 且有重点郡县，`TurnManager` 会生成 `Command.improveRoad` 并交给 `commandHandler.execute`，由 `CommandValidator` 校验阶段、控制权、道路需求和资源，再由 `CommandExecutor` 消耗资源、补战术道路并提升基础设施。如果记录包含 `recommendedProductionKind`，`TurnManager` 仍会生成 `Command.queueProduction`，经同一规则链路校验资源并排入生产队列。这个阶段不执行屯田或治安状态写入。
+随后 `TurnManager.applyGovernorPlanning` 调用 `GovernorAgent.plan`。它承接君主姿态和外交上下文，读取经济总账、郡县、道路、补给和生产队列，选择征兵、修路、屯田、治安或补给重点，并写入 `GovernorDecisionRecord`。如果焦点是 `roadRepair` 且有重点郡县，`TurnManager` 会生成 `Command.improveRoad` 并交给 `commandHandler.execute`，由 `CommandValidator` 校验阶段、控制权、道路需求和资源，再由 `CommandExecutor` 消耗资源，优先从已有官道、外部官道入口或郡县核心连缀最多两格战术道路并提升基础设施。如果记录包含 `recommendedProductionKind`，`TurnManager` 仍会生成 `Command.queueProduction`，经同一规则链路校验资源并排入生产队列。这个阶段不执行屯田或治安状态写入。
 
 随后 `TurnManager.applyStrategistPlanning` 调用 `StrategistAgent.plan`。它承接君主姿态和太守上下文，选择主防区，重排攻击目标 region，补齐 focus/support/convergence 参数，并写入 `StrategistDecisionRecord`。这个阶段仍只返回新的 `DirectiveEnvelope`，不执行底层命令，也不直接修改战术权威状态。
 

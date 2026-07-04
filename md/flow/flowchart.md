@@ -35,7 +35,7 @@ v2.4 命名边界：
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
 - `CommandExecutor` 会把中文武将姓名、道路机动、交战审计和攻防修正摘要写入移动、攻击和反击日志；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
-- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。
 
@@ -73,7 +73,7 @@ flowchart TD
     DIPLO["外交提案<br/>DiplomatAgent.plan<br/>同盟/停战/借道/称臣/讨伐檄文"]:::command
     DCMD["外交命令<br/>Command.proposeDiplomacy<br/>经规则层更新关系/紧张度"]:::command
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给审计"]:::command
-    ROAD["太守修路命令<br/>Command.improveRoad<br/>经规则层修缮道路和基础设施"]:::command
+    ROAD["太守修路命令<br/>Command.improveRoad<br/>经规则层连通优先修缮道路和基础设施"]:::command
     GCMD["太守生产命令<br/>Command.queueProduction<br/>经规则层校验资源并排产"]:::command
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>重排目标 region，写 StrategistDecisionRecord"]:::command
     GENA["武将军令复核<br/>GeneralAgent.plan<br/>按武将分配复核投入，写 GeneralDecisionRecord"]:::command
@@ -296,7 +296,7 @@ flowchart TD
     DREC["外交审计<br/>DiplomatDecisionRecord + CommandResultSummary<br/>记录提案、对象、中文执行结果"]:::ui
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给"]:::ai
     RCMD["太守修路命令<br/>Command.improveRoad<br/>校验控制权/资源并修缮道路"]:::command
-    RRE["修路规则执行<br/>RuleEngine.execute<br/>补战术道路、提升基础设施、扣资源"]:::rules
+    RRE["修路规则执行<br/>RuleEngine.execute<br/>连缀官道、提升基础设施、扣资源"]:::rules
     GCMD["太守生产命令<br/>Command.queueProduction<br/>校验资源并加入生产队列"]:::command
     GRE["生产规则执行<br/>RuleEngine.execute<br/>扣资源、追加 ProductionOrder"]:::rules
     GOVREC["太守审计<br/>GovernorDecisionRecord + CommandResultSummary<br/>记录内政重点、建议和中文执行结果"]:::ui

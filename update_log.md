@@ -2255,6 +2255,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只做事件日志审计，不实现发布级战报面板、图标化战斗解释、士气、疲劳或单挑。
 - 未做运行时 UI 烟测，事件日志换行、宽度和实际战报可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 太守连通修路兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `EconomyRules.improveRoad` 保持原有资源成本、基础设施 +1 和每次最多补两格道路的执行边界。
+- 修路目标从单纯按高价值 hex 排序，升级为优先从已有官道、外部相邻官道入口或郡县核心出发，补一段连续道路。
+- 新增内部 BFS 路径选择与 deterministic 坐标排序，只在当前势力控制、可通行且属于目标郡县的 hex 内规划。
+- 找不到连通方案时仍回退到原高价值目标排序，避免合法修路命令无效果。
+- 保持太守 Agent 不直接修改 `GameState`；道路和基础设施变化仍只能经 `Command.improveRoad -> CommandValidator -> CommandExecutor -> EconomyRules` 执行。
+
+关键系统：
+
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_governor_connected_road_repair.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮仍不是完整跨郡县主干路规划；复杂道路网络需要多轮太守修路逐步形成。
+- 未做运行时 UI 烟测，事件日志坐标、AI 面板换行和实际道路可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

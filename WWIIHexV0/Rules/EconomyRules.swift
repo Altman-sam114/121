@@ -5,6 +5,7 @@ struct EconomyRules {
     private let baseIndustryReserve = 160
     private let baseSupplyReserve = 180
     private let maxAutomaticReinforcementPerDivision = 2
+    private let maxRoadImprovementHexes = 2
     let roadImprovementCost = EconomyResources(manpower: 20, industry: 30, supplies: 10)
 
     func makeInitialState(map: MapState, factions: [Faction], turn: Int) -> EconomyState {
@@ -448,10 +449,10 @@ struct EconomyRules {
         faction: Faction,
         map: inout MapState
     ) -> [HexCoord] {
-        let targets = roadImprovementTargets(in: region, faction: faction, map: map)
+        let targets = roadImprovementPlan(in: region, faction: faction, map: map)
         var improvedHexes: [HexCoord] = []
 
-        for coord in targets.prefix(2) {
+        for coord in targets.prefix(maxRoadImprovementHexes) {
             guard var tile = map.tile(at: coord) else {
                 continue
             }
@@ -473,23 +474,203 @@ struct EconomyRules {
         faction: Faction,
         map: MapState
     ) -> [HexCoord] {
-        regionHexes(for: region)
-            .filter { coord in
-                guard let tile = map.tile(at: coord) else {
-                    return false
-                }
-                return tile.isPassable &&
-                    tile.controller == faction &&
-                    !tile.hasRoad
-            }
+        eligibleRoadHexes(in: region, faction: faction, map: map)
+            .filter { map.tile(at: $0)?.hasRoad == false }
             .sorted {
                 let lhsScore = roadImprovementPriority($0, region: region, map: map)
                 let rhsScore = roadImprovementPriority($1, region: region, map: map)
                 if lhsScore != rhsScore {
                     return lhsScore > rhsScore
                 }
-                return $0.q == $1.q ? $0.r < $1.r : $0.q < $1.q
+                return coordPrecedes($0, $1)
             }
+    }
+
+    private func roadImprovementPlan(
+        in region: RegionNode,
+        faction: Faction,
+        map: MapState
+    ) -> [HexCoord] {
+        let targets = roadImprovementTargets(in: region, faction: faction, map: map)
+        guard !targets.isEmpty else {
+            return []
+        }
+
+        if let connectedPlan = connectedRoadImprovementPlan(
+            targets: targets,
+            region: region,
+            faction: faction,
+            map: map
+        ), !connectedPlan.isEmpty {
+            return Array(connectedPlan.prefix(maxRoadImprovementHexes))
+        }
+
+        return Array(targets.prefix(maxRoadImprovementHexes))
+    }
+
+    private func connectedRoadImprovementPlan(
+        targets: [HexCoord],
+        region: RegionNode,
+        faction: Faction,
+        map: MapState
+    ) -> [HexCoord]? {
+        let eligibleHexes = Set(eligibleRoadHexes(in: region, faction: faction, map: map))
+        guard !eligibleHexes.isEmpty else {
+            return nil
+        }
+
+        let roadAnchors = Set(eligibleHexes.filter { map.tile(at: $0)?.hasRoad == true })
+        if !roadAnchors.isEmpty {
+            for target in targets {
+                guard let path = shortestRoadPath(
+                    fromAny: roadAnchors,
+                    to: target,
+                    eligibleHexes: eligibleHexes
+                ) else {
+                    continue
+                }
+                let plan = path.filter { map.tile(at: $0)?.hasRoad != true }
+                let filledPlan = fillRoadPlan(plan, targets: targets, connectedTo: roadAnchors)
+                if !filledPlan.isEmpty {
+                    return filledPlan
+                }
+            }
+        }
+
+        if let externalConnection = targets.first(where: { hasAdjacentRoad($0, map: map) }) {
+            return fillRoadPlan([externalConnection], targets: targets, connectedTo: Set([externalConnection]))
+        }
+
+        guard let seed = roadSeedHex(in: region, eligibleHexes: eligibleHexes, map: map) else {
+            return nil
+        }
+        for target in targets where target != seed {
+            guard let path = shortestRoadPath(
+                fromAny: Set([seed]),
+                to: target,
+                eligibleHexes: eligibleHexes
+            ) else {
+                continue
+            }
+            let plan = path.filter { map.tile(at: $0)?.hasRoad != true }
+            let filledPlan = fillRoadPlan(plan, targets: targets, connectedTo: Set(plan))
+            if !filledPlan.isEmpty {
+                return filledPlan
+            }
+        }
+
+        let seedPlan = map.tile(at: seed)?.hasRoad == true ? [] : [seed]
+        let filledSeedPlan = fillRoadPlan(seedPlan, targets: targets, connectedTo: Set(seedPlan))
+        return filledSeedPlan.isEmpty ? nil : filledSeedPlan
+    }
+
+    private func fillRoadPlan(
+        _ plan: [HexCoord],
+        targets: [HexCoord],
+        connectedTo anchors: Set<HexCoord>
+    ) -> [HexCoord] {
+        let targetSet = Set(targets)
+        var result: [HexCoord] = []
+        var seen = Set<HexCoord>()
+        for coord in plan where targetSet.contains(coord) && !seen.contains(coord) {
+            result.append(coord)
+            seen.insert(coord)
+        }
+
+        var network = anchors
+        network.formUnion(result)
+        while result.count < maxRoadImprovementHexes {
+            guard let next = targets.first(where: { coord in
+                !seen.contains(coord) && coord.neighbors.contains { network.contains($0) }
+            }) else {
+                break
+            }
+            result.append(next)
+            seen.insert(next)
+            network.insert(next)
+        }
+        return result
+    }
+
+    private func shortestRoadPath(
+        fromAny starts: Set<HexCoord>,
+        to target: HexCoord,
+        eligibleHexes: Set<HexCoord>
+    ) -> [HexCoord]? {
+        guard eligibleHexes.contains(target) else {
+            return nil
+        }
+
+        let startList = starts
+            .filter { eligibleHexes.contains($0) }
+            .sorted(by: coordPrecedes)
+        guard !startList.isEmpty else {
+            return nil
+        }
+
+        var queue = startList
+        var visited = Set(startList)
+        var previous: [HexCoord: HexCoord] = [:]
+        var index = 0
+
+        while index < queue.count {
+            let current = queue[index]
+            index += 1
+            if current == target {
+                return reconstructPath(to: target, previous: previous)
+            }
+
+            for neighbor in current.neighbors.sorted(by: coordPrecedes)
+                where eligibleHexes.contains(neighbor) && !visited.contains(neighbor) {
+                visited.insert(neighbor)
+                previous[neighbor] = current
+                queue.append(neighbor)
+            }
+        }
+
+        return nil
+    }
+
+    private func reconstructPath(
+        to target: HexCoord,
+        previous: [HexCoord: HexCoord]
+    ) -> [HexCoord] {
+        var path = [target]
+        var current = target
+        while let parent = previous[current] {
+            path.append(parent)
+            current = parent
+        }
+        return Array(path.reversed())
+    }
+
+    private func eligibleRoadHexes(
+        in region: RegionNode,
+        faction: Faction,
+        map: MapState
+    ) -> [HexCoord] {
+        regionHexes(for: region)
+            .filter { coord in
+                guard let tile = map.tile(at: coord) else {
+                    return false
+                }
+                return tile.isPassable && tile.controller == faction
+            }
+    }
+
+    private func roadSeedHex(
+        in region: RegionNode,
+        eligibleHexes: Set<HexCoord>,
+        map: MapState
+    ) -> HexCoord? {
+        eligibleHexes.sorted {
+            let lhsScore = roadSeedPriority($0, region: region, map: map)
+            let rhsScore = roadSeedPriority($1, region: region, map: map)
+            if lhsScore != rhsScore {
+                return lhsScore > rhsScore
+            }
+            return coordPrecedes($0, $1)
+        }.first
     }
 
     private func roadImprovementPriority(_ coord: HexCoord, region: RegionNode, map: MapState) -> Int {
@@ -507,6 +688,34 @@ struct EconomyRules {
             score += 3
         }
         return score
+    }
+
+    private func roadSeedPriority(_ coord: HexCoord, region: RegionNode, map: MapState) -> Int {
+        guard let tile = map.tile(at: coord) else {
+            return 0
+        }
+        var score = tile.hasRoad ? 20 : 0
+        if coord == region.representativeHex {
+            score += 10
+        }
+        if tile.baseTerrain == .city || tile.cityName != nil || tile.fortressName != nil {
+            score += 8
+        }
+        if map.supplySources.contains(where: { $0.coord == coord }) {
+            score += 6
+        }
+        if hasAdjacentRoad(coord, map: map) {
+            score += 5
+        }
+        return score
+    }
+
+    private func hasAdjacentRoad(_ coord: HexCoord, map: MapState) -> Bool {
+        coord.neighbors.contains { map.tile(at: $0)?.hasRoad == true }
+    }
+
+    private func coordPrecedes(_ lhs: HexCoord, _ rhs: HexCoord) -> Bool {
+        lhs.q == rhs.q ? lhs.r < rhs.r : lhs.q < rhs.q
     }
 
     private func regionHexes(for region: RegionNode) -> [HexCoord] {
