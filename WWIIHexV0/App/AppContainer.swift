@@ -799,7 +799,9 @@ final class AppContainer: ObservableObject {
             .map { "；态势：\($0)" } ?? ""
         let defenderGeneralText = combatTargetDefenderGeneralText(influence)
             .map { "；\($0)" } ?? ""
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)\(defenderGeneralText)；距 \(distance) 格"
+        let generalModifierText = combatTargetGeneralModifierText(influence)
+            .map { "；\($0)" } ?? ""
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)\(defenderGeneralText)\(generalModifierText)；距 \(distance) 格"
     }
 
     private func combatTargetPriorityText(
@@ -898,6 +900,20 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "敌将 \(defenderName)"
+    }
+
+    private func combatTargetGeneralModifierText(_ influence: GeneralCombatInfluenceSummary) -> String? {
+        var fragments: [String] = []
+        if influence.attackBonus != 0 {
+            fragments.append("攻\(signedBonus(influence.attackBonus))")
+        }
+        if influence.defenseBonus != 0 {
+            fragments.append("防\(signedBonus(influence.defenseBonus))")
+        }
+        guard !fragments.isEmpty else {
+            return nil
+        }
+        return "武将修正 \(fragments.joined(separator: " "))"
     }
 
     private func combatCounterPreviewText(
