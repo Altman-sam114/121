@@ -1579,10 +1579,21 @@ final class AppContainer: ObservableObject {
             movementRules.isEnemyZoneOfControl($0, for: division.faction, in: gameState)
         }
         let safeRoadCount = reachableRoadCoords.count - contestedRoadCount
-        if contestedRoadCount > 0 {
-            return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，安全 \(safeRoadCount) 格，敌控压迫 \(contestedRoadCount) 格"
+        let nearestRoadDistance = reachableRoadCoords.map {
+            division.coord.distance(to: $0)
+        }.min() ?? 0
+        let safeRoadCoords = reachableRoadCoords.filter {
+            !movementRules.isEnemyZoneOfControl($0, for: division.faction, in: gameState)
         }
-        return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，均未受敌控区压迫"
+        let nearestSafeRoadDistance = safeRoadCoords.map {
+            division.coord.distance(to: $0)
+        }.min()
+        let safeDistanceText = nearestSafeRoadDistance.map { "，最近安全 \($0) 格" } ?? ""
+
+        if contestedRoadCount > 0 {
+            return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，最近可达 \(nearestRoadDistance) 格，安全 \(safeRoadCount) 格\(safeDistanceText)，敌控压迫 \(contestedRoadCount) 格"
+        }
+        return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，最近可达 \(nearestRoadDistance) 格\(safeDistanceText)，均未受敌控区压迫"
     }
 
     private func submitPlayerDirective(
