@@ -2334,6 +2334,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只做 `GeneralAgent` 的 deterministic tactic shaping，不实现完整武将技能树、士气、疲劳、单挑、战报 UI 或真实 LLM。
 - 未做运行时 AI 回合或 UI 烟测，武将塑形后的实际日志换行、AI 面板显示和战术效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 武将战术 AI 面板审计兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AgentPanelView` 的“武将”审计块从只显示武将姓名、动作、防区和攻守类型，扩展为显示最终 tactic、指挥风格、目标郡县和 rationale。
+- 缺失 tactic 时显示“未定战术”，缺失风格时显示“未定风格”，无目标 region 时显示“无目标”，保持旧记录兼容。
+- rationale 限制最多三行，避免 AI 面板武将块挤压命令结果、防区指令和 raw JSON。
+- 保持 `GeneralDecisionRecord` schema、`GeneralAgent` 战术塑形、`WarCommandExecutor`、`RuleEngine` 和战斗计算不变；本轮只改善审计可见性。
+
+关键系统：
+
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_tactic_audit.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮未做运行时 UI 截图或可读性烟测，实际面板换行、窄屏布局和 Dynamic Type 下的显示效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 本轮不实现武将头像、技能详情面板、战报图标化或玩家手动下达武将战术。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

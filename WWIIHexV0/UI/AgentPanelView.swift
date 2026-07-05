@@ -152,9 +152,14 @@ struct AgentPanelView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            Text("\(generalRecord.zoneId.rawValue) / \(generalRecord.directiveType.displayName)")
+                            Text(generalRecordSummary(generalRecord))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(generalRecord.rationale)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
                         }
                     }
                 }
@@ -257,6 +262,28 @@ struct AgentPanelView: View {
         let targets = directive.targetRegionIds.map(\.rawValue).joined(separator: ", ")
         let targetText = targets.isEmpty ? "无目标" : targets
         return "\(type) / \(tactic) / \(executed) 成功, \(rejected) 拒绝 / \(targetText)"
+    }
+
+    private func generalRecordSummary(_ record: GeneralDecisionRecord) -> String {
+        let tactic = record.tactic?.displayName ?? "未定战术"
+        let style = commandStyleDisplayName(record.commandStyle)
+        let targets = record.targetRegionIds.map(\.rawValue).joined(separator: ", ")
+        let targetText = targets.isEmpty ? "无目标" : targets
+        return "\(record.zoneId.rawValue) / \(record.directiveType.displayName) / \(tactic) / \(style) / \(targetText)"
+    }
+
+    private func commandStyleDisplayName(_ style: ZoneCommanderAgentConfig.CommandStyle?) -> String {
+        guard let style else {
+            return "未定风格"
+        }
+        switch style {
+        case .aggressive:
+            return "进取"
+        case .balanced:
+            return "持重"
+        case .cautious:
+            return "谨慎"
+        }
     }
 
     private func resultLine(_ result: CommandResultSummary) -> String {

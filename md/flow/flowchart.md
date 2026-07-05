@@ -87,7 +87,7 @@ flowchart TD
     DREL["外交关系<br/>DiplomaticRelation.status / tension<br/>只由外交命令最小更新"]:::state
     GOVREC["太守审计<br/>GameState.governorRecords<br/>保存内政重点、修路和生产结果"]:::state
     SREC["军师审计<br/>GameState.strategistRecords<br/>保存主防区、目标和理由"]:::state
-    GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作和理由"]:::state
+    GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作、战术和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
     LOG["日志和复盘记录<br/>EventLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动和命令结果中文化，含武将道路机动、交战审计和攻防修正摘要"]:::ui
@@ -303,7 +303,7 @@ flowchart TD
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>选择主防区，编排 focus/support/convergence"]:::ai
     SREC["军师审计<br/>StrategistDecisionRecord + EventLog<br/>记录目标 region 和理由"]:::ui
     GENA["武将军令复核与战术塑形<br/>GeneralAgent.plan<br/>读取防区武将，复核投入、预备队和 tactic"]:::ai
-    GREC["武将审计<br/>GeneralDecisionRecord + EventLog<br/>记录武将动作和理由"]:::ui
+    GREC["武将审计<br/>GeneralDecisionRecord + EventLog<br/>记录武将动作、战术、风格和理由"]:::ui
     GINF["武将战场影响与交战审计<br/>GeneralInfluence / CombatAuditSummary<br/>道路机动、攻击、防御与交战因素摘要"]:::rules
     TACTIC["高级战术路由<br/>TacticName<br/>正攻 / 疾袭 / 突击 / 破阵 / 合围 / 箭雨 / 固守 / 死守"]:::command
     WCE["指令执行器<br/>WarCommandExecutor.execute<br/>按战术 profile 选择单位、目标和 fallback"]:::command

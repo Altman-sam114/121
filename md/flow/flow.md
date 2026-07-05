@@ -136,7 +136,7 @@ playerCommandState
 - `warDirectiveRecords` 记录战争指令执行回放，供 v0.36+ 后续接 LLM / 聊天命令审计。
 - `governorRecords` 记录太守内政建议，供 AI 面板解释征兵、修路、屯田、治安或补给取向。
 - `strategistRecords` 记录军师目标编排，供 AI 面板和后续多 Agent 审计读取。
-- `generalRecords` 记录武将军令复核，供 AI 面板解释每个防区武将的动作。
+- `generalRecords` 记录武将军令复核与战术塑形，供 AI 面板解释每个防区武将的动作、战术、风格、目标郡县和理由。
 
 ### 1.2 MapState / Hex
 
@@ -460,7 +460,7 @@ MarshalAgent / TheaterCommanderPool
 - 按武将忠诚、满意度、指挥风格和防区压力，对军师后的 `ZoneDirective` 做最后复核。
 - 收束过激攻势、谨慎推进或调整防守预备队，但不生成底层 `Command`。
 - 生成 `GeneralDecisionRecord`，写入 `GameState.generalRecords`，并追加事件日志。
-- 把武将复核摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
+- 把武将复核摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看；AI 面板会显示武将动作、最终 tactic、风格、目标郡县和 rationale。
 
 `GeneralInfluence` 的职责：
 
