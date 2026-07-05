@@ -66,7 +66,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、优先从已有官道或外部官道入口连缀最多两格战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
-- `GeneralAgent.plan` 接在军师层之后，读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格、技能和防区压力复核军令，塑形 `ZoneDirective.tactic` 并写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
+- `GeneralAgent.plan` 接在军师层之后，也接入玩家武将面板宏观军令执行前；它读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格、技能和防区压力复核军令，塑形 `ZoneDirective.tactic` 并写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
 - `CommandValidationError` 保留英文 rawValue 作为 Codable / 测试兼容身份，同时提供中文 `displayName`；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 使用中文展示值写入 `CommandResult`、事件日志、`WarDirectiveRecord.diagnostics` 和 AI 面板命令结果。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
@@ -398,7 +398,7 @@ isCoreZone
 
 源码：`WWIIHexV0/Core/DiplomacyState.swift`、`WWIIHexV0/Core/WarDirectiveRecord.swift`、`WWIIHexV0/Agents/RulerAgent.swift`、`WWIIHexV0/Agents/DiplomatAgent.swift`、`WWIIHexV0/Agents/GovernorAgent.swift`、`WWIIHexV0/Agents/StrategistAgent.swift`、`WWIIHexV0/Agents/GeneralAgent.swift`、`WWIIHexV0/Turn/TurnManager.swift`
 
-v2.4 当前已把君主层、外交层、太守层、军师层和武将层接入 `.marshalDirective` 和显式 `.zoneDirective` 执行前的编排点：
+v2.4 当前已把君主层、外交层、太守层、军师层和武将层接入 `.marshalDirective` 和显式 `.zoneDirective` 执行前的编排点；玩家武将面板生成的宏观 `ZoneDirective` 不走完整 AI 回合，但会在 `WarCommandExecutor` 前单独调用 `GeneralAgent.plan`，让玩家侧军令同样受到武将风格、忠诚、满意度和技能塑形：
 
 ```text
 MarshalAgent / TheaterCommanderPool
@@ -457,7 +457,7 @@ MarshalAgent / TheaterCommanderPool
 `GeneralAgent` 的职责：
 
 - 读取 `FrontZone.generalAssignment` 和 `GeneralRegistry` 中的武将资料。
-- 按武将忠诚、满意度、指挥风格和防区压力，对军师后的 `ZoneDirective` 做最后复核。
+- 按武将忠诚、满意度、指挥风格和防区压力，对军师后的 `ZoneDirective` 和玩家武将面板宏观 `ZoneDirective` 做最后复核。
 - 收束过激攻势、谨慎推进或调整防守预备队，但不生成底层 `Command`。
 - 生成 `GeneralDecisionRecord`，写入 `GameState.generalRecords`，并追加事件日志。
 - 把武将复核摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看；AI 面板会显示武将动作、最终 tactic、风格、目标郡县和 rationale。
@@ -857,6 +857,17 @@ submit(command)
   -> appendInteractionEvent(...)
   -> refreshSelectionAfterStateChange()
   -> runAIIfNeeded()
+```
+
+玩家提交武将面板宏观军令：
+
+```text
+GeneralCommandPanelView
+  -> AppContainer 组装 attack / defense ZoneDirective
+  -> GeneralAgent.plan（按防区武将塑形 tactic，写 GeneralDecisionRecord）
+  -> WarCommandExecutor.execute(... excluding: micromanagedDivisionIds)
+  -> RuleEngine
+  -> WarDirectiveRecord + PlayerPlannedOperation(tactic)
 ```
 
 点击地图：
@@ -2074,9 +2085,10 @@ Data/generals.json
 玩家宏观将军命令
   -> GeneralCommandPanelView 按钮
   -> AppContainer 组装 ZoneDirective
+  -> GeneralAgent.plan 塑形 tactic
   -> WarCommandExecutor
   -> RuleEngine
-  -> WarDirectiveRecord + PlayerPlannedOperation
+  -> WarDirectiveRecord + PlayerPlannedOperation(tactic)
   -> BoardScene 计划线 / 金色微操单位圈
 ```
 
@@ -2092,8 +2104,8 @@ Data/generals.json
 - HQ 逻辑：不生成占格子的 HQ 单位。`GeneralAssignment.hqRegionId` 指向战区内友方城市或最大 region，`GeneralDispatcher.isHQUnderAttack` 通过 region controller 判断 HQ 是否被夺。
 - 将军养成初步：`GeneralAssignment` 保存 `loyalty`、`satisfaction`、`interventionCount`。玩家直接微操某个将军辖下单位时，记录干预次数并轻微降低满意度。
 - 微操锁：玩家在己方 phase 对具体师执行 move/attack/hold/resupply/allowRetreat 后，该师 id 写入 `PlayerCommandState.micromanagedDivisionIds`。本回合玩家再下达战区宏观命令时，`WarCommandExecutor.execute(... excluding:)` 会跳过这些师，避免同一回合被将军指令覆盖。`endTurn` 或 active faction / turn 改变时清空锁。
-- 半自动指令：`GeneralCommandPanelView` 的 `Hold Line` 生成 defense `ZoneDirective`，`Attack Region` 根据当前选中敌方 region 和相邻玩家 FrontZone 生成 attack `ZoneDirective`，直接复用 `WarCommandExecutor -> RuleEngine`，不通过 `TurnManager.runDirectiveTurn`，因此不会自动结束玩家回合。
-- 记录与反馈：玩家宏观命令写入 `WarDirectiveRecord` 和 `PlayerPlannedOperation`。`BoardScene` 只读 `PlayerCommandState.plannedOperations`，画源 region 到目标 region 的箭头；防御命令画源点圆环。玩家微操锁定单位在 `UnitNode` 上显示金色底圈。
+- 半自动指令：`GeneralCommandPanelView` 的 `Hold Line` 生成 defense `ZoneDirective`，`Attack Region` 根据当前选中敌方 region 和相邻玩家 FrontZone 生成 attack `ZoneDirective`；提交时先经 `GeneralAgent.plan` 按防区武将塑形 tactic，再复用 `WarCommandExecutor -> RuleEngine`，不通过 `TurnManager.runDirectiveTurn`，因此不会自动结束玩家回合。
+- 记录与反馈：玩家宏观命令写入 `WarDirectiveRecord` 和 `PlayerPlannedOperation`，两者都记录最终 tactic。`BoardScene` 只读 `PlayerCommandState.plannedOperations`，画源 region 到目标 region 的箭头；防御命令画源点圆环。`GeneralCommandPanelView` 的计划军令列表显示指令类型、最终战术和目标。玩家微操锁定单位在 `UnitNode` 上显示金色底圈。
 - UI：`RootGameView` 新增 `General` tab，Unit tab 也嵌入 `GeneralCommandPanelView`。`GeneralProfileView` 用 sheet 展示将军身份、履历、技能、忠诚/满意度、干预次数、HQ 状态和辖下部队。
 
 边界：

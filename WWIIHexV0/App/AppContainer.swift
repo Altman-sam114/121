@@ -566,19 +566,31 @@ final class AppContainer: ObservableObject {
             appendInteractionEvent("General order rejected: source zone changed during refresh.")
             return
         }
+        let generalAdjustment = GeneralAgent(registry: generalRegistry).plan(
+            envelope: DirectiveEnvelope(
+                schemaVersion: 2,
+                issuerId: "player",
+                turn: startState.turn,
+                directives: [directive],
+                commanderAgentId: refreshedZone.generalAssignment?.generalId
+            ),
+            in: startState
+        )
+        let shapedDirective = generalAdjustment.envelope.directives.first ?? directive
         let lockedIds = startState.playerCommandState.micromanagedDivisionIds
         let execution = WarCommandExecutor(commandHandler: commandHandler).execute(
-            directive,
+            shapedDirective,
             in: startState,
             excluding: lockedIds
         )
 
         var nextState = refreshGeneralAssignments(in: execution.finalState)
+        nextState.appendGeneralRecords(generalAdjustment.records)
         let commandSummaries = execution.commandResults.enumerated().map { index, result in
             CommandResultSummary.directiveCommand(
                 directiveIndex: 0,
                 commandIndex: index,
-                directive: directive,
+                directive: shapedDirective,
                 command: execution.generatedCommands[index],
                 result: result
             )
@@ -596,29 +608,30 @@ final class AppContainer: ObservableObject {
         }
 
         let record = WarDirectiveRecord(
-            id: "player_directive_turn_\(startState.turn)_\(directive.zoneId.rawValue)_\(directive.type.rawValue)_\(targetRegionId?.rawValue ?? "hold")",
+            id: "player_directive_turn_\(startState.turn)_\(shapedDirective.zoneId.rawValue)_\(shapedDirective.type.rawValue)_\(targetRegionId?.rawValue ?? "hold")",
             issuerId: "player",
             turn: startState.turn,
             faction: playerFaction,
-            zoneId: directive.zoneId,
-            directiveType: directive.type,
-            targetRegionIds: targetRegionId.map { [$0] } ?? directive.targetRegionIds,
+            zoneId: shapedDirective.zoneId,
+            directiveType: shapedDirective.type,
+            targetRegionIds: targetRegionId.map { [$0] } ?? shapedDirective.targetRegionIds,
             commandResults: commandSummaries,
             diagnostics: diagnostics,
-            category: directive.category,
-            tactic: directive.tactic,
+            category: shapedDirective.category,
+            tactic: shapedDirective.tactic,
             commanderAgentId: refreshedZone.generalAssignment?.generalId,
-            commandTarget: directive.commandTarget
+            commandTarget: shapedDirective.commandTarget
         )
 
         nextState.warDirectiveRecords.append(record)
         nextState.playerCommandState.recordOperation(
             PlayerPlannedOperation(
-                id: "player_operation_turn_\(startState.turn)_\(directive.zoneId.rawValue)_\(directive.type.rawValue)_\(targetRegionId?.rawValue ?? "hold")",
+                id: "player_operation_turn_\(startState.turn)_\(shapedDirective.zoneId.rawValue)_\(shapedDirective.type.rawValue)_\(targetRegionId?.rawValue ?? "hold")",
                 turn: startState.turn,
-                zoneId: directive.zoneId,
+                zoneId: shapedDirective.zoneId,
                 faction: playerFaction,
-                directiveType: directive.type,
+                directiveType: shapedDirective.type,
+                tactic: shapedDirective.tactic,
                 sourceRegionId: sourceRegionId,
                 targetRegionId: targetRegionId,
                 createdByGeneralId: refreshedZone.generalAssignment?.generalId
@@ -628,7 +641,7 @@ final class AppContainer: ObservableObject {
         gameState = nextState
         lastWarDirectiveRecords = Array((lastWarDirectiveRecords + [record]).suffix(12))
         lastCommandMessage = playerDirectiveMessage(for: execution, diagnostics: diagnostics)
-        appendInteractionEvent("General order submitted: \(directive.type.rawValue) \(directive.zoneId.rawValue).")
+        appendInteractionEvent("General order submitted: \(shapedDirective.type.rawValue) \(shapedDirective.zoneId.rawValue).")
         refreshSelectionAfterStateChange()
     }
 

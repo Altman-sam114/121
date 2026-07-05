@@ -35,7 +35,7 @@ v2.4 命名边界：
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralAgent` 会按武将风格/技能塑形 `ZoneDirective.tactic`，`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
 - `CommandExecutor` 会把中文武将姓名、道路机动、交战审计和攻防修正摘要写入移动、攻击和反击日志；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
-- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术，其余战争命令仍经 `WarCommandExecutor -> RuleEngine`。
+- `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术。玩家武将面板宏观命令也会先经 `GeneralAgent.plan` 塑形 tactic，再进入 `WarCommandExecutor -> RuleEngine`，但不会自动结束玩家回合。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。
 
@@ -66,6 +66,8 @@ flowchart TD
     DEPLOY["部署层<br/>WarDeploymentState<br/>用 hexToFrontZone 把单位分成前线/纵深/驻军"]:::derived
     ECO["经济总账<br/>EconomyState / EconomyRules<br/>收入、维护费、生产队列、自动补员"]:::economy
     PLAYER["玩家输入<br/>点击地图、移动、攻击、结束回合"]:::input
+    PGEN["玩家武将面板宏观军令<br/>GeneralCommandPanelView<br/>固守战线 / 进攻郡县"]:::input
+    PZD["玩家 ZoneDirective<br/>AppContainer.submitPlayerDirective<br/>先进入武将战术塑形"]:::command
     AI["AI 元帅系统<br/>MarshalAgent + TheaterDirective JSON<br/>先做大战役级规划"]:::input
     DEC["元帅 JSON 解码<br/>TheaterDirectiveDecoder<br/>提取 fenced JSON、校验 id 与 schema"]:::command
     COMP["元帅意图编译<br/>TheaterDirectiveCompiler<br/>把 TheaterDirective 降级成 ZoneDirective"]:::command
@@ -106,6 +108,7 @@ flowchart TD
     GS --> DIP
 
     PLAYER --> CMD
+    PLAYER --> PGEN --> PZD --> GENA
     AI --> DEC --> COMP --> RULER --> DIPLO --> DCMD --> GOV --> ROAD --> GCMD --> STRAT --> GENA --> ZD --> WCE --> CMD
     DCMD --> CMD
     ROAD --> CMD
@@ -477,7 +480,7 @@ flowchart TD
 
 ## 8. v0.4 将军与玩家双轨命令
 
-这张图说明 v0.4 分支的新增主线：实体将军从 JSON / region 种子接入 FrontZone；玩家可以微操具体部队，也可以通过将军面板发战区宏观命令。两条路最终仍收口到规则系统。
+这张图说明 v0.4 分支的新增主线：实体将军从 JSON / region 种子接入 FrontZone；玩家可以微操具体部队，也可以通过将军面板发战区宏观命令。宏观命令会在执行前经过 `GeneralAgent.plan` 塑形最终 tactic，两条路最终仍收口到规则系统。
 
 ```mermaid
 flowchart TD
@@ -493,9 +496,10 @@ flowchart TD
     LOCK["微操锁<br/>PlayerCommandState.micromanagedDivisionIds<br/>本回合玩家亲控单位"]:::state
     GENUI["将军面板<br/>GeneralCommandPanelView<br/>Hold Line / Attack Region"]:::ui
     ZD["玩家战区指令<br/>ZoneDirective<br/>defense holdLine 或 attack selected region"]:::command
+    GENA["武将战术塑形<br/>GeneralAgent.plan<br/>按防区武将生成最终 tactic"]:::ai
     WCE["执行器<br/>WarCommandExecutor.execute(excluding lockedIds)<br/>跳过已微操单位"]:::command
     RE["规则权威<br/>RuleEngine<br/>校验并修改 GameState"]:::rules
-    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation<br/>AI 面板、日志、计划线共用"]:::ui
+    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation(tactic)<br/>AI 面板、日志、计划线共用"]:::ui
     BOARD["视觉反馈<br/>BoardScene<br/>进攻箭头、防御圆环、微操单位金色圈"]:::ui
     PROFILE["将军档案<br/>GeneralProfileView<br/>履历、技能、忠诚、满意度、辖下部队"]:::ui
 
@@ -504,11 +508,13 @@ flowchart TD
     FZ --> GENUI --> PROFILE
     TAP --> MICRO --> RE --> LOCK
     LOCK --> WCE
-    TAP --> GENUI --> ZD --> WCE --> RE --> RECORD --> BOARD
+    TAP --> GENUI --> ZD --> GENA --> WCE --> RE --> RECORD --> BOARD
     FZ --> GENUI
+    FZ --> GENA
 
     WARN["边界<br/>UI 和将军不直接改 hex / division<br/>行动必须走 Command 或 ZoneDirective"]:::warn
     GENUI -.守住.-> WARN
+    GENA -.守住.-> WARN
     WCE -.守住.-> WARN
 
     classDef data fill:#f8f9fb,stroke:#6b7280,color:#111827

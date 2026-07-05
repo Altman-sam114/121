@@ -47,6 +47,7 @@ struct PlayerPlannedOperation: Identifiable, Codable, Equatable {
     let zoneId: FrontZoneId
     let faction: Faction
     let directiveType: DirectiveType
+    let tactic: TacticName?
     let sourceRegionId: RegionId?
     let targetRegionId: RegionId?
     let createdByGeneralId: String?
@@ -57,6 +58,7 @@ struct PlayerPlannedOperation: Identifiable, Codable, Equatable {
         zoneId: FrontZoneId,
         faction: Faction,
         directiveType: DirectiveType,
+        tactic: TacticName? = nil,
         sourceRegionId: RegionId? = nil,
         targetRegionId: RegionId? = nil,
         createdByGeneralId: String? = nil
@@ -66,6 +68,7 @@ struct PlayerPlannedOperation: Identifiable, Codable, Equatable {
         self.zoneId = zoneId
         self.faction = faction
         self.directiveType = directiveType
+        self.tactic = tactic
         self.sourceRegionId = sourceRegionId
         self.targetRegionId = targetRegionId
         self.createdByGeneralId = createdByGeneralId

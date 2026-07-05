@@ -2372,6 +2372,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮未做运行时 UI 截图或可读性烟测，实际面板换行、窄屏布局和 Dynamic Type 下的显示效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 本轮不实现武将头像、技能详情面板、战报图标化或玩家手动下达武将战术。
 
+## v2.4 - 玩家武将宏观军令战术塑形兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 玩家通过 `GeneralCommandPanelView` 下达“固守战线 / 进攻郡县”宏观军令时，`AppContainer.submitPlayerDirective` 会先把 `ZoneDirective` 包装为单条 `DirectiveEnvelope`，交给 `GeneralAgent.plan` 按防区武将塑形最终 tactic。
+- 玩家宏观军令后续执行、`CommandResultSummary`、`WarDirectiveRecord` 和 `PlayerPlannedOperation` 都使用塑形后的 directive；武将复核记录追加到 `GameState.generalRecords`，供 AI 面板和后续审计读取。
+- `PlayerPlannedOperation` 新增可选 `tactic` 字段，旧记录缺失时保持 nil 兼容。
+- `GeneralCommandPanelView` 的计划军令摘要从“指令 / 目标”扩展为“指令 / 最终战术 / 目标”，便于玩家确认武将对军令的影响。
+- 保持微操锁、`WarCommandExecutor -> RuleEngine`、不自动结束玩家回合、不直接改 hex / 军队 / 道路 / 资源的边界不变。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Core/PlayerCommandState.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_player_general_tactic_shaping.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/UI/GeneralCommandPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，计划军令列表在窄屏和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- `GeneralAgent` 仍是 deterministic 兼容层；本轮不实现完整武将抗命、技能树、士气、疲劳、单挑或真实 LLM 聊天军令。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

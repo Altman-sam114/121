@@ -182,6 +182,7 @@ struct GeneralCommandPanelView: View {
 
     private func operationSummary(_ operation: PlayerPlannedOperation) -> String {
         let target = operation.targetRegionId?.rawValue ?? operation.sourceRegionId?.rawValue ?? operation.zoneId.rawValue
-        return "\(operation.directiveType.displayName) / \(target)"
+        let tactic = operation.tactic?.displayName ?? "未定战术"
+        return "\(operation.directiveType.displayName) / \(tactic) / \(target)"
     }
 }
