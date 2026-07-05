@@ -2654,6 +2654,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，郡县面板新增字段在窄屏、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 官道摘要只显示当前覆盖数量和选中地格状态，不实现完整粮道覆盖图、修路路线预览、道路价值评分或跨郡县交通网络分析。
 
+## v2.4 - 军队所属武将摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `UnitInspectorStrategicState` 增加 `GeneralAssignment?` 只读快照，让军队详情能直接知道当前军队所属武将。
+- `MapDisplayAdapter.unitInspectorState` 使用与武将影响一致的查找优先级：先找显式包含该军队 id 的 `FrontZone.generalAssignment`，再 fallback 到当前 hex 所属防区武将。
+- `UnitInspectorView` 新增“所属武将”摘要，展示武将姓名、风格、忠诚、满意、前三个中文技能和玩家干预次数；无分配时显示“武将：未任命”。
+- 保持 `GeneralInfluence`、`GeneralAgent`、`GeneralDispatcher`、`WarCommandExecutor`、`RuleEngine`、武将分配、忠诚满意、道路机动、交战修正和战术塑形规则不变；本轮只做 UI 状态派生和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_general_assignment_summary.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI / SpriteKit 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/SpriteKit/MapDisplayAdapter.swift WWIIHexV0/UI/UnitInspectorView.swift WWIIHexV0/UI/RootGameView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，“所属武将”摘要在窄屏、长武将名、长技能名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只展示当前武将分配快照，不实现武将任免、头像资产、详细属性、忠诚变化解释或技能效果展开。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

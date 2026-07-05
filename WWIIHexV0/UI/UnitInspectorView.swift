@@ -63,6 +63,18 @@ struct UnitInspectorView: View {
                     Text(frontLineSummary(strategicState.frontLineIds))
                         .multilineTextAlignment(.trailing)
                 }
+
+                if let assignment = strategicState.generalAssignment {
+                    noteSection(
+                        title: "所属武将",
+                        notes: generalAssignmentNotes(assignment),
+                        systemImage: "person.text.rectangle"
+                    )
+                } else {
+                    LabeledContent("武将") {
+                        Text("未任命")
+                    }
+                }
             }
 
             LabeledContent("兵力") {
@@ -130,6 +142,50 @@ struct UnitInspectorView: View {
 
     private func frontLineSummary(_ ids: [FrontLineId]) -> String {
         ids.isEmpty ? "无" : ids.map(\.rawValue).joined(separator: ", ")
+    }
+
+    private func generalAssignmentNotes(_ assignment: GeneralAssignment) -> [String] {
+        var notes = [
+            "\(assignment.displayName)：\(assignment.styleDisplayName)，忠诚 \(assignment.loyalty)，满意 \(assignment.satisfaction)"
+        ]
+
+        if !assignment.skills.isEmpty {
+            notes.append("技能：\(assignment.skillDisplaySummary)")
+        }
+
+        if assignment.interventionCount > 0 {
+            notes.append("玩家干预：\(assignment.interventionCount) 次")
+        }
+
+        return notes
+    }
+}
+
+private extension GeneralAssignment {
+    var displayName: String {
+        generalDisplayName ?? generalId
+    }
+
+    var styleDisplayName: String {
+        switch commandStyleRawValue {
+        case "aggressive":
+            return "进取"
+        case "balanced":
+            return "持重"
+        case "cautious":
+            return "谨慎"
+        case let rawValue?:
+            return rawValue
+        case nil:
+            return "未定风格"
+        }
+    }
+
+    var skillDisplaySummary: String {
+        skills
+            .prefix(3)
+            .map(GeneralSkillDisplay.displayName)
+            .joined(separator: " / ")
     }
 }
 

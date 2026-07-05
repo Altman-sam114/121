@@ -60,7 +60,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `CombatRules.combatAuditSummary` 使用同一套攻击/防御 profile 生成只读交战审计摘要，把有效攻击/防御变化、地形、河流、器械攻城、围城、死守和侧击写入攻击/反击日志；该摘要不改变伤害、撤退或反击规则。
 - `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralSkillDisplay` 将 raw skill id 显示为粮道调度、骑兵突击、守备专精等中文标签，规则和 JSON 仍保留原 id；`GeneralAgent` 会读取这些快照，把军师后的 `ZoneDirective.tactic` 收束为攻守类别合法、且符合机动/器械/预备队条件的战术；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
-- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把交战审计和攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；`GeneralCommandPanelView` 会只读展示当前选中武将防区的道路机动和接敌攻防摘要；`UnitInspectorView` 会读取 `AppContainer.selectedUnitMobilityPreviewNotes` 和 `selectedUnitCombatPreviewNotes`，对当前选中军队显示基础/有效机动、武将官道加成、可达格数、当前位置/郡县官道状态，以及最多三名射程内敌军的预计伤害、反击风险和距离排序，首选目标继续显示武将影响和交战审计；`RegionInspectorView` 会从 `RegionInspectorState` 展示当前郡县官道覆盖和当前地格官道状态，方便玩家判断修路、行军和粮道价值；这些预览复用 `MovementRules` / `CombatRules` / `GeneralInfluence` 或 `MapDisplayAdapter` 的只读派生，不执行命令、不修改状态；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战、哪个命令为什么被拒绝”。
+- `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把交战审计和攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；`GeneralCommandPanelView` 会只读展示当前选中武将防区的道路机动和接敌攻防摘要；`UnitInspectorView` 会读取 `UnitInspectorStrategicState.generalAssignment`、`AppContainer.selectedUnitMobilityPreviewNotes` 和 `selectedUnitCombatPreviewNotes`，对当前选中军队显示所属武将、风格、忠诚/满意、中文技能摘要、基础/有效机动、武将官道加成、可达格数、当前位置/郡县官道状态，以及最多三名射程内敌军的预计伤害、反击风险和距离排序，首选目标继续显示武将影响和交战审计；`RegionInspectorView` 会从 `RegionInspectorState` 展示当前郡县官道覆盖和当前地格官道状态，方便玩家判断修路、行军和粮道价值；这些预览复用 `MovementRules` / `CombatRules` / `GeneralInfluence` 或 `MapDisplayAdapter` 的只读派生，不执行命令、不修改状态；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战、哪个命令为什么被拒绝”。
 - 道路敌控区、玩家地图点击攻击、攻击高亮、武将宏观目标选择、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
@@ -478,6 +478,7 @@ MarshalAgent / TheaterCommanderPool
 - `CombatRules.generalInfluenceSummary` 将同一套攻防修正整理为只读摘要；`CommandExecutor.combatLog` 会在攻击和反击事件中输出中文摘要，优先使用 assignment 的武将姓名快照，不改变伤害计算。
 - `CombatRules.combatAuditSummary` 将同一套攻击/防御 profile 整理为只读交战审计摘要；`CommandExecutor.combatLog` 会在攻击和反击事件中输出有效攻击/防御变化、地形、河流、攻城、围城、死守和侧击因素，不改变伤害计算。
 - `AppContainer.selectedGeneralInfluenceNotes` 复用 `GeneralInfluence.movementSummary` 和 `GeneralInfluence.combatSummary`，为 `GeneralCommandPanelView` 提供当前防区道路机动与接敌攻防只读摘要；它不执行命令，也不修改道路、军队、控制权或动态战区。
+- `MapDisplayAdapter.unitInspectorState` 会用同一套优先级为选中军队附带 `GeneralAssignment` 快照：先找显式分配到该军队的武将，再 fallback 到当前 hex 所属防区武将；`UnitInspectorView` 只读展示武将姓名、风格、忠诚/满意、中文技能和玩家干预次数，不改变武将分配或规则计算。
 - 道路 ZOC、攻击目标、粮道通行和安全补员邻接统一按 `Faction.isHostile(to:)` 判断敌对；中立势力不会只因 `faction != activeFaction` 阻断道路、粮道或被合法攻击。
 - 这些修正只改变规则计算，不直接执行移动、攻击或状态写入。
 

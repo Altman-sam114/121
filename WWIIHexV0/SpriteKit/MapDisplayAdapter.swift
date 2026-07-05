@@ -65,6 +65,7 @@ struct UnitInspectorStrategicState: Equatable {
     let frontLineIds: [FrontLineId]
     let frontZoneId: FrontZoneId?
     let deploymentRole: UnitDeploymentRole
+    let generalAssignment: GeneralAssignment?
 }
 
 struct MapDisplayAdapter {
@@ -242,18 +243,39 @@ struct MapDisplayAdapter {
         let regionId = division.location(in: state.map)
         let frontLineIds = regionId
             .flatMap { state.frontLineState.regionStates[$0]?.frontLines.map(\.id) } ?? []
+        let frontZoneId = state.warDeploymentState.zoneId(for: division.coord, map: state.map)
         return UnitInspectorStrategicState(
             coord: division.coord,
             regionId: regionId,
             dynamicTheaterId: state.theaterState.dynamicTheaterId(for: division.coord, map: state.map),
             frontLineIds: frontLineIds.sorted { $0.rawValue < $1.rawValue },
-            frontZoneId: state.warDeploymentState.zoneId(for: division.coord, map: state.map),
+            frontZoneId: frontZoneId,
             deploymentRole: WarDeploymentManager().deploymentRole(
                 for: division,
                 in: state.map,
                 state: state.warDeploymentState
-            )
+            ),
+            generalAssignment: generalAssignment(for: division, fallbackZoneId: frontZoneId)
         )
+    }
+
+    private func generalAssignment(for division: Division, fallbackZoneId: FrontZoneId?) -> GeneralAssignment? {
+        let zones = state.warDeploymentState.frontZones.values
+            .filter { $0.faction == division.faction }
+            .sorted { $0.id.rawValue < $1.id.rawValue }
+
+        if let assigned = zones.first(where: {
+            $0.generalAssignment?.assignedDivisionIds.contains(division.id) == true
+        })?.generalAssignment {
+            return assigned
+        }
+
+        guard let fallbackZoneId,
+              let zone = state.warDeploymentState.frontZones[fallbackZoneId],
+              zone.faction == division.faction else {
+            return nil
+        }
+        return zone.generalAssignment
     }
 
     private func dominantDynamicFrontZoneId(for regionId: RegionId) -> FrontZoneId? {
