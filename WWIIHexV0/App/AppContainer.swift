@@ -511,7 +511,7 @@ final class AppContainer: ObservableObject {
 
     var selectedGeneralInfluenceNotes: [String] {
         guard let zone = selectedGeneralCommandZone,
-              selectedGeneralAssignment != nil else {
+              let assignment = selectedGeneralAssignment else {
             return []
         }
 
@@ -551,7 +551,10 @@ final class AppContainer: ObservableObject {
             roadBenefitNote = "道路受益：\(displayedUnits)\(remainingText)"
         } else {
             roadNote = "道路：当前麾下军队未获得官道机动加成"
-            roadBenefitNote = nil
+            roadBenefitNote = generalRoadNoBonusReasonText(
+                for: divisions,
+                assignment: assignment
+            )
         }
 
         let enemyDivisions = gameState.divisions
@@ -589,6 +592,50 @@ final class AppContainer: ObservableObject {
         }
 
         return [roadNote, roadBenefitNote, combatNote, engagementPairingNote].compactMap { $0 }
+    }
+
+    private func generalRoadNoBonusReasonText(
+        for divisions: [Division],
+        assignment: GeneralAssignment
+    ) -> String? {
+        let commandQuality = (assignment.loyalty + assignment.satisfaction) / 2
+        if commandQuality < 45 {
+            return "道路受益：忠诚/满意不足，官道机动暂未触发"
+        }
+
+        let roadReadyCount = divisions.filter {
+            generalRoadNetworkAvailable(for: $0, assignment: assignment)
+        }.count
+        guard roadReadyCount == 0 else {
+            return nil
+        }
+
+        if hasGeneralRoadNetworkSkill(assignment) {
+            return "道路受益：所在郡县暂无可借官道"
+        }
+        return "道路受益：需进驻官道，或凭粮道/疾行/骑战技能借郡县官道"
+    }
+
+    private func generalRoadNetworkAvailable(
+        for division: Division,
+        assignment: GeneralAssignment
+    ) -> Bool {
+        if gameState.map.tile(at: division.coord)?.hasRoad == true {
+            return true
+        }
+        guard hasGeneralRoadNetworkSkill(assignment),
+              let regionId = gameState.map.region(for: division.coord),
+              let region = gameState.map.region(id: regionId) else {
+            return false
+        }
+        return region.displayHexes.contains {
+            gameState.map.tile(at: $0)?.hasRoad == true
+        }
+    }
+
+    private func hasGeneralRoadNetworkSkill(_ assignment: GeneralAssignment) -> Bool {
+        !Set(["logistics", "rapid_exploitation", "armor_expert", "cavalry_charge"])
+            .isDisjoint(with: assignment.skills)
     }
 
     private enum EngagementPairingPerspective {

@@ -3936,6 +3936,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，武将面板“道路受益”摘要在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 该摘要只读展示当前武将麾下军队已经获得的官道机动加成，不代表完整路径安全、真实可达路径、敌控区绕行、同盟借道、移动后同回合攻击或未来回合机动。
 
+## v2.4 - 武将面板官道无加成原因提示兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 在当前选中武将防区没有任何麾下军队获得官道机动加成时，追加一条“道路受益”只读原因提示。
+- 原因提示优先解释忠诚/满意不足导致官道机动暂未触发；若武将状态足够，则区分当前所在郡县无可借官道，或需要军队进驻官道/依赖粮道、疾行、骑战类技能借郡县官道。
+- 有官道机动加成时继续显示既有受益军队列表，不追加无加成原因噪声。
+- 保持 `GeneralInfluence`、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮草、撤退、补给和计划军令行为不变；本轮只做武将面板只读原因反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_no_bonus_reason.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，武将面板无官道加成原因提示在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该提示只读解释当前静态状态，不代表完整路径安全、真实可达路径、敌控区绕行、同盟借道、移动后同回合攻击或未来回合机动。
+
 ## v2.4 - 武将面板麾下军队备战摘要兼容层
 
 完成日期：2026-07-05
