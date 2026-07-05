@@ -188,7 +188,7 @@ private extension GeneralAssignment {
     var skillDisplaySummary: String {
         skills
             .prefix(3)
-            .map(GeneralSkillDisplay.displayName)
+            .map(GeneralSkillDisplay.displayNameWithHint)
             .joined(separator: " / ")
     }
 }

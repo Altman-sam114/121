@@ -2496,6 +2496,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，技能标签在窄屏、长标签和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 未登记的新技能只做英文 fallback 展示，不会影响规则执行；后续新增技能时应同步补中文标签。
 
+## v2.4 - 武将技能道路与交战效果提示兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralSkillDisplay` 新增只读 `effectHint(for:)` 与 `displayNameWithHint(for:)`，在纯中文技能标签之外提供官道机动、骑兵突击、攻城修正、地形/渡河防御等短效果提示。
+- `GeneralCommandPanelView` 的武将技能行改为显示前三个“技能名：短效果”，帮助玩家把武将技能和道路/交战摘要联系起来。
+- `GeneralProfileView` 的技能卡片保留技能名，同时在卡片内分行显示短效果提示，降低长文本挤压。
+- `UnitInspectorView` 的“所属武将”摘要改为显示带短效果提示的前三个技能，让选中军队时能直接看出所属武将可能影响官道机动或接敌攻防。
+- 保持 `GeneralData.skills`、`GeneralAssignment.skills`、JSON schema、`GeneralInfluence`、`MovementRules`、`CombatRules`、`CommandExecutor`、`WarCommandExecutor`、`RuleEngine`、真实道路机动、攻防修正、伤害、反击、撤退和日志结算不变；本轮只做 UI 文案解释层和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/Agents/GeneralRegistry.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/GeneralProfileView.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_skill_road_combat_effect_hints.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/GeneralRegistry.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/GeneralProfileView.swift WWIIHexV0/UI/UnitInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增技能短效果在窄屏、长技能名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 短效果只是根据当前规则入口和技能语义给出的只读提示，不代表完整技能树、胜率、士气、疲劳、单挑、隐藏敌军、成长或敌方回合反制。
+
 ## v2.4 - 军队接战预判与敌对入口过滤兼容层
 
 完成日期：2026-07-05

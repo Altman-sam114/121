@@ -131,6 +131,61 @@ enum GeneralSkillDisplay {
         }
     }
 
+    static func effectHint(for rawValue: String) -> String? {
+        switch rawValue {
+        case "army_group_coordination":
+            return "协同军令"
+        case "armor_expert", "armor_theory":
+            return "官道机动与骑战攻势"
+        case "breakthrough":
+            return "破阵进攻"
+        case "cavalry_charge":
+            return "官道机动与骑兵突击"
+        case "coalition_coordination":
+            return "联军协同"
+        case "counterattack":
+            return "反击进攻"
+        case "defensive_master":
+            return "地形与渡河防御"
+        case "discipline":
+            return "地形防御"
+        case "disciplined_retreat":
+            return "退守塑形"
+        case "fortress_operations":
+            return "城关攻守"
+        case "logistics":
+            return "官道机动"
+        case "night_raid":
+            return "奇袭袭扰"
+        case "offensive_planning":
+            return "攻势修正"
+        case "political_will":
+            return "军心投入"
+        case "pressure_management":
+            return "压迫维持"
+        case "rapid_exploitation":
+            return "官道机动与追击"
+        case "reserve_control":
+            return "预备与渡河防御"
+        case "set_piece_attack":
+            return "阵地进攻与攻城"
+        case "siegecraft":
+            return "攻城修正"
+        case "staff_coordination":
+            return "参谋与渡河防御"
+        default:
+            return nil
+        }
+    }
+
+    static func displayNameWithHint(for rawValue: String) -> String {
+        let name = displayName(for: rawValue)
+        guard let hint = effectHint(for: rawValue) else {
+            return name
+        }
+        return "\(name)：\(hint)"
+    }
+
     private static func fallbackDisplayName(for rawValue: String) -> String {
         rawValue
             .split(separator: "_")

@@ -55,9 +55,10 @@ struct GeneralCommandPanelView: View {
                         .lineLimit(3)
 
                     if !general.skills.isEmpty {
-                        Text(general.skillDisplayNames.joined(separator: " / "))
+                        Text(general.skillEffectSummary)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(3)
                     }
 
                     if let assignment {
@@ -220,5 +221,14 @@ struct GeneralCommandPanelView: View {
 
     private func influenceIcon(for note: String) -> String {
         note.hasPrefix("道路") ? "arrow.up.right.circle" : "shield.lefthalf.filled"
+    }
+}
+
+private extension GeneralData {
+    var skillEffectSummary: String {
+        skills
+            .prefix(3)
+            .map(GeneralSkillDisplay.displayNameWithHint)
+            .joined(separator: " / ")
     }
 }

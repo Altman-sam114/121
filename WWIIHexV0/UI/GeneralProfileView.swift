@@ -109,15 +109,22 @@ struct GeneralProfileView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], alignment: .leading, spacing: 8) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8)], alignment: .leading, spacing: 8) {
                     ForEach(general.skills, id: \.self) { skill in
-                        Label(GeneralSkillDisplay.displayName(for: skill), systemImage: "star.fill")
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(2)
-                            .padding(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(PlatformStyles.tertiarySystemBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label(GeneralSkillDisplay.displayName(for: skill), systemImage: "star.fill")
+                                .font(.caption.weight(.semibold))
+                            if let hint = GeneralSkillDisplay.effectHint(for: skill) {
+                                Text(hint)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .lineLimit(2)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(PlatformStyles.tertiarySystemBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
             }
