@@ -56,6 +56,7 @@ struct RegionInspectorState: Equatable {
     let visibleNonHostileDivisions: [Division]
     let friendlyGeneralSummaries: [String]
     let visibleEnemyEngagementSummaries: [String]
+    let visibleNonHostileRelationSummaries: [String]
     let objectiveNames: [String]
     let objectiveStatus: String
     let cityLevel: CityLevel
@@ -257,6 +258,18 @@ struct MapDisplayAdapter {
             .map { division in
                 enemyEngagementSummary(for: division, anchor: engagementAnchor)
             }
+        let visibleNonHostileRelationSummaries = visibleNonHostile
+            .filter { !$0.isDestroyed }
+            .sorted { lhs, rhs in
+                if lhs.faction != rhs.faction {
+                    return lhs.faction.rawValue < rhs.faction.rawValue
+                }
+                return lhs.id < rhs.id
+            }
+            .prefix(3)
+            .map { division in
+                nonHostileRelationSummary(for: division, viewerFaction: viewerFaction)
+            }
 
         return RegionInspectorState(
             region: region,
@@ -279,6 +292,7 @@ struct MapDisplayAdapter {
             visibleNonHostileDivisions: visibleNonHostile,
             friendlyGeneralSummaries: friendlyGeneralSummaries,
             visibleEnemyEngagementSummaries: Array(visibleEnemyEngagementSummaries),
+            visibleNonHostileRelationSummaries: Array(visibleNonHostileRelationSummaries),
             objectiveNames: objectiveNames,
             objectiveStatus: objectiveStatus,
             cityLevel: cityLevel,
@@ -340,6 +354,23 @@ struct MapDisplayAdapter {
             : "距射程 \(distance - division.range)"
         let generalSummary = generalDisplayName(for: division).map { "，敌将 \($0)" } ?? ""
         return "\(division.thematicDisplayName)：距 \(distance)，\(rangeSummary)，兵力 \(division.strength)/\(division.maxStrength)\(generalSummary)"
+    }
+
+    private func nonHostileRelationSummary(for division: Division, viewerFaction: Faction) -> String {
+        let relationSummary = diplomaticRelationSummary(from: viewerFaction, to: division.faction)
+        let generalSummary = generalDisplayName(for: division).map { "，武将 \($0)" } ?? ""
+        return "\(division.thematicDisplayName)：\(division.faction.shortDisplayName)，\(relationSummary)，非敌对\(generalSummary)"
+    }
+
+    private func diplomaticRelationSummary(from viewerFaction: Faction, to otherFaction: Faction) -> String {
+        guard let viewerCountry = state.diplomacyState.primaryCountry(for: viewerFaction),
+              let otherCountry = state.diplomacyState.primaryCountry(for: otherFaction) else {
+            return "关系未建档"
+        }
+        guard let relation = state.diplomacyState.relation(between: viewerCountry.id, and: otherCountry.id) else {
+            return "关系未建档"
+        }
+        return "\(relation.status.displayName)，紧张 \(relation.tension)"
     }
 
     private func dominantDynamicFrontZoneId(for regionId: RegionId) -> FrontZoneId? {

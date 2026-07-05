@@ -135,6 +135,11 @@ struct RegionInspectorView: View {
                 Text(unitNames(state.visibleNonHostileDivisions))
                     .multilineTextAlignment(.trailing)
             }
+
+            LabeledContent("非敌对关系") {
+                Text(summaryLines(state.visibleNonHostileRelationSummaries))
+                    .multilineTextAlignment(.trailing)
+            }
         }
     }
 

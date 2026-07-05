@@ -4168,6 +4168,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，命令面板新增“非敌对军队”状态文案后，在窄屏和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 当前 `Faction.isHostile(to:)` 仍未接完整外交关系、停战、同盟和借道制度；本轮只避免 UI 文案把非 hostile 军队误称为敌军。
 
+## v2.4 - 郡县检查器非敌对关系摘要
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `RegionInspectorState` 新增 `visibleNonHostileRelationSummaries`，用于郡县检查器只读展示可见非敌对军队的势力、外交关系、紧张度和非敌对标记。
+- `MapDisplayAdapter.inspectorState` 从当前可见、非己方、非 hostile 且未毁灭的军队中最多生成三条非敌对关系摘要；若 `DiplomacyState` 没有对应 country 或 relation，则明确显示“关系未建档”。
+- `RegionInspectorView` 新增“非敌对关系”行，与“可见敌军”和“可见非敌对军队”分开，帮助玩家判断中立、友好或后续借道势力为什么不是当前交战对象。
+- 保持 `Faction.isHostile(to:)` 当前最小实现、`DiplomacyState` schema、外交命令、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、真实攻击、敌控区、道路压迫、粮道和补给规则不变；本轮只做郡县检查器只读态势摘要和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_non_hostile_relation_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，郡县检查器新增“非敌对关系”行后，在窄屏、长军队名、长势力名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 当前 `Faction.isHostile(to:)` 和外交关系读取仍是兼容层只读摘要，不代表完整同盟、借道、停战、称臣或臣属制度已经落地。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
