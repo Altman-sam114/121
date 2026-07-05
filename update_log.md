@@ -3533,6 +3533,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 武将面板官道受益军队摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 在当前选中武将防区已有道路汇总后追加“道路受益”只读摘要，列出实际获得官道机动加成的麾下军队。
+- 摘要继续复用 `GeneralInfluence.movementSummary(for:in:)`，按 `roadBonus` 从高到低、再按军队 id 排序，最多显示前三支受益军队和加成值；超过三支时追加“另 N 支”。
+- 无官道机动加成时保持原有“当前麾下军队未获得官道机动加成”文案，不新增空摘要行。
+- 保持 `GeneralInfluence`、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮草、撤退、补给和计划军令行为不变；本轮只做武将面板只读官道受益反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_benefit_units_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，武将面板“道路受益”摘要在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该摘要只读展示当前武将麾下军队已经获得的官道机动加成，不代表完整路径安全、真实可达路径、敌控区绕行、同盟借道、移动后同回合攻击或未来回合机动。
+
 ## v2.4 - 武将面板麾下军队备战摘要兼容层
 
 完成日期：2026-07-05

@@ -527,11 +527,31 @@ final class AppContainer: ObservableObject {
         let movementSummaries = divisions.map { influence.movementSummary(for: $0, in: gameState) }
         let roadBoostedCount = movementSummaries.filter { $0.roadBonus > 0 }.count
         let maxRoadBonus = movementSummaries.map(\.roadBonus).max() ?? 0
+        let boostedRoadUnits = Array(zip(divisions, movementSummaries))
+            .filter { _, summary in
+                summary.roadBonus > 0
+            }
+            .sorted { lhs, rhs in
+                if lhs.1.roadBonus != rhs.1.roadBonus {
+                    return lhs.1.roadBonus > rhs.1.roadBonus
+                }
+                return lhs.0.id < rhs.0.id
+            }
         let roadNote: String
+        let roadBenefitNote: String?
         if maxRoadBonus > 0 {
             roadNote = "道路：\(roadBoostedCount)/\(divisions.count) 支军队获得官道机动，最高 +\(maxRoadBonus)"
+            let displayedUnits = boostedRoadUnits.prefix(3)
+                .map { division, summary in
+                    "\(division.thematicDisplayName) +\(summary.roadBonus)"
+                }
+                .joined(separator: "，")
+            let remainingCount = max(0, roadBoostedCount - 3)
+            let remainingText = remainingCount > 0 ? "，另 \(remainingCount) 支" : ""
+            roadBenefitNote = "道路受益：\(displayedUnits)\(remainingText)"
         } else {
             roadNote = "道路：当前麾下军队未获得官道机动加成"
+            roadBenefitNote = nil
         }
 
         let enemyDivisions = gameState.divisions
@@ -563,7 +583,7 @@ final class AppContainer: ObservableObject {
             combatNote = "交战：当前接敌攻击 \(bonusRange(attackBonuses))，防御 \(bonusRange(defenseBonuses))\(enemyText)"
         }
 
-        return [roadNote, combatNote]
+        return [roadNote, roadBenefitNote, combatNote].compactMap { $0 }
     }
 
     private func nearestEnemyText(for divisions: [Division], enemyDivisions: [Division]) -> String? {
