@@ -3533,6 +3533,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 军队接战无敌对空状态兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 在当前选中军队没有任何未溃散 hostile 敌对军队时，返回“接战：当前无可预判敌对军队”空状态。
+- `UnitInspectorView` 继续通过既有“接战预判”小节展示该只读 notes，不新增参数、不改 UI API。
+- 当存在 hostile 敌对军队但未入射程时，保留既有最近敌军、接近候选、接近武将、接近态势、威胁和官道接近预判；射程内存在敌对军队时仍走既有多目标接战预判。
+- 保持 `Faction.isHostile(to:)`、`CombatRules`、`MovementRules`、`GeneralInfluence`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮草、撤退、补给和计划军令行为不变；本轮只做军队详情接战预判空状态和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_no_hostile_empty_state.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，军队详情“接战预判”空状态在窄屏和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该空状态只读表示当前没有 hostile 目标可用于接战预判，不代表完整外交关系、隐藏敌军、未来回合威胁、路径安全、移动后同回合攻击或真实胜率。
+
 ## v2.4 - 武将面板官道受益军队摘要兼容层
 
 完成日期：2026-07-05

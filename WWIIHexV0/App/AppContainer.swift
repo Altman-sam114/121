@@ -375,6 +375,9 @@ final class AppContainer: ObservableObject {
                     distance: division.coord.distance(to: target.coord)
                 )
             }
+        guard !enemyDistances.isEmpty else {
+            return ["接战：当前无可预判敌对军队"]
+        }
 
         let previews: [(
             target: Division,
