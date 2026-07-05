@@ -49,10 +49,13 @@ struct RegionInspectorState: Equatable {
     let frontZoneId: FrontZoneId?
     let frontPressure: Double
     let roadHexCount: Int
+    let pressuredRoadHexCount: Int
     let passableHexCount: Int
     let friendlyDivisions: [Division]
     let visibleEnemyDivisions: [Division]
     let visibleNonHostileDivisions: [Division]
+    let friendlyGeneralSummaries: [String]
+    let visibleEnemyEngagementSummaries: [String]
     let objectiveNames: [String]
     let objectiveStatus: String
     let cityLevel: CityLevel
@@ -207,6 +210,14 @@ struct MapDisplayAdapter {
                 !division.faction.isHostile(to: viewerFaction) &&
                 isDivisionVisible(division, viewerFaction: viewerFaction)
         }
+        let visibleHostileCoords = state.divisions.compactMap { division -> HexCoord? in
+            guard division.faction.isHostile(to: viewerFaction),
+                  !division.isDestroyed,
+                  isDivisionVisible(division, viewerFaction: viewerFaction) else {
+                return nil
+            }
+            return division.coord
+        }
         let objectiveNames = state.map.objectives
             .filter { objective in
                 region.displayHexes.contains(objective.coord)
@@ -220,7 +231,32 @@ struct MapDisplayAdapter {
         let economicOutput = regionalEconomicOutput(for: region, cityLevel: cityLevel)
         let regionTiles = region.displayHexes.compactMap { state.map.tile(at: $0) }
         let roadHexCount = regionTiles.count { $0.hasRoad }
+        let pressuredRoadHexCount = region.displayHexes.count { coord in
+            state.map.tile(at: coord)?.hasRoad == true &&
+                visibleHostileCoords.contains { $0.distance(to: coord) <= 1 }
+        }
         let passableHexCount = regionTiles.count { $0.isPassable }
+        let engagementAnchor = selectedHex ?? region.representativeHex
+        let friendlyGeneralSummaries = friendly.compactMap { division -> String? in
+            guard let generalName = generalDisplayName(for: division) else {
+                return nil
+            }
+            return "\(division.thematicDisplayName)：\(generalName)"
+        }
+        let visibleEnemyEngagementSummaries = visibleEnemy
+            .filter { !$0.isDestroyed }
+            .sorted { lhs, rhs in
+                let lhsDistance = lhs.coord.distance(to: engagementAnchor)
+                let rhsDistance = rhs.coord.distance(to: engagementAnchor)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance < rhsDistance
+                }
+                return lhs.id < rhs.id
+            }
+            .prefix(3)
+            .map { division in
+                enemyEngagementSummary(for: division, anchor: engagementAnchor)
+            }
 
         return RegionInspectorState(
             region: region,
@@ -236,10 +272,13 @@ struct MapDisplayAdapter {
                 .map(\.pressureLevel)
                 .max() ?? 0,
             roadHexCount: roadHexCount,
+            pressuredRoadHexCount: pressuredRoadHexCount,
             passableHexCount: passableHexCount,
             friendlyDivisions: friendly,
             visibleEnemyDivisions: visibleEnemy,
             visibleNonHostileDivisions: visibleNonHostile,
+            friendlyGeneralSummaries: friendlyGeneralSummaries,
+            visibleEnemyEngagementSummaries: Array(visibleEnemyEngagementSummaries),
             objectiveNames: objectiveNames,
             objectiveStatus: objectiveStatus,
             cityLevel: cityLevel,
@@ -284,6 +323,23 @@ struct MapDisplayAdapter {
             return nil
         }
         return zone.generalAssignment
+    }
+
+    private func generalDisplayName(for division: Division) -> String? {
+        let zoneId = state.warDeploymentState.zoneId(for: division.coord, map: state.map)
+        guard let assignment = generalAssignment(for: division, fallbackZoneId: zoneId) else {
+            return nil
+        }
+        return assignment.generalDisplayName ?? assignment.generalId
+    }
+
+    private func enemyEngagementSummary(for division: Division, anchor: HexCoord) -> String {
+        let distance = division.coord.distance(to: anchor)
+        let rangeSummary = distance <= division.range
+            ? "入射程"
+            : "距射程 \(distance - division.range)"
+        let generalSummary = generalDisplayName(for: division).map { "，敌将 \($0)" } ?? ""
+        return "\(division.thematicDisplayName)：距 \(distance)，\(rangeSummary)，兵力 \(division.strength)/\(division.maxStrength)\(generalSummary)"
     }
 
     private func dominantDynamicFrontZoneId(for regionId: RegionId) -> FrontZoneId? {

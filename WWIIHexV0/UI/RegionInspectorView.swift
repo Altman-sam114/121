@@ -116,8 +116,18 @@ struct RegionInspectorView: View {
                     .multilineTextAlignment(.trailing)
             }
 
+            LabeledContent("本郡武将") {
+                Text(summaryLines(state.friendlyGeneralSummaries))
+                    .multilineTextAlignment(.trailing)
+            }
+
             LabeledContent("可见敌军") {
                 Text(unitNames(state.visibleEnemyDivisions))
+                    .multilineTextAlignment(.trailing)
+            }
+
+            LabeledContent("敌军接战") {
+                Text(summaryLines(state.visibleEnemyEngagementSummaries))
                     .multilineTextAlignment(.trailing)
             }
 
@@ -135,10 +145,17 @@ struct RegionInspectorView: View {
         return divisions.map(\.thematicDisplayName).joined(separator: ", ")
     }
 
+    private func summaryLines(_ summaries: [String]) -> String {
+        summaries.isEmpty ? "无" : summaries.joined(separator: "\n")
+    }
+
     private func roadSummary(_ state: RegionInspectorState) -> String {
         guard state.passableHexCount > 0 else {
             return "无可通行地格"
         }
-        return "\(state.roadHexCount)/\(state.passableHexCount) 格"
+        let pressureSummary = state.pressuredRoadHexCount > 0
+            ? "，受压 \(state.pressuredRoadHexCount)"
+            : "，未受压"
+        return "\(state.roadHexCount)/\(state.passableHexCount) 格\(pressureSummary)"
     }
 }

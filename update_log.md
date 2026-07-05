@@ -3533,6 +3533,84 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 郡县检查器武将与接战摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `RegionInspectorState` 新增 `friendlyGeneralSummaries` 和 `visibleEnemyEngagementSummaries`，用于郡县检查器只读展示本郡己方军队对应武将，以及可见敌军距离/射程/兵力/敌将态势。
+- `MapDisplayAdapter.inspectorState` 复用现有 `GeneralAssignment` 快照，从己方军队派生本郡武将摘要；可见敌军接战摘要只来自当前郡县内可见、未溃散且 hostile 的军队，锚点优先使用选中 hex，否则使用郡县代表 hex。
+- `RegionInspectorView` 新增“本郡武将”和“敌军接战”行，方便玩家在郡县层同时判断谁在守、敌军离当前地格或郡县核心有多近、是否已处于敌军射程内。
+- 保持 `MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮道和补给规则不变；本轮只做郡县检查器只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_general_engagement_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，郡县检查器新增“本郡武将”和“敌军接战”多行摘要后，在窄屏、长军队名、长武将名、长敌将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 敌军接战摘要只读展示当前可见 hostile 军队相对锚点的距离、射程态势、兵力和敌将，不代表完整攻击合法性、伤害胜率、路径安全、隐藏敌军推断、同盟借道、移动后同回合攻击或敌方回合反制。
+
+## v2.4 - 郡县检查器官道受压摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `RegionInspectorState` 新增 `pressuredRoadHexCount`，用于郡县检查器只读展示当前郡县官道受压数量。
+- `MapDisplayAdapter.inspectorState` 统计当前 region 内 `hasRoad` 的官道格，并只用当前 viewer 可见、未毁灭且 hostile 的军队作为压迫来源，避免不可见敌军通过郡县面板泄漏。
+- `RegionInspectorView.roadSummary` 将“官道覆盖”从单纯覆盖数扩展为覆盖数 + `受压 N` / `未受压` 摘要，服务修路、行军、粮道和接战态势判断。
+- 保持 `MovementRules.isEnemyZoneOfControl`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮道和补给规则不变；本轮只做郡县检查器只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_hostile_road_pressure_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，郡县检查器“官道覆盖”追加受压摘要后，在窄屏、长地名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该摘要是当前可见 hostile 军队造成的只读态势提示，不代表完整路径安全、隐藏敌军推断、同盟借道、移动后同回合攻击或真实胜率。
+
 ## v2.4 - 郡县检查器敌对可见军队口径兼容层
 
 完成日期：2026-07-05
