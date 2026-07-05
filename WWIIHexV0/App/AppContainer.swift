@@ -337,6 +337,60 @@ final class AppContainer: ObservableObject {
             .sorted { $0.id < $1.id }
     }
 
+    var selectedGeneralInfluenceNotes: [String] {
+        guard let zone = selectedGeneralCommandZone,
+              selectedGeneralAssignment != nil else {
+            return []
+        }
+
+        let divisions = selectedGeneralAssignedDivisions
+        guard !divisions.isEmpty else {
+            return [
+                "道路：暂无麾下军队",
+                "交战：暂无麾下军队可计算"
+            ]
+        }
+
+        let influence = GeneralInfluence()
+        let movementSummaries = divisions.map { influence.movementSummary(for: $0, in: gameState) }
+        let roadBoostedCount = movementSummaries.filter { $0.roadBonus > 0 }.count
+        let maxRoadBonus = movementSummaries.map(\.roadBonus).max() ?? 0
+        let roadNote: String
+        if maxRoadBonus > 0 {
+            roadNote = "道路：\(roadBoostedCount)/\(divisions.count) 支军队获得官道机动，最高 +\(maxRoadBonus)"
+        } else {
+            roadNote = "道路：当前麾下军队未获得官道机动加成"
+        }
+
+        let enemyDivisions = gameState.divisions
+            .filter { $0.faction.isHostile(to: zone.faction) && !$0.isDestroyed }
+        var attackBonuses: [Int] = []
+        var defenseBonuses: [Int] = []
+        for division in divisions {
+            for enemy in enemyDivisions {
+                if division.coord.distance(to: enemy.coord) <= division.range {
+                    attackBonuses.append(
+                        influence.combatSummary(attacker: division, defender: enemy, in: gameState).attackBonus
+                    )
+                }
+                if enemy.coord.distance(to: division.coord) <= enemy.range {
+                    defenseBonuses.append(
+                        influence.combatSummary(attacker: enemy, defender: division, in: gameState).defenseBonus
+                    )
+                }
+            }
+        }
+
+        let combatNote: String
+        if attackBonuses.isEmpty && defenseBonuses.isEmpty {
+            combatNote = "交战：当前未接敌，进入射程后计算武将攻防"
+        } else {
+            combatNote = "交战：当前接敌攻击 \(bonusRange(attackBonuses))，防御 \(bonusRange(defenseBonuses))"
+        }
+
+        return [roadNote, combatNote]
+    }
+
     var selectedGeneralHQUnderAttack: Bool {
         guard let zone = selectedGeneralCommandZone else {
             return false
@@ -544,6 +598,21 @@ final class AppContainer: ObservableObject {
                     || $0.unitsGarrison.contains(divisionId)
             }?
             .id
+    }
+
+    private func bonusRange(_ values: [Int]) -> String {
+        guard let minValue = values.min(),
+              let maxValue = values.max() else {
+            return "无接战"
+        }
+        if minValue == maxValue {
+            return signedBonus(minValue)
+        }
+        return "\(signedBonus(minValue))~\(signedBonus(maxValue))"
+    }
+
+    private func signedBonus(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : "\(value)"
     }
 
     private func submitPlayerDirective(

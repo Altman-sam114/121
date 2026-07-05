@@ -2413,6 +2413,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，计划军令列表在窄屏和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - `GeneralAgent` 仍是 deterministic 兼容层；本轮不实现完整武将抗命、技能树、士气、疲劳、单挑或真实 LLM 聊天军令。
 
+## v2.4 - 武将道路与交战面板摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 复用 `GeneralInfluence.movementSummary`，为当前选中武将防区汇总麾下军队的官道机动加成数量和最高加成。
+- 同一派生属性复用 `GeneralInfluence.combatSummary`，只统计当前已进入射程的敌我配对，汇总接敌攻击和防御修正；未接敌时显示后续接战再计算。
+- `GeneralCommandPanelView` 新增“道路与交战”只读摘要区，显示道路机动与接敌攻防影响，让玩家不必等移动/攻击日志才知道武将对道路和交战的当前作用。
+- `RootGameView` 在 Unit tab 和 General tab 两个现有武将面板入口传入同一套摘要。
+- 保持 `GeneralInfluence`、`MovementRules`、`CombatRules`、`WarCommandExecutor`、`RuleEngine` 和状态写入边界不变；本轮只做 UI 可见性和 App 层只读派生。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_influence_panel_summary.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/UI/GeneralCommandPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“道路与交战”摘要在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 交战摘要只统计当前射程内敌我配对，不做完整战斗预报、伤害预测、士气、疲劳或单挑展示。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -5,6 +5,7 @@ struct GeneralCommandPanelView: View {
     let general: GeneralData?
     let assignment: GeneralAssignment?
     let assignedDivisions: [Division]
+    let influenceNotes: [String]
     let targetRegion: RegionNode?
     let targetZone: FrontZone?
     let hqUnderAttack: Bool
@@ -64,6 +65,20 @@ struct GeneralCommandPanelView: View {
                         metricBar(title: "满意", value: assignment.satisfaction)
                         LabeledContent("干预") {
                             Text("\(assignment.interventionCount)")
+                        }
+                    }
+
+                    if !influenceNotes.isEmpty {
+                        Text("道路与交战")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(Array(influenceNotes.enumerated()), id: \.offset) { _, note in
+                                Label(note, systemImage: influenceIcon(for: note))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
                         }
                     }
 
@@ -184,5 +199,9 @@ struct GeneralCommandPanelView: View {
         let target = operation.targetRegionId?.rawValue ?? operation.sourceRegionId?.rawValue ?? operation.zoneId.rawValue
         let tactic = operation.tactic?.displayName ?? "未定战术"
         return "\(operation.directiveType.displayName) / \(tactic) / \(target)"
+    }
+
+    private func influenceIcon(for note: String) -> String {
+        note.hasPrefix("道路") ? "arrow.up.right.circle" : "shield.lefthalf.filled"
     }
 }
