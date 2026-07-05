@@ -124,6 +124,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_region_road_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_inspector_general_engagement_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_inspector_hostile_road_pressure_summary.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_road_pressure_nearest_enemy_source_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_inspector_hostile_visibility.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_inspector_non_hostile_relation_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_general_assignment_summary.md`

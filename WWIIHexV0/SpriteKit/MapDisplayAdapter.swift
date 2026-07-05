@@ -50,6 +50,7 @@ struct RegionInspectorState: Equatable {
     let frontPressure: Double
     let roadHexCount: Int
     let pressuredRoadHexCount: Int
+    let roadPressureSourceSummaries: [String]
     let passableHexCount: Int
     let friendlyDivisions: [Division]
     let visibleEnemyDivisions: [Division]
@@ -211,13 +212,10 @@ struct MapDisplayAdapter {
                 !division.faction.isHostile(to: viewerFaction) &&
                 isDivisionVisible(division, viewerFaction: viewerFaction)
         }
-        let visibleHostileCoords = state.divisions.compactMap { division -> HexCoord? in
-            guard division.faction.isHostile(to: viewerFaction),
-                  !division.isDestroyed,
-                  isDivisionVisible(division, viewerFaction: viewerFaction) else {
-                return nil
-            }
-            return division.coord
+        let visibleHostileDivisions = state.divisions.filter { division in
+            division.faction.isHostile(to: viewerFaction) &&
+                !division.isDestroyed &&
+                isDivisionVisible(division, viewerFaction: viewerFaction)
         }
         let objectiveNames = state.map.objectives
             .filter { objective in
@@ -234,10 +232,15 @@ struct MapDisplayAdapter {
         let roadHexCount = regionTiles.count { $0.hasRoad }
         let pressuredRoadHexCount = region.displayHexes.count { coord in
             state.map.tile(at: coord)?.hasRoad == true &&
-                visibleHostileCoords.contains { $0.distance(to: coord) <= 1 }
+                visibleHostileDivisions.contains { $0.coord.distance(to: coord) <= 1 }
         }
         let passableHexCount = regionTiles.count { $0.isPassable }
         let engagementAnchor = selectedHex ?? region.representativeHex
+        let roadPressureSourceSummaries = roadPressureSummaries(
+            for: region,
+            hostileDivisions: visibleHostileDivisions,
+            anchor: engagementAnchor
+        )
         let friendlyGeneralSummaries = friendly.compactMap { division -> String? in
             guard let generalName = generalDisplayName(for: division) else {
                 return nil
@@ -286,6 +289,7 @@ struct MapDisplayAdapter {
                 .max() ?? 0,
             roadHexCount: roadHexCount,
             pressuredRoadHexCount: pressuredRoadHexCount,
+            roadPressureSourceSummaries: roadPressureSourceSummaries,
             passableHexCount: passableHexCount,
             friendlyDivisions: friendly,
             visibleEnemyDivisions: visibleEnemy,
@@ -354,6 +358,62 @@ struct MapDisplayAdapter {
             : "距射程 \(distance - division.range)"
         let generalSummary = generalDisplayName(for: division).map { "，敌将 \($0)" } ?? ""
         return "\(division.thematicDisplayName)：距 \(distance)，\(rangeSummary)，兵力 \(division.strength)/\(division.maxStrength)\(generalSummary)"
+    }
+
+    private func roadPressureSummaries(
+        for region: RegionNode,
+        hostileDivisions: [Division],
+        anchor: HexCoord
+    ) -> [String] {
+        let roadHexes = region.displayHexes.filter { coord in
+            state.map.tile(at: coord)?.hasRoad == true
+        }
+        let pressureSources = hostileDivisions.compactMap { enemy -> (
+            enemy: Division,
+            road: HexCoord,
+            roadDistance: Int,
+            anchorDistance: Int
+        )? in
+            guard let nearestRoad = roadHexes
+                .filter({ enemy.coord.distance(to: $0) <= 1 })
+                .sorted(by: { lhs, rhs in
+                    let lhsRoadDistance = enemy.coord.distance(to: lhs)
+                    let rhsRoadDistance = enemy.coord.distance(to: rhs)
+                    if lhsRoadDistance != rhsRoadDistance {
+                        return lhsRoadDistance < rhsRoadDistance
+                    }
+                    let lhsAnchorDistance = lhs.distance(to: anchor)
+                    let rhsAnchorDistance = rhs.distance(to: anchor)
+                    if lhsAnchorDistance != rhsAnchorDistance {
+                        return lhsAnchorDistance < rhsAnchorDistance
+                    }
+                    return "\(lhs.q),\(lhs.r)" < "\(rhs.q),\(rhs.r)"
+                })
+                .first else {
+                return nil
+            }
+            return (
+                enemy,
+                nearestRoad,
+                enemy.coord.distance(to: nearestRoad),
+                nearestRoad.distance(to: anchor)
+            )
+        }
+        return pressureSources
+            .sorted { lhs, rhs in
+                if lhs.roadDistance != rhs.roadDistance {
+                    return lhs.roadDistance < rhs.roadDistance
+                }
+                if lhs.anchorDistance != rhs.anchorDistance {
+                    return lhs.anchorDistance < rhs.anchorDistance
+                }
+                return lhs.enemy.id < rhs.enemy.id
+            }
+            .prefix(3)
+            .map { item in
+                let generalSummary = generalDisplayName(for: item.enemy).map { "，敌将 \($0)" } ?? ""
+                return "\(item.enemy.thematicDisplayName)：压迫官道 \(item.road.q),\(item.road.r)，距官道 \(item.roadDistance)，距锚点 \(item.anchorDistance)\(generalSummary)"
+            }
     }
 
     private func nonHostileRelationSummary(for division: Division, viewerFaction: Faction) -> String {

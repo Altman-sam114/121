@@ -4247,6 +4247,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，按钮下方新增多行灰态原因后，在窄屏、长阶段名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 灰态原因是当前 UI 派生条件的只读解释，不代表完整路径安全、真实进攻胜率、敌方反制、同盟借道或后续外交制度已经落地。
 
+## v2.4 - 郡县检查器官道受压最近敌军来源摘要兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `RegionInspectorState` 新增 `roadPressureSourceSummaries`，记录本郡官道受压的最近可见敌军来源摘要。
+- `MapDisplayAdapter.inspectorState` 将官道受压数量和来源摘要统一到当前 viewer 可见、未毁灭、且 `Faction.isHostile(to:)` 判定 hostile 的敌军口径，避免隐藏敌军泄漏。
+- `roadPressureSummaries` 按敌军来源去重，同一支敌军只输出一条最近受压官道，最多显示三条，并追加受压官道坐标、距官道、距锚点和敌将名。
+- `RegionInspectorView` 新增“官道压迫”行，在郡县检查器中与官道覆盖、本郡武将、敌军接战和非敌对关系摘要并列展示。
+- 保持移动、攻击、道路修缮、粮道、补给、外交、真实敌控区和 `Command / ZoneDirective -> WarCommandExecutor / RuleEngine` 执行链路不变；本轮只做只读 UI 派生和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_road_pressure_nearest_enemy_source_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增多行“官道压迫”摘要在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 官道压迫来源是只读态势摘要，不代表完整路径安全、真实攻击合法性、胜率、借道、同盟通行或敌方回合反制制度。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

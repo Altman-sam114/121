@@ -73,6 +73,11 @@ struct RegionInspectorView: View {
                     .multilineTextAlignment(.trailing)
             }
 
+            LabeledContent("官道压迫") {
+                Text(summaryLines(state.roadPressureSourceSummaries))
+                    .multilineTextAlignment(.trailing)
+            }
+
             LabeledContent("粮草") {
                 Text("\(state.region.supplyValue)")
             }
