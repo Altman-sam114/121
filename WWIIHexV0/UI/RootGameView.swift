@@ -171,6 +171,8 @@ struct RootGameView: View {
                         plannedOperationRows: container.selectedGeneralPlannedOperationRows,
                         canHoldLine: container.canOrderSelectedGeneralHoldLine,
                         canAttackRegion: container.canOrderSelectedGeneralAttackRegion,
+                        holdLineUnavailableReason: container.selectedGeneralHoldLineUnavailableReason,
+                        attackRegionUnavailableReason: container.selectedGeneralAttackRegionUnavailableReason,
                         onShowProfile: { isGeneralProfilePresented = true },
                         onHoldLine: container.orderSelectedGeneralHoldLine,
                         onAttackRegion: container.orderSelectedGeneralAttackRegion
@@ -190,6 +192,8 @@ struct RootGameView: View {
                         plannedOperationRows: container.selectedGeneralPlannedOperationRows,
                         canHoldLine: container.canOrderSelectedGeneralHoldLine,
                         canAttackRegion: container.canOrderSelectedGeneralAttackRegion,
+                        holdLineUnavailableReason: container.selectedGeneralHoldLineUnavailableReason,
+                        attackRegionUnavailableReason: container.selectedGeneralAttackRegionUnavailableReason,
                         onShowProfile: { isGeneralProfilePresented = true },
                         onHoldLine: container.orderSelectedGeneralHoldLine,
                         onAttackRegion: container.orderSelectedGeneralAttackRegion

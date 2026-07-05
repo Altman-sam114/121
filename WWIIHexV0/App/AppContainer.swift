@@ -813,11 +813,42 @@ final class AppContainer: ObservableObject {
     }
 
     var canOrderSelectedGeneralHoldLine: Bool {
-        canIssuePlayerDirective && selectedGeneralCommandZone != nil
+        selectedGeneralHoldLineUnavailableReason == nil
     }
 
     var canOrderSelectedGeneralAttackRegion: Bool {
-        canIssuePlayerDirective && selectedAttackTarget != nil && selectedGeneralCommandZone != nil
+        selectedGeneralAttackRegionUnavailableReason == nil
+    }
+
+    var selectedGeneralHoldLineUnavailableReason: String? {
+        if let reason = playerDirectiveUnavailableReason {
+            return reason
+        }
+        guard selectedGeneralCommandZone != nil else {
+            return "请选择己方防区、己方军队，或相邻敌方郡县以确定固守防区。"
+        }
+        return nil
+    }
+
+    var selectedGeneralAttackRegionUnavailableReason: String? {
+        if let reason = playerDirectiveUnavailableReason {
+            return reason
+        }
+        guard let selectedRegionId else {
+            return "请选择敌方前线郡县作为进攻目标。"
+        }
+        guard let targetZone = gameState.warDeploymentState.zone(for: selectedRegionId) else {
+            return "选中郡县未映射防区，暂不能生成进攻军令。"
+        }
+        guard targetZone.faction.isHostile(to: playerFaction) else {
+            return targetZone.faction == playerFaction
+                ? "目标是己方防区；请选择敌方前线郡县。"
+                : "目标防区当前非敌对；请选择交战中的敌方郡县。"
+        }
+        guard selectedGeneralCommandZone != nil else {
+            return "目标附近没有可用己方相邻防区；请先选择己方防区或己方军队。"
+        }
+        return nil
     }
 
     var displayEventLog: [GameLogEntry] {
@@ -847,6 +878,19 @@ final class AppContainer: ObservableObject {
         !observerModeEnabled &&
             gameState.activeFaction == playerFaction &&
             gameState.phase == .alliedPlayer
+    }
+
+    private var playerDirectiveUnavailableReason: String? {
+        if observerModeEnabled {
+            return "观察模式不能下达武将军令。"
+        }
+        guard gameState.activeFaction == playerFaction else {
+            return "当前行动势力为 \(gameState.activeFaction.displayName)，未到玩家武将军令阶段。"
+        }
+        guard gameState.phase == .alliedPlayer else {
+            return "\(gameState.phase.displayName) 阶段不能下达武将军令。"
+        }
+        return nil
     }
 
     private var selectedAttackTarget: (region: RegionNode, zone: FrontZone)? {

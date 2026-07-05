@@ -77,6 +77,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_core_action_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_command_result_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_command_panel_hostile_status_text.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_command_button_unavailable_reason.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_tactic_shaping.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_tactic_audit.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_nearest_enemy_summary.md`

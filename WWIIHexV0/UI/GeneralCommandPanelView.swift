@@ -12,6 +12,8 @@ struct GeneralCommandPanelView: View {
     let plannedOperationRows: [(id: String, iconName: String, summary: String)]
     let canHoldLine: Bool
     let canAttackRegion: Bool
+    let holdLineUnavailableReason: String?
+    let attackRegionUnavailableReason: String?
     let onShowProfile: () -> Void
     let onHoldLine: () -> Void
     let onAttackRegion: () -> Void
@@ -134,6 +136,15 @@ struct GeneralCommandPanelView: View {
             }
             .buttonStyle(.bordered)
 
+            if let commandHintText {
+                Label(commandHintText, systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(nil)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             if !plannedOperationRows.isEmpty {
                 Text("计划军令")
                     .font(.caption.weight(.semibold))
@@ -221,6 +232,19 @@ struct GeneralCommandPanelView: View {
 
     private func influenceIcon(for note: String) -> String {
         note.hasPrefix("道路") ? "arrow.up.right.circle" : "shield.lefthalf.filled"
+    }
+
+    private var commandHintText: String? {
+        if let holdLineUnavailableReason, let attackRegionUnavailableReason {
+            return "固守：\(holdLineUnavailableReason)\n进攻：\(attackRegionUnavailableReason)"
+        }
+        if let holdLineUnavailableReason {
+            return "固守：\(holdLineUnavailableReason)"
+        }
+        if let attackRegionUnavailableReason {
+            return "进攻：\(attackRegionUnavailableReason)"
+        }
+        return nil
     }
 }
 

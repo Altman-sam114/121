@@ -4207,6 +4207,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，郡县检查器新增“非敌对关系”行后，在窄屏、长军队名、长势力名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 当前 `Faction.isHostile(to:)` 和外交关系读取仍是兼容层只读摘要，不代表完整同盟、借道、停战、称臣或臣属制度已经落地。
 
+## v2.4 - 武将面板命令按钮不可用原因提示兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `AppContainer` 新增 `selectedGeneralHoldLineUnavailableReason` 与 `selectedGeneralAttackRegionUnavailableReason`，集中生成武将面板“固守战线 / 进攻郡县”灰态原因。
+- `canOrderSelectedGeneralHoldLine` 与 `canOrderSelectedGeneralAttackRegion` 改为由对应原因是否为 `nil` 决定，避免按钮可用性和提示条件分叉。
+- `GeneralCommandPanelView` 新增只读 `info.circle` 提示，显示观察模式、非玩家阶段、未选择己方防区、未选择敌方前线郡县、目标防区非敌对或目标附近无己方相邻防区等下一步提示。
+- `RootGameView` 在两个 `GeneralCommandPanelView` 入口传入灰态原因。
+- 保持 `GeneralAgent`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实 `ZoneDirective` 执行、移动、攻击、道路、粮道、补给和动态防区归属不变；本轮只做武将面板只读操作反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_command_button_unavailable_reason.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/RootGameView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，按钮下方新增多行灰态原因后，在窄屏、长阶段名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 灰态原因是当前 UI 派生条件的只读解释，不代表完整路径安全、真实进攻胜率、敌方反制、同盟借道或后续外交制度已经落地。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
