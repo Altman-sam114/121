@@ -315,6 +315,37 @@ final class AppContainer: ObservableObject {
         return mapDisplayAdapter.unitInspectorState(for: selectedDivision)
     }
 
+    var selectedUnitMobilityPreviewNotes: [String] {
+        guard let division = selectedDivision else {
+            return []
+        }
+
+        let movementRules = MovementRules()
+        let summary = movementRules.generalInfluenceSummary(for: division, in: gameState)
+        let reachableCount = movementRules.movementRange(for: division, in: gameState).count
+        var notes = [
+            "机动：基础 \(summary.baseMovement)，有效 \(summary.effectiveMovement)，可达 \(reachableCount) 格"
+        ]
+
+        if let roadInfluence = summary.logFragment {
+            notes.append(roadInfluence)
+        } else if let generalName = summary.generalName ?? summary.generalId {
+            notes.append("道路：\(generalName) 当前未触发官道机动加成")
+        } else {
+            notes.append("道路：未分配武将，按基础机动行军")
+        }
+
+        if gameState.map.tile(at: division.coord)?.hasRoad == true {
+            notes.append("当前位置：已在官道")
+        } else if let roadCount = currentRegionRoadCount(for: division), roadCount > 0 {
+            notes.append("郡县官道：\(roadCount) 格，可作为行军和粮道参考")
+        } else {
+            notes.append("郡县官道：暂无可用官道")
+        }
+
+        return notes
+    }
+
     var selectedUnitCombatPreviewNotes: [String] {
         guard let division = selectedDivision else {
             return []
@@ -675,6 +706,16 @@ final class AppContainer: ObservableObject {
 
     private func signedBonus(_ value: Int) -> String {
         value > 0 ? "+\(value)" : "\(value)"
+    }
+
+    private func currentRegionRoadCount(for division: Division) -> Int? {
+        guard let regionId = gameState.map.region(for: division.coord),
+              let region = gameState.map.region(id: regionId) else {
+            return nil
+        }
+        return region.displayHexes.count {
+            gameState.map.tile(at: $0)?.hasRoad == true
+        }
     }
 
     private func submitPlayerDirective(

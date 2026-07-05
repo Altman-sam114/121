@@ -82,3 +82,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_influence_panel_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_skill_display_labels.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_preview.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_road_mobility_preview.md`

@@ -4,6 +4,7 @@ struct UnitInspectorView: View {
     let division: Division?
     let playerFaction: Faction
     let strategicState: UnitInspectorStrategicState?
+    let mobilityPreviewNotes: [String]
     let combatPreviewNotes: [String]
 
     var body: some View {
@@ -89,18 +90,34 @@ struct UnitInspectorView: View {
                     .multilineTextAlignment(.trailing)
             }
 
+            if !mobilityPreviewNotes.isEmpty {
+                noteSection(
+                    title: "道路机动",
+                    notes: mobilityPreviewNotes,
+                    systemImage: "arrow.up.right.circle"
+                )
+            }
+
             if !combatPreviewNotes.isEmpty {
-                Text("接战预判")
-                    .font(.caption.weight(.semibold))
+                noteSection(
+                    title: "接战预判",
+                    notes: combatPreviewNotes,
+                    systemImage: "scope"
+                )
+            }
+        }
+    }
+
+    private func noteSection(title: String, notes: [String], systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ForEach(Array(notes.enumerated()), id: \.offset) { _, note in
+                Label(note, systemImage: systemImage)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(Array(combatPreviewNotes.enumerated()), id: \.offset) { _, note in
-                        Label(note, systemImage: "scope")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
+                    .lineLimit(2)
             }
         }
     }

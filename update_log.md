@@ -2537,6 +2537,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，接战预判在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 预判只展示当前射程内首个敌对目标，不实现完整战斗预报、胜负概率、士气、疲劳、单挑或多目标比较。
 
+## v2.4 - 军队道路机动预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitMobilityPreviewNotes` 为当前选中军队生成只读道路机动预判，显示基础机动、有效机动、可达格数、武将官道加成和当前位置/郡县官道状态。
+- `UnitInspectorView` 新增“道路机动”小节，并复用同一套 note section 显示“接战预判”，让军队详情能同时呈现道路与交战影响。
+- `RootGameView` 将新的只读道路机动派生属性传入军队详情面板。
+- 保持 `MovementRules`、`GeneralInfluence`、`CombatRules`、`WarCommandExecutor`、`RuleEngine`、道路移动成本、武将道路加成条件、寻路和敌控区规则不变；本轮只做 UI 预览和 App 层只读派生。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_road_mobility_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/GeneralProfileView.swift WWIIHexV0/UI/UnitInspectorView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，道路机动预判在窄屏、长武将名、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 预判只展示当前规则下的可达格数和官道状态，不实现完整行军路径解释、粮道覆盖图或道路修建路线规划。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
