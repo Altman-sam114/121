@@ -106,7 +106,8 @@ struct UnitInspectorView: View {
                 noteSection(
                     title: "道路机动",
                     notes: mobilityPreviewNotes,
-                    systemImage: "arrow.up.right.circle"
+                    systemImage: "arrow.up.right.circle",
+                    lineLimit: nil
                 )
             }
 
@@ -114,13 +115,14 @@ struct UnitInspectorView: View {
                 noteSection(
                     title: "接战预判",
                     notes: combatPreviewNotes,
-                    systemImage: "scope"
+                    systemImage: "scope",
+                    lineLimit: nil
                 )
             }
         }
     }
 
-    private func noteSection(title: String, notes: [String], systemImage: String) -> some View {
+    private func noteSection(title: String, notes: [String], systemImage: String, lineLimit: Int? = 2) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption.weight(.semibold))
@@ -129,7 +131,9 @@ struct UnitInspectorView: View {
                 Label(note, systemImage: systemImage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(lineLimit)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

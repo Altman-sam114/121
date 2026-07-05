@@ -3525,6 +3525,40 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，计划军令行放开截断后在窄屏、长武将名、长战术名、长郡县名、长军队名和 Dynamic Type 下的实际高度与滚动体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 该改动只影响 `GeneralCommandPanelView` 文本展示，不代表完整行军路径安全、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 军队详情道路机动与接战预判换行兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `UnitInspectorView.noteSection` 新增 `lineLimit` 参数，默认仍保持 2 行上限。
+- “道路机动”和“接战预判”调用点传入不限行，让长道路、官道接近、敌射威胁、武将对阵、候选目标和风险摘要按内容纵向展开。
+- “所属武将”等默认 note section 仍保持 2 行上限，避免短摘要无意膨胀。
+- 保持 `AppContainer.selectedUnitMobilityPreviewNotes`、`selectedUnitCombatPreviewNotes`、`MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做军队详情面板只读可读性修正和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_inspector_road_combat_note_wrapping.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/UnitInspectorView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，军队详情“道路机动”和“接战预判”放开截断后在窄屏、长军队名、长武将名、长敌将名和 Dynamic Type 下的实际高度与滚动体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该改动只影响 `UnitInspectorView` 文本展示，不代表完整路径安全、攻击合法性、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
+
 ## v2.4 - 武将面板道路与交战近敌摘要兼容层
 
 完成日期：2026-07-05
