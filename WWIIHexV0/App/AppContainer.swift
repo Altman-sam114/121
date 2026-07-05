@@ -442,6 +442,10 @@ final class AppContainer: ObservableObject {
             notes.append(roadApproach)
         }
 
+        if let generalMatchup = combatGeneralMatchupText(leadingPreview.influence) {
+            notes.append(generalMatchup)
+        }
+
         notes.append(contentsOf: previews.prefix(3).enumerated().map { index, preview in
             combatTargetPreviewLine(
                 rank: index,
@@ -870,6 +874,19 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "接战官道：\(fragments.joined(separator: "，"))"
+    }
+
+    private func combatGeneralMatchupText(_ influence: GeneralCombatInfluenceSummary) -> String? {
+        let attackerName = influence.attackerGeneralName ?? influence.attackerGeneralId
+        let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId
+
+        guard attackerName != nil || defenderName != nil else {
+            return nil
+        }
+
+        let attackerText = attackerName.map { "我方 \($0)" } ?? "我方未任命"
+        let defenderText = defenderName.map { "敌方 \($0)" } ?? "敌方未任命"
+        return "交战武将：\(attackerText)，\(defenderText)"
     }
 
     private func combatCounterPreviewText(
