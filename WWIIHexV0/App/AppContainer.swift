@@ -453,7 +453,8 @@ final class AppContainer: ObservableObject {
                 target: preview.target,
                 damage: preview.damage,
                 counterDamage: preview.counterDamage,
-                distance: preview.distance
+                distance: preview.distance,
+                influence: preview.influence
             )
         })
 
@@ -778,7 +779,8 @@ final class AppContainer: ObservableObject {
         target: Division,
         damage: CombatDamage,
         counterDamage: CombatDamage?,
-        distance: Int
+        distance: Int,
+        influence: GeneralCombatInfluenceSummary
     ) -> String {
         let prefix = rank == 0 ? "首选" : "候选 \(rank + 1)"
         let targetOutcome = combatPreviewOutcome(for: target, damage: damage)
@@ -795,7 +797,9 @@ final class AppContainer: ObservableObject {
             .map { "；风险：\($0)" } ?? ""
         let stanceText = combatTargetStanceText(for: target)
             .map { "；态势：\($0)" } ?? ""
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)；距 \(distance) 格"
+        let defenderGeneralText = combatTargetDefenderGeneralText(influence)
+            .map { "；\($0)" } ?? ""
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)\(defenderGeneralText)；距 \(distance) 格"
     }
 
     private func combatTargetPriorityText(
@@ -887,6 +891,13 @@ final class AppContainer: ObservableObject {
         let attackerText = attackerName.map { "我方 \($0)" } ?? "我方未任命"
         let defenderText = defenderName.map { "敌方 \($0)" } ?? "敌方未任命"
         return "交战武将：\(attackerText)，\(defenderText)"
+    }
+
+    private func combatTargetDefenderGeneralText(_ influence: GeneralCombatInfluenceSummary) -> String? {
+        guard let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId else {
+            return nil
+        }
+        return "敌将 \(defenderName)"
     }
 
     private func combatCounterPreviewText(

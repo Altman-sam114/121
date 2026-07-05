@@ -2990,6 +2990,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“交战武将”文本在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只展示当前首选接战双方的武将快照，不实现任免、头像、技能详情、士气、单挑或忠诚变化解释。
 
+## v2.4 - 军队接战候选敌将预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 的最多三条接战候选目标行新增敌将身份提示；当候选目标防守方存在武将 name/id 时，候选行追加 `敌将 ...`。
+- 候选敌将摘要复用每个 `CombatTargetPreview.influence` 中的 `defenderGeneralName/id`，和真实武将防御修正使用同一套查找来源。
+- 保留首选目标已有“交战武将”总览、非零“武将影响”摘要、接战官道、强度结算、风险、态势和交战审计。
+- 保持 `GeneralInfluence`、`CombatRules`、`MovementRules`、`CommandExecutor`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、真实武将加成、伤害、防御、反击、撤退、围城、道路和粮道规则不变；本轮只做军队详情接战候选解释文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_candidate_general_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“敌将 ...”候选文本在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只展示候选目标防守方武将身份，不实现任免、头像、技能详情、士气、单挑或忠诚变化解释。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
