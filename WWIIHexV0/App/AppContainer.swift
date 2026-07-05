@@ -958,8 +958,17 @@ final class AppContainer: ObservableObject {
                 movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
             }.count
             let safeCount = reachableRoadCoords.count - pressuredCount
+            let inRangeRoadCoords = reachableRoadCoords.filter {
+                $0.distance(to: target.coord) <= attacker.range
+            }
+            let remainingApproachGap = max(0, nearestRoadDistance - attacker.range)
             fragments.append("\(reachableRoadCoords.count) 个可达更近官道位")
             fragments.append("最近距 \(nearestRoadDistance)")
+            if inRangeRoadCoords.isEmpty {
+                fragments.append("仍差 \(remainingApproachGap) 格入射程")
+            } else {
+                fragments.append("\(inRangeRoadCoords.count) 个抵达后入射程")
+            }
             if safeCount > 0 {
                 fragments.append("安全 \(safeCount)")
             }
