@@ -351,58 +351,88 @@ final class AppContainer: ObservableObject {
             return []
         }
 
-        let targets = gameState.divisions
-            .filter {
-                $0.id != division.id &&
-                    !$0.isDestroyed &&
-                    $0.faction.isHostile(to: division.faction) &&
-                    division.coord.distance(to: $0.coord) <= division.range
+        let combatRules = CombatRules()
+        let previews: [(
+            target: Division,
+            damage: CombatDamage,
+            counterDamage: CombatDamage?,
+            influence: GeneralCombatInfluenceSummary,
+            audit: CombatAuditSummary,
+            distance: Int
+        )] = gameState.divisions
+            .compactMap { target in
+                guard target.id != division.id,
+                      !target.isDestroyed,
+                      target.faction.isHostile(to: division.faction) else {
+                    return nil
+                }
+                let distance = division.coord.distance(to: target.coord)
+                guard distance <= division.range else {
+                    return nil
+                }
+
+                let counterDamage: CombatDamage?
+                if combatRules.canCounterAttack(defender: target, attacker: division) {
+                    counterDamage = combatRules.counterAttackDamage(defender: target, attacker: division, in: gameState)
+                } else {
+                    counterDamage = nil
+                }
+
+                return (
+                    target: target,
+                    damage: combatRules.attackDamage(attacker: division, defender: target, in: gameState),
+                    counterDamage: counterDamage,
+                    influence: combatRules.generalInfluenceSummary(attacker: division, defender: target, in: gameState),
+                    audit: combatRules.combatAuditSummary(attacker: division, defender: target, in: gameState),
+                    distance: distance
+                )
             }
             .sorted {
-                let lhsDistance = division.coord.distance(to: $0.coord)
-                let rhsDistance = division.coord.distance(to: $1.coord)
-                if lhsDistance != rhsDistance {
-                    return lhsDistance < rhsDistance
+                if $0.damage.strengthDamage != $1.damage.strengthDamage {
+                    return $0.damage.strengthDamage > $1.damage.strengthDamage
                 }
-                return $0.name < $1.name
+
+                let lhsCounter = $0.counterDamage?.strengthDamage ?? 0
+                let rhsCounter = $1.counterDamage?.strengthDamage ?? 0
+                if lhsCounter != rhsCounter {
+                    return lhsCounter < rhsCounter
+                }
+
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+
+                if $0.target.name != $1.target.name {
+                    return $0.target.name < $1.target.name
+                }
+
+                return $0.target.id < $1.target.id
             }
 
-        guard let target = targets.first else {
+        guard let leadingPreview = previews.first else {
             return []
         }
 
-        let combatRules = CombatRules()
-        let damage = combatRules.attackDamage(attacker: division, defender: target, in: gameState)
-        let counterText: String
-        if combatRules.canCounterAttack(defender: target, attacker: division) {
-            let counterDamage = combatRules.counterAttackDamage(defender: target, attacker: division, in: gameState)
-            counterText = "反击 \(counterDamage.strengthDamage)"
-        } else {
-            counterText = "无反击"
+        var notes = previews.prefix(3).enumerated().map { index, preview in
+            combatTargetPreviewLine(
+                rank: index,
+                target: preview.target,
+                damage: preview.damage,
+                counterDamage: preview.counterDamage,
+                distance: preview.distance
+            )
         }
 
-        var notes = [
-            "\(target.thematicDisplayName)：预计伤害 \(damage.strengthDamage)，\(counterText)"
-        ]
-
-        if let influence = combatRules.generalInfluenceSummary(
-            attacker: division,
-            defender: target,
-            in: gameState
-        ).logFragment {
+        if let influence = leadingPreview.influence.logFragment {
             notes.append(influence)
         }
 
-        if let audit = combatRules.combatAuditSummary(
-            attacker: division,
-            defender: target,
-            in: gameState
-        ).logFragment {
+        if let audit = leadingPreview.audit.logFragment {
             notes.append(audit)
         }
 
-        if targets.count > 1 {
-            notes.append("另有 \(targets.count - 1) 支敌军在射程内")
+        if previews.count > 3 {
+            notes.append("另有 \(previews.count - 3) 支敌军在射程内")
         }
 
         return notes
@@ -706,6 +736,24 @@ final class AppContainer: ObservableObject {
 
     private func signedBonus(_ value: Int) -> String {
         value > 0 ? "+\(value)" : "\(value)"
+    }
+
+    private func combatTargetPreviewLine(
+        rank: Int,
+        target: Division,
+        damage: CombatDamage,
+        counterDamage: CombatDamage?,
+        distance: Int
+    ) -> String {
+        let prefix = rank == 0 ? "首选" : "候选 \(rank + 1)"
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(combatCounterPreviewText(counterDamage))，距 \(distance) 格"
+    }
+
+    private func combatCounterPreviewText(_ counterDamage: CombatDamage?) -> String {
+        guard let counterDamage else {
+            return "无反击"
+        }
+        return "反击 \(counterDamage.strengthDamage)"
     }
 
     private func currentRegionRoadCount(for division: Division) -> Int? {
