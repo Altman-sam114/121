@@ -909,28 +909,50 @@ final class AppContainer: ObservableObject {
         let targetHex = operation.targetRegionId.flatMap {
             plannedOperationHex(regionId: $0, zoneId: operation.zoneId)
         }
-        let sourceDistance = plannedOperationNearestHostileDistance(from: sourceHex, faction: operation.faction)
-        let targetDistance = targetHex.flatMap {
-            plannedOperationNearestHostileDistance(from: $0, faction: operation.faction)
+        let sourceEnemy = plannedOperationNearestHostileSummary(from: sourceHex, faction: operation.faction)
+        let targetEnemy = targetHex.flatMap {
+            plannedOperationNearestHostileSummary(from: $0, faction: operation.faction)
         }
 
-        if let targetDistance, let sourceDistance {
-            return "敌距 源\(sourceDistance)/目\(targetDistance)"
+        if let targetEnemy, let sourceEnemy {
+            return "近敌：源\(sourceEnemy.name)距\(sourceEnemy.distance)格/目\(targetEnemy.name)距\(targetEnemy.distance)格"
         }
-        if let targetDistance {
-            return "敌距 目\(targetDistance)"
+        if let targetEnemy {
+            return "近敌：目\(targetEnemy.name)距\(targetEnemy.distance)格"
         }
-        if let sourceDistance {
-            return "近敌 \(sourceDistance)"
+        if let sourceEnemy {
+            return "近敌：\(sourceEnemy.name)距\(sourceEnemy.distance)格"
         }
         return nil
     }
 
-    private func plannedOperationNearestHostileDistance(from coord: HexCoord, faction: Faction) -> Int? {
-        gameState.divisions
+    private func plannedOperationNearestHostileSummary(
+        from coord: HexCoord,
+        faction: Faction
+    ) -> (name: String, distance: Int)? {
+        let nearest = gameState.divisions
             .filter { $0.faction.isHostile(to: faction) && !$0.isDestroyed }
-            .map { $0.coord.distance(to: coord) }
-            .min()
+            .map {
+                (
+                    name: $0.thematicDisplayName,
+                    distance: $0.coord.distance(to: coord),
+                    id: $0.id
+                )
+            }
+            .min {
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+                if $0.name != $1.name {
+                    return $0.name < $1.name
+                }
+                return $0.id < $1.id
+            }
+
+        guard let nearest else {
+            return nil
+        }
+        return (name: nearest.name, distance: nearest.distance)
     }
 
     private func plannedOperationRoadPressureText(for operation: PlayerPlannedOperation) -> String? {

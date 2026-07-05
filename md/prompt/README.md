@@ -82,6 +82,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_nearest_enemy_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_road_pressure_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_route_enemy_distance_summary.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_nearest_enemy_identity_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_road_pressure_tags.md`
 - `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_tactic_labels.md`
 - `md/prompt/v2.0-三国迁移/v2.4_player_general_tactic_shaping.md`
