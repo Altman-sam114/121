@@ -42,6 +42,10 @@ struct RegionInspectorView: View {
                 LabeledContent("防区") {
                     Text(state.selectedHexFrontZoneId?.rawValue ?? "无")
                 }
+
+                LabeledContent("当前官道") {
+                    Text(state.selectedHexHasRoad == true ? "是" : "否")
+                }
             }
 
             LabeledContent("控制") {
@@ -62,6 +66,11 @@ struct RegionInspectorView: View {
 
             LabeledContent("关隘") {
                 Text(state.region.terrain == .fortress ? "是" : "否")
+            }
+
+            LabeledContent("官道覆盖") {
+                Text(roadSummary(state))
+                    .multilineTextAlignment(.trailing)
             }
 
             LabeledContent("粮草") {
@@ -119,5 +128,12 @@ struct RegionInspectorView: View {
             return "无"
         }
         return divisions.map(\.thematicDisplayName).joined(separator: ", ")
+    }
+
+    private func roadSummary(_ state: RegionInspectorState) -> String {
+        guard state.passableHexCount > 0 else {
+            return "无可通行地格"
+        }
+        return "\(state.roadHexCount)/\(state.passableHexCount) 格"
     }
 }

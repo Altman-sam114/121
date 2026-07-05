@@ -44,9 +44,12 @@ struct RegionInspectorState: Equatable {
     let selectedHexController: Faction?
     let selectedHexDynamicTheaterId: TheaterId?
     let selectedHexFrontZoneId: FrontZoneId?
+    let selectedHexHasRoad: Bool?
     let theaterId: TheaterId?
     let frontZoneId: FrontZoneId?
     let frontPressure: Double
+    let roadHexCount: Int
+    let passableHexCount: Int
     let friendlyDivisions: [Division]
     let visibleEnemyDivisions: [Division]
     let objectiveNames: [String]
@@ -207,6 +210,9 @@ struct MapDisplayAdapter {
 
         let cityLevel = EconomyRules().cityLevel(for: region, map: state.map)
         let economicOutput = regionalEconomicOutput(for: region, cityLevel: cityLevel)
+        let regionTiles = region.displayHexes.compactMap { state.map.tile(at: $0) }
+        let roadHexCount = regionTiles.count { $0.hasRoad }
+        let passableHexCount = regionTiles.count { $0.isPassable }
 
         return RegionInspectorState(
             region: region,
@@ -214,12 +220,15 @@ struct MapDisplayAdapter {
             selectedHexController: selectedHex.flatMap { state.map.tile(at: $0)?.controller },
             selectedHexDynamicTheaterId: selectedHex.flatMap { state.theaterState.dynamicTheaterId(for: $0, map: state.map) },
             selectedHexFrontZoneId: selectedHex.flatMap { state.warDeploymentState.zoneId(for: $0, map: state.map) },
+            selectedHexHasRoad: selectedHex.flatMap { state.map.tile(at: $0)?.hasRoad },
             theaterId: state.theaterState.dominantDynamicTheaterId(for: regionId, map: state.map),
             frontZoneId: dominantDynamicFrontZoneId(for: regionId),
             frontPressure: state.frontLineState.regionStates[regionId]?.frontLines
                 .flatMap(\.segments)
                 .map(\.pressureLevel)
                 .max() ?? 0,
+            roadHexCount: roadHexCount,
+            passableHexCount: passableHexCount,
             friendlyDivisions: friendly,
             visibleEnemyDivisions: visibleEnemy,
             objectiveNames: objectiveNames,
