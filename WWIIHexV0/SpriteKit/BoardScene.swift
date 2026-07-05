@@ -354,8 +354,20 @@ final class BoardScene: SKScene {
                     to: targetPoint,
                     type: operation.directiveType
                 )
+                drawOperationAnchor(at: sourcePoint, type: operation.directiveType, isTarget: false)
+                drawOperationAnchor(at: targetPoint, type: operation.directiveType, isTarget: true)
+                drawOperationLabel(
+                    operationLabelText(for: operation, state: renderState.gameState),
+                    at: operationLabelPoint(from: sourcePoint, to: targetPoint),
+                    type: operation.directiveType
+                )
             } else {
                 drawOperationHoldMarker(at: sourcePoint)
+                drawOperationLabel(
+                    operationLabelText(for: operation, state: renderState.gameState),
+                    at: CGPoint(x: sourcePoint.x, y: sourcePoint.y + layout.hexSize * 0.76),
+                    type: operation.directiveType
+                )
             }
         }
     }
@@ -419,6 +431,18 @@ final class BoardScene: SKScene {
         addChild(head)
     }
 
+    private func drawOperationAnchor(at point: CGPoint, type: DirectiveType, isTarget: Bool) {
+        let radius: CGFloat = isTarget ? 7 : 5
+        let color = operationColor(for: type)
+        let anchor = SKShapeNode(circleOfRadius: radius)
+        anchor.position = point
+        anchor.strokeColor = color
+        anchor.fillColor = color.withAlphaComponent(isTarget ? 0.68 : 0.22)
+        anchor.lineWidth = isTarget ? 2 : 1.5
+        anchor.zPosition = isTarget ? 28 : 25
+        addChild(anchor)
+    }
+
     private func drawOperationHoldMarker(at point: CGPoint) {
         let marker = SKShapeNode(circleOfRadius: 18)
         marker.position = point
@@ -427,6 +451,112 @@ final class BoardScene: SKScene {
         marker.lineWidth = 4
         marker.zPosition = 26
         addChild(marker)
+    }
+
+    private func drawOperationLabel(_ text: String, at point: CGPoint, type: DirectiveType) {
+        let color = operationColor(for: type)
+        let label = SKLabelNode(text: text)
+        label.fontName = "AvenirNext-DemiBold"
+        label.fontSize = 11
+        label.fontColor = SKColor(white: 0.98, alpha: 1)
+        label.horizontalAlignmentMode = .center
+        label.verticalAlignmentMode = .center
+        label.zPosition = 30
+
+        let estimatedWidth = max(42, min(128, CGFloat(text.count) * 10 + 16))
+        let background = SKShapeNode(
+            rectOf: CGSize(width: estimatedWidth, height: 20),
+            cornerRadius: 6
+        )
+        background.fillColor = SKColor(white: 0.06, alpha: 0.78)
+        background.strokeColor = color.withAlphaComponent(0.92)
+        background.lineWidth = 1.4
+        background.zPosition = 29
+
+        let container = SKNode()
+        container.position = point
+        container.zPosition = 29
+        container.addChild(background)
+        container.addChild(label)
+        addChild(container)
+    }
+
+    private func operationLabelPoint(from start: CGPoint, to end: CGPoint) -> CGPoint {
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = max(1, hypot(dx, dy))
+        let offset: CGFloat = 22
+        return CGPoint(
+            x: (start.x + end.x) / 2 - (dy / length) * offset,
+            y: (start.y + end.y) / 2 + (dx / length) * offset
+        )
+    }
+
+    private func operationLabelText(for operation: PlayerPlannedOperation, state: GameState) -> String {
+        let tactic = operation.tactic.map(operationTacticLabel) ?? operation.directiveType.displayName
+        guard let generalName = operationGeneralName(for: operation, state: state) else {
+            return "\(operationTypeLabel(operation.directiveType)) \(tactic)"
+        }
+        return "\(shortOperationName(generalName)) \(operationTypeLabel(operation.directiveType))\(tactic)"
+    }
+
+    private func operationGeneralName(for operation: PlayerPlannedOperation, state: GameState) -> String? {
+        let assignment = state.warDeploymentState.frontZones[operation.zoneId]?.generalAssignment
+        if let displayName = assignment?.generalDisplayName,
+           !displayName.isEmpty {
+            return displayName
+        }
+        guard let generalId = operation.createdByGeneralId,
+              !generalId.isEmpty else {
+            return nil
+        }
+        return generalId
+    }
+
+    private func shortOperationName(_ name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > 4 else {
+            return trimmed
+        }
+        return String(trimmed.prefix(4))
+    }
+
+    private func operationTypeLabel(_ type: DirectiveType) -> String {
+        switch type {
+        case .attack:
+            return "攻"
+        case .defend:
+            return "守"
+        }
+    }
+
+    private func operationTacticLabel(_ tactic: TacticName) -> String {
+        switch tactic {
+        case .standardAttack:
+            return "正攻"
+        case .blitzkrieg:
+            return "疾袭"
+        case .spearhead:
+            return "突击"
+        case .breakthrough:
+            return "破阵"
+        case .pincerMovement:
+            return "合围"
+        case .fireCoverage:
+            return "箭雨"
+        case .feint:
+            return "佯攻"
+        case .guerrillaWarfare:
+            return "奇袭"
+        case .holdPosition:
+            return "固守"
+        case .elasticDefense:
+            return "诱敌"
+        case .defenseInDepth:
+            return "设防"
+        case .lastStand:
+            return "死守"
+        }
     }
 
     private func operationColor(for type: DirectiveType) -> SKColor {
