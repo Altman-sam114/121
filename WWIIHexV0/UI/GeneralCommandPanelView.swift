@@ -77,7 +77,9 @@ struct GeneralCommandPanelView: View {
                                 Label(note, systemImage: influenceIcon(for: note))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                    .lineLimit(3)
+                                    .lineLimit(nil)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
