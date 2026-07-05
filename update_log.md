@@ -3491,6 +3491,40 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，计划军令摘要新增源→目标和敌距后，在窄屏、长武将名、长战术名、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 敌距摘要只读展示源/目标代表 hex 到最近敌军的当前静态距离，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
 
+## v2.4 - 武将面板计划军令换行兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralCommandPanelView` 的“计划军令”行取消固定 4 行截断，改为按内容纵向展开。
+- 计划军令摘要继续显示既有武将、最终战术、源→目标、官道状态、源目受压和最近敌军对象/距离，图标和 `plannedOperationRows` tuple/API 保持不变。
+- 面板本身已位于 `RootGameView` 的 `ScrollView` 内，长摘要通过现有滚动承接，不新增滚动容器。
+- 保持 `AppContainer.selectedGeneralPlannedOperationRows`、`PlayerPlannedOperation` schema、`MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做计划军令面板只读可读性修正和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_wrapping.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，计划军令行放开截断后在窄屏、长武将名、长战术名、长郡县名、长军队名和 Dynamic Type 下的实际高度与滚动体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该改动只影响 `GeneralCommandPanelView` 文本展示，不代表完整行军路径安全、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
+
 ## v2.4 - 武将面板道路与交战近敌摘要兼容层
 
 完成日期：2026-07-05

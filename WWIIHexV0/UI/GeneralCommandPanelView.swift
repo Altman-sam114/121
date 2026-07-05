@@ -140,7 +140,9 @@ struct GeneralCommandPanelView: View {
                         let row = plannedOperationRows[index]
                         Label(row.summary, systemImage: row.iconName)
                             .font(.caption)
-                            .lineLimit(4)
+                            .lineLimit(nil)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
