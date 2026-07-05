@@ -471,16 +471,13 @@ final class AppContainer: ObservableObject {
                 damage: preview.damage,
                 counterDamage: preview.counterDamage,
                 distance: preview.distance,
-                influence: preview.influence
+                influence: preview.influence,
+                audit: preview.audit
             )
         })
 
         if let influence = leadingPreview.influence.logFragment {
             notes.append(influence)
-        }
-
-        if let audit = leadingPreview.audit.logFragment {
-            notes.append(audit)
         }
 
         if previews.count > 3 {
@@ -1159,7 +1156,8 @@ final class AppContainer: ObservableObject {
         damage: CombatDamage,
         counterDamage: CombatDamage?,
         distance: Int,
-        influence: GeneralCombatInfluenceSummary
+        influence: GeneralCombatInfluenceSummary,
+        audit: CombatAuditSummary
     ) -> String {
         let prefix = rank == 0 ? "首选" : "候选 \(rank + 1)"
         let targetOutcome = combatPreviewOutcome(for: target, damage: damage)
@@ -1180,7 +1178,9 @@ final class AppContainer: ObservableObject {
             .map { "；\($0)" } ?? ""
         let generalModifierText = combatTargetGeneralModifierText(influence)
             .map { "；\($0)" } ?? ""
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)\(defenderGeneralText)\(generalModifierText)；距 \(distance) 格"
+        let auditText = audit.logFragment
+            .map { "；\($0)" } ?? ""
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)\(defenderGeneralText)\(generalModifierText)\(auditText)；距 \(distance) 格"
     }
 
     private func combatTargetPriorityText(

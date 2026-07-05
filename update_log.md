@@ -3064,6 +3064,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“武将修正 ...”候选文本在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只展示候选目标当前攻防修正数值，不解释完整技能、忠诚、满意、士气、单挑或武将成长。
 
+## v2.4 - 军队接战候选交战审计预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 的最多三条射程内候选目标行各自显示本候选目标的 `CombatAuditSummary.logFragment`。
+- 候选交战审计复用 `CombatRules.combatAuditSummary(attacker:defender:in:)`，与真实交战日志同源，显示有效攻击/防御变化、地形、河流、器械攻城、围城、死守和侧击等因素。
+- 移除原先只对首选目标额外追加的一条独立交战审计，避免首选目标重复显示；首选目标仍保留非零武将影响详情。
+- 保留已完成的首选理由、接战官道、交战武将、候选敌将、候选武将修正、强度结算、风险、态势、候选数量提示和换行逻辑。
+- 保持 `CombatRules`、`MovementRules`、`GeneralInfluence`、`CommandValidator`、`CommandExecutor`、`WarCommandExecutor`、`RuleEngine`、真实伤害、反击、撤退、围城、道路、粮道、命令执行和日志结算不变；本轮只做军队详情接战预判只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_candidate_audit_preview.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，前三个候选目标行追加交战审计后，在窄屏、长军队名、长因素列表和 Dynamic Type 下的实际高度与滚动体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 候选交战审计只读展示当前静态交战因素，不代表完整胜率、路径安全、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制。
+
 ## v2.4 - 军队未接敌时接近距离与官道预判兼容层
 
 完成日期：2026-07-05
