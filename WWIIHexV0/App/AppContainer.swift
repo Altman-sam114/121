@@ -363,6 +363,19 @@ final class AppContainer: ObservableObject {
 
         let combatRules = CombatRules()
         let movementRules = MovementRules()
+        let enemyDistances: [(target: Division, distance: Int)] = gameState.divisions
+            .compactMap { target in
+                guard target.id != division.id,
+                      !target.isDestroyed,
+                      target.faction.isHostile(to: division.faction) else {
+                    return nil
+                }
+                return (
+                    target: target,
+                    distance: division.coord.distance(to: target.coord)
+                )
+            }
+
         let previews: [(
             target: Division,
             damage: CombatDamage,
@@ -370,14 +383,10 @@ final class AppContainer: ObservableObject {
             influence: GeneralCombatInfluenceSummary,
             audit: CombatAuditSummary,
             distance: Int
-        )] = gameState.divisions
-            .compactMap { target in
-                guard target.id != division.id,
-                      !target.isDestroyed,
-                      target.faction.isHostile(to: division.faction) else {
-                    return nil
-                }
-                let distance = division.coord.distance(to: target.coord)
+        )] = enemyDistances
+            .compactMap { candidate in
+                let target = candidate.target
+                let distance = candidate.distance
                 guard distance <= division.range else {
                     return nil
                 }
@@ -421,7 +430,11 @@ final class AppContainer: ObservableObject {
             }
 
         guard let leadingPreview = previews.first else {
-            return []
+            return combatOutOfRangePreviewNotes(
+                attacker: division,
+                enemies: enemyDistances,
+                movementRules: movementRules
+            )
         }
 
         var notes = [
@@ -837,6 +850,37 @@ final class AppContainer: ObservableObject {
         return "首选理由：\(target.thematicDisplayName)，\(reasons.joined(separator: "，"))"
     }
 
+    private func combatOutOfRangePreviewNotes(
+        attacker: Division,
+        enemies: [(target: Division, distance: Int)],
+        movementRules: MovementRules
+    ) -> [String] {
+        guard let nearest = enemies.sorted(by: {
+            if $0.distance != $1.distance {
+                return $0.distance < $1.distance
+            }
+            if $0.target.name != $1.target.name {
+                return $0.target.name < $1.target.name
+            }
+            return $0.target.id < $1.target.id
+        }).first else {
+            return []
+        }
+
+        let approachGap = max(0, nearest.distance - attacker.range)
+        var notes = [
+            "接战距离：最近 \(nearest.target.thematicDisplayName)，距 \(nearest.distance) 格，射程 \(attacker.range)，需接近 \(approachGap) 格"
+        ]
+        if let roadApproach = combatOutOfRangeRoadApproachText(
+            attacker: attacker,
+            target: nearest.target,
+            movementRules: movementRules
+        ) {
+            notes.append(roadApproach)
+        }
+        return notes
+    }
+
     private func combatRoadApproachText(
         attacker: Division,
         target: Division,
@@ -880,6 +924,52 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "接战官道：\(fragments.joined(separator: "，"))"
+    }
+
+    private func combatOutOfRangeRoadApproachText(
+        attacker: Division,
+        target: Division,
+        movementRules: MovementRules
+    ) -> String? {
+        let currentDistance = attacker.coord.distance(to: target.coord)
+        let reachableRoadCoords = movementRules.movementRange(for: attacker, in: gameState)
+            .filter { coord in
+                gameState.map.tile(at: coord)?.hasRoad == true &&
+                    coord.distance(to: target.coord) < currentDistance
+            }
+        let attackerOnRoad = gameState.map.tile(at: attacker.coord)?.hasRoad == true
+        let targetOnRoad = gameState.map.tile(at: target.coord)?.hasRoad == true
+
+        var fragments: [String] = []
+        if !reachableRoadCoords.isEmpty {
+            let nearestRoadDistance = reachableRoadCoords
+                .map { $0.distance(to: target.coord) }
+                .min() ?? currentDistance
+            let pressuredCount = reachableRoadCoords.filter {
+                movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+            }.count
+            let safeCount = reachableRoadCoords.count - pressuredCount
+            fragments.append("\(reachableRoadCoords.count) 个可达更近官道位")
+            fragments.append("最近距 \(nearestRoadDistance)")
+            if safeCount > 0 {
+                fragments.append("安全 \(safeCount)")
+            }
+            if pressuredCount > 0 {
+                fragments.append("受敌控区 \(pressuredCount)")
+            }
+        }
+
+        if attackerOnRoad {
+            fragments.append("我方在官道")
+        }
+        if targetOnRoad {
+            fragments.append("目标临官道")
+        }
+
+        guard !fragments.isEmpty else {
+            return nil
+        }
+        return "官道接近：\(fragments.joined(separator: "，"))"
     }
 
     private func combatGeneralMatchupText(_ influence: GeneralCombatInfluenceSummary) -> String? {

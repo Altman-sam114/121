@@ -3064,6 +3064,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“武将修正 ...”候选文本在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只展示候选目标当前攻防修正数值，不解释完整技能、忠诚、满意、士气、单挑或武将成长。
 
+## v2.4 - 军队未接敌时接近距离与官道预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 先统一收集敌对军队距离；射程内仍走既有三目标接战预判。
+- 当当前射程内没有敌军但地图上存在敌军时，接战预判会显示最近敌军、当前距离、军队射程和需接近格数，避免玩家在未接敌阶段看到空白接战信息。
+- 新增“官道接近”摘要：复用 `MovementRules.movementRange` 和 `isEnemyZoneOfControl`，统计可达范围内能缩短到最近敌军距离的官道格、最近距离、安全数量和受敌控区数量，并标出我方/目标是否临官道。
+- 保持 `MovementRules`、`CombatRules`、`GeneralInfluence`、`CommandExecutor`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、真实移动成本、敌控区停止、道路加成、伤害、防御、反击、撤退、围城和粮道规则不变；本轮只做军队详情接近预判解释文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_out_of_range_combat_approach_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“接战距离/官道接近”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只做当前位置的只读接近判断，不模拟移动后同回合攻击、跨回合追击、完整路径安全、同盟借道或真实胜率。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
