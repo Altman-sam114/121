@@ -3533,6 +3533,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 武将面板麾下军队备战摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralCommandPanelView` 的“麾下军队”列表从单纯军队名扩展为兵力、粮草、军令和行动状态短摘要。
+- 短摘要复用现有 `Division.thematicDisplayName`、`SupplyState.shortDisplayName`、`RetreatMode.shortDisplayCode` 和 `Division.canAct` 等只读字段，显示如 `兵 8/12，粮 足，令 守，可动`。
+- 当麾下军队超过当前展示上限时追加“另有 N 支麾下军队”，避免列表被 `prefix(5)` 静默截断。
+- 保持 `AppContainer.selectedGeneralInfluenceNotes`、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮草、撤退、补给和计划军令行为不变；本轮只做武将面板只读备战反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_assigned_unit_readiness_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，麾下军队短摘要在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该摘要只读展示当前兵力、粮草、军令和行动状态，不代表完整道路机动、伤害胜率、路径安全、攻击合法性、隐藏敌军推断或敌方回合反制。
+
 ## v2.4 - 郡县检查器武将与接战摘要兼容层
 
 完成日期：2026-07-05

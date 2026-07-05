@@ -103,9 +103,14 @@ struct GeneralCommandPanelView: View {
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(assignedDivisions.prefix(5)), id: \.id) { division in
-                        Label(division.thematicDisplayName, systemImage: unitIcon(for: division))
+                        Label(assignedDivisionSummary(for: division), systemImage: unitIcon(for: division))
                             .font(.caption)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                    }
+                    if assignedDivisions.count > 5 {
+                        Text("另有 \(assignedDivisions.count - 5) 支麾下军队")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -192,6 +197,21 @@ struct GeneralCommandPanelView: View {
             return "scope"
         }
         return "person.3.fill"
+    }
+
+    private func assignedDivisionSummary(for division: Division) -> String {
+        let actionSummary: String
+        if division.isDestroyed {
+            actionSummary = "溃散"
+        } else if division.isRetreating {
+            actionSummary = "撤退"
+        } else if division.canAct {
+            actionSummary = "可动"
+        } else {
+            actionSummary = "已动"
+        }
+
+        return "\(division.thematicDisplayName)：兵 \(division.strength)/\(division.maxStrength)，粮 \(division.supplyState.shortDisplayName)，令 \(division.retreatMode.shortDisplayCode)，\(actionSummary)"
     }
 
     private func influenceIcon(for note: String) -> String {
