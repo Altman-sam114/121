@@ -288,7 +288,13 @@ struct CommandExecutor {
         in state: inout GameState
     ) -> CombatResultSummary {
         guard let index = state.divisionIndex(id: originalDivision.id) else {
-            return CombatResultSummary(shouldRetreat: false, wasDestroyed: true, extraStrengthDamage: 0)
+            return CombatResultSummary(
+                shouldRetreat: false,
+                wasDestroyed: true,
+                extraStrengthDamage: 0,
+                remainingStrength: 0,
+                maxStrength: originalDivision.maxStrength
+            )
         }
 
         let shouldRetreat = state.divisions[index].retreatMode == .retreatable &&
@@ -307,11 +313,14 @@ struct CommandExecutor {
         }
 
         if state.divisions[index].isDestroyed {
+            let maxStrength = state.divisions[index].maxStrength
             eliminateDivision(originalDivision, in: &state)
             return CombatResultSummary(
                 shouldRetreat: shouldRetreat,
                 wasDestroyed: true,
-                extraStrengthDamage: extraStrengthDamage
+                extraStrengthDamage: extraStrengthDamage,
+                remainingStrength: 0,
+                maxStrength: maxStrength
             )
         }
 
@@ -322,7 +331,9 @@ struct CommandExecutor {
         return CombatResultSummary(
             shouldRetreat: shouldRetreat,
             wasDestroyed: false,
-            extraStrengthDamage: extraStrengthDamage
+            extraStrengthDamage: extraStrengthDamage,
+            remainingStrength: state.divisions[index].strength,
+            maxStrength: state.divisions[index].maxStrength
         )
     }
 
@@ -413,6 +424,12 @@ struct CommandExecutor {
             "\(prefix)：兵力 -\(damage.strengthDamage)"
         ]
 
+        if outcome.extraStrengthDamage > 0 {
+            parts.append("额外兵力 -\(outcome.extraStrengthDamage)")
+        }
+
+        parts.append("余 \(outcome.remainingStrength)/\(outcome.maxStrength)")
+
         if let audit = combatAudit.logFragment {
             parts.append(audit)
         }
@@ -423,10 +440,6 @@ struct CommandExecutor {
 
         if outcome.shouldRetreat {
             parts.append("\(subjectName) 触发自动撤退")
-        }
-
-        if outcome.extraStrengthDamage > 0 {
-            parts.append("额外兵力 -\(outcome.extraStrengthDamage)")
         }
 
         if outcome.wasDestroyed {
@@ -457,4 +470,6 @@ private struct CombatResultSummary: Equatable {
     let shouldRetreat: Bool
     let wasDestroyed: Bool
     let extraStrengthDamage: Int
+    let remainingStrength: Int
+    let maxStrength: Int
 }
