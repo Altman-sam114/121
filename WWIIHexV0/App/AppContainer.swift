@@ -883,6 +883,13 @@ final class AppContainer: ObservableObject {
         if let stanceText = combatTargetStanceText(for: nearest.target) {
             notes.append("接近态势：\(stanceText)")
         }
+        if let threatText = combatOutOfRangeThreatText(
+            attacker: attacker,
+            target: nearest.target,
+            movementRules: movementRules
+        ) {
+            notes.append(threatText)
+        }
         if let roadApproach = combatOutOfRangeRoadApproachText(
             attacker: attacker,
             target: nearest.target,
@@ -936,6 +943,36 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "接战官道：\(fragments.joined(separator: "，"))"
+    }
+
+    private func combatOutOfRangeThreatText(
+        attacker: Division,
+        target: Division,
+        movementRules: MovementRules
+    ) -> String? {
+        let currentDistance = attacker.coord.distance(to: target.coord)
+        let enemyRange = target.range
+        let reachableCloserCoords = movementRules.movementRange(for: attacker, in: gameState)
+            .filter { $0.distance(to: target.coord) < currentDistance }
+        let threatenedApproachCount = reachableCloserCoords.count {
+            $0.distance(to: target.coord) <= enemyRange
+        }
+
+        var fragments = ["敌射程 \(enemyRange)"]
+        if currentDistance <= enemyRange {
+            fragments.append("当前已在敌方射程内")
+        } else {
+            fragments.append("当前距敌射程 \(currentDistance - enemyRange) 格")
+        }
+
+        if threatenedApproachCount > 0 {
+            fragments.append("\(threatenedApproachCount) 个可达接近位会入敌射程")
+        }
+
+        guard fragments.count > 1 else {
+            return nil
+        }
+        return "接近威胁：\(fragments.joined(separator: "，"))"
     }
 
     private func combatOutOfRangeRoadApproachText(
