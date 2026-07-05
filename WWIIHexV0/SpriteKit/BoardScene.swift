@@ -333,22 +333,28 @@ final class BoardScene: SKScene {
         }
 
         for operation in operations {
-            guard let sourcePoint = operationPoint(
+            guard let sourceHex = operationHex(
                 regionId: operation.sourceRegionId,
                 zoneId: operation.zoneId,
-                state: renderState.gameState,
-                layout: layout
+                state: renderState.gameState
             ) else {
                 continue
             }
+            let sourcePoint = layout.hexToPixel(sourceHex)
 
             if let targetRegionId = operation.targetRegionId,
-               let targetPoint = operationPoint(
+               let targetHex = operationHex(
                 regionId: targetRegionId,
                 zoneId: operation.zoneId,
-                state: renderState.gameState,
-                layout: layout
+                state: renderState.gameState
                ) {
+                let targetPoint = layout.hexToPixel(targetHex)
+                let roadSummary = operationRoadSummary(
+                    sourceHex: sourceHex,
+                    targetHex: targetHex,
+                    faction: operation.faction,
+                    state: renderState.gameState
+                )
                 drawOperationArrow(
                     from: sourcePoint,
                     to: targetPoint,
@@ -356,15 +362,50 @@ final class BoardScene: SKScene {
                 )
                 drawOperationAnchor(at: sourcePoint, type: operation.directiveType, isTarget: false)
                 drawOperationAnchor(at: targetPoint, type: operation.directiveType, isTarget: true)
+                drawOperationRoadMarker(
+                    at: sourcePoint,
+                    hasRoad: roadSummary.sourceHasRoad,
+                    isPressured: roadSummary.sourceIsPressured,
+                    layout: layout,
+                    xOffset: -layout.hexSize * 0.34
+                )
+                drawOperationRoadMarker(
+                    at: targetPoint,
+                    hasRoad: roadSummary.targetHasRoad,
+                    isPressured: roadSummary.targetIsPressured,
+                    layout: layout,
+                    xOffset: layout.hexSize * 0.34
+                )
                 drawOperationLabel(
-                    operationLabelText(for: operation, state: renderState.gameState),
+                    operationLabelText(
+                        for: operation,
+                        state: renderState.gameState,
+                        roadTag: roadSummary.label
+                    ),
                     at: operationLabelPoint(from: sourcePoint, to: targetPoint),
                     type: operation.directiveType
                 )
             } else {
+                let roadSummary = operationRoadSummary(
+                    sourceHex: sourceHex,
+                    targetHex: nil,
+                    faction: operation.faction,
+                    state: renderState.gameState
+                )
                 drawOperationHoldMarker(at: sourcePoint)
+                drawOperationRoadMarker(
+                    at: sourcePoint,
+                    hasRoad: roadSummary.sourceHasRoad,
+                    isPressured: roadSummary.sourceIsPressured,
+                    layout: layout,
+                    xOffset: -layout.hexSize * 0.34
+                )
                 drawOperationLabel(
-                    operationLabelText(for: operation, state: renderState.gameState),
+                    operationLabelText(
+                        for: operation,
+                        state: renderState.gameState,
+                        roadTag: roadSummary.label
+                    ),
                     at: CGPoint(x: sourcePoint.x, y: sourcePoint.y + layout.hexSize * 0.76),
                     type: operation.directiveType
                 )
@@ -372,15 +413,14 @@ final class BoardScene: SKScene {
         }
     }
 
-    private func operationPoint(
+    private func operationHex(
         regionId: RegionId?,
         zoneId: FrontZoneId,
-        state: GameState,
-        layout: HexLayout
-    ) -> CGPoint? {
+        state: GameState
+    ) -> HexCoord? {
         if let regionId,
            let hex = state.map.representativeHex(for: regionId) {
-            return layout.hexToPixel(hex)
+            return hex
         }
 
         guard let zone = state.warDeploymentState.frontZones[zoneId] else {
@@ -391,7 +431,7 @@ final class BoardScene: SKScene {
               let hex = state.map.representativeHex(for: hqRegionId) else {
             return nil
         }
-        return layout.hexToPixel(hex)
+        return hex
     }
 
     private func drawOperationArrow(from start: CGPoint, to end: CGPoint, type: DirectiveType) {
@@ -453,6 +493,31 @@ final class BoardScene: SKScene {
         addChild(marker)
     }
 
+    private func drawOperationRoadMarker(
+        at point: CGPoint,
+        hasRoad: Bool,
+        isPressured: Bool,
+        layout: HexLayout,
+        xOffset: CGFloat
+    ) {
+        let markerSize = max(7, layout.hexSize * 0.22)
+        let marker = SKShapeNode(rectOf: CGSize(width: markerSize, height: markerSize), cornerRadius: 2)
+        marker.position = CGPoint(
+            x: point.x + xOffset,
+            y: point.y - layout.hexSize * 0.38
+        )
+        marker.zRotation = .pi / 4
+        marker.fillColor = hasRoad
+            ? TerrainStyle.roadStroke.withAlphaComponent(0.82)
+            : SKColor(white: 0.06, alpha: 0.56)
+        marker.strokeColor = isPressured
+            ? SKColor(red: 1.0, green: 0.20, blue: 0.16, alpha: 0.94)
+            : SKColor(white: 0.95, alpha: hasRoad ? 0.72 : 0.38)
+        marker.lineWidth = isPressured ? 2 : 1
+        marker.zPosition = 29
+        addChild(marker)
+    }
+
     private func drawOperationLabel(_ text: String, at point: CGPoint, type: DirectiveType) {
         let color = operationColor(for: type)
         let label = SKLabelNode(text: text)
@@ -492,12 +557,17 @@ final class BoardScene: SKScene {
         )
     }
 
-    private func operationLabelText(for operation: PlayerPlannedOperation, state: GameState) -> String {
+    private func operationLabelText(
+        for operation: PlayerPlannedOperation,
+        state: GameState,
+        roadTag: String?
+    ) -> String {
         let tactic = operation.tactic.map(operationTacticLabel) ?? operation.directiveType.displayName
+        let suffix = roadTag.map { " · \($0)" } ?? ""
         guard let generalName = operationGeneralName(for: operation, state: state) else {
-            return "\(operationTypeLabel(operation.directiveType)) \(tactic)"
+            return "\(operationTypeLabel(operation.directiveType))\(tactic)\(suffix)"
         }
-        return "\(shortOperationName(generalName)) \(operationTypeLabel(operation.directiveType))\(tactic)"
+        return "\(shortOperationName(generalName)) \(operationTypeLabel(operation.directiveType))\(tactic)\(suffix)"
     }
 
     private func operationGeneralName(for operation: PlayerPlannedOperation, state: GameState) -> String? {
@@ -556,6 +626,46 @@ final class BoardScene: SKScene {
             return "设防"
         case .lastStand:
             return "死守"
+        }
+    }
+
+    private func operationRoadSummary(
+        sourceHex: HexCoord,
+        targetHex: HexCoord?,
+        faction: Faction,
+        state: GameState
+    ) -> (label: String, sourceHasRoad: Bool, targetHasRoad: Bool, sourceIsPressured: Bool, targetIsPressured: Bool) {
+        let sourceHasRoad = state.map.tile(at: sourceHex)?.hasRoad == true
+        let targetHasRoad = targetHex.flatMap { state.map.tile(at: $0)?.hasRoad } ?? false
+        let sourceIsPressured = operationHexIsPressured(sourceHex, faction: faction, state: state)
+        let targetIsPressured = targetHex.map {
+            operationHexIsPressured($0, faction: faction, state: state)
+        } ?? false
+
+        let roadLabel: String
+        if targetHex == nil {
+            roadLabel = sourceHasRoad ? "据道" : "离道"
+        } else if sourceHasRoad && targetHasRoad {
+            roadLabel = "双道"
+        } else if sourceHasRoad {
+            roadLabel = "源道"
+        } else if targetHasRoad {
+            roadLabel = "目道"
+        } else {
+            roadLabel = "无道"
+        }
+
+        let label = sourceIsPressured || targetIsPressured
+            ? "\(roadLabel)/受压"
+            : roadLabel
+        return (label, sourceHasRoad, targetHasRoad, sourceIsPressured, targetIsPressured)
+    }
+
+    private func operationHexIsPressured(_ coord: HexCoord, faction: Faction, state: GameState) -> Bool {
+        state.divisions.contains { division in
+            division.faction.isHostile(to: faction) &&
+                !division.isDestroyed &&
+                division.coord.distance(to: coord) <= 1
         }
     }
 
