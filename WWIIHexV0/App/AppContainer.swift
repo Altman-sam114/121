@@ -880,6 +880,9 @@ final class AppContainer: ObservableObject {
         if let modifierText = combatTargetGeneralModifierText(influence) {
             notes.append("接近参考：\(modifierText)")
         }
+        if let stanceText = combatTargetStanceText(for: nearest.target) {
+            notes.append("接近态势：\(stanceText)")
+        }
         if let roadApproach = combatOutOfRangeRoadApproachText(
             attacker: attacker,
             target: nearest.target,
