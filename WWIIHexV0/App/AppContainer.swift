@@ -416,6 +416,7 @@ final class AppContainer: ObservableObject {
         var notes = previews.prefix(3).enumerated().map { index, preview in
             combatTargetPreviewLine(
                 rank: index,
+                attacker: division,
                 target: preview.target,
                 damage: preview.damage,
                 counterDamage: preview.counterDamage,
@@ -740,20 +741,43 @@ final class AppContainer: ObservableObject {
 
     private func combatTargetPreviewLine(
         rank: Int,
+        attacker: Division,
         target: Division,
         damage: CombatDamage,
         counterDamage: CombatDamage?,
         distance: Int
     ) -> String {
         let prefix = rank == 0 ? "首选" : "候选 \(rank + 1)"
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(combatCounterPreviewText(counterDamage))，距 \(distance) 格"
+        let targetOutcome = combatStrengthOutcomeText(
+            label: "敌余",
+            strength: target.strength,
+            maxStrength: target.maxStrength,
+            damage: damage.strengthDamage
+        )
+        let counterOutcome = combatCounterPreviewText(counterDamage, attacker: attacker)
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcome)；\(counterOutcome)；距 \(distance) 格"
     }
 
-    private func combatCounterPreviewText(_ counterDamage: CombatDamage?) -> String {
+    private func combatCounterPreviewText(_ counterDamage: CombatDamage?, attacker: Division) -> String {
         guard let counterDamage else {
             return "无反击"
         }
-        return "反击 \(counterDamage.strengthDamage)"
+        let attackerOutcome = combatStrengthOutcomeText(
+            label: "我余",
+            strength: attacker.strength,
+            maxStrength: attacker.maxStrength,
+            damage: counterDamage.strengthDamage
+        )
+        return "反击 \(counterDamage.strengthDamage)，\(attackerOutcome)"
+    }
+
+    private func combatStrengthOutcomeText(
+        label: String,
+        strength: Int,
+        maxStrength: Int,
+        damage: Int
+    ) -> String {
+        "\(label) \(max(0, strength - damage))/\(maxStrength)"
     }
 
     private func currentRegionRoadCount(for division: Division) -> Int? {

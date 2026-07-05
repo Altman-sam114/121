@@ -2693,6 +2693,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，“所属武将”摘要在窄屏、长武将名、长技能名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只展示当前武将分配快照，不实现武将任免、头像资产、详细属性、忠诚变化解释或技能效果展开。
 
+## v2.4 - 军队接战剩余兵力预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 的三目标接战预判行增加战后兵力结果，预计攻击后显示敌军剩余兵力。
+- 若目标可反击，预判行同时显示反击伤害和我方反击后剩余兵力；无反击时继续显示“无反击”。
+- 剩余兵力只用当前 `Division.strength/maxStrength` 与既有 `CombatDamage.strengthDamage` 做只读派生，不写入日志、审计记录或持久状态。
+- 保持 `CombatRules`、`GeneralInfluence`、`MovementRules`、`WarCommandExecutor`、`RuleEngine`、伤害公式、反击规则、排序规则和 UI 入参不变；本轮只做接战预览文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_strength_outcome_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“敌余/我余”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 预判只展示单次攻击/反击后的兵力余量，不实现完整胜负概率、士气、疲劳、撤退预测、单挑或跨回合战斗规划。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
