@@ -560,6 +560,11 @@ final class AppContainer: ObservableObject {
         let enemyDivisions = gameState.divisions
             .filter { $0.faction.isHostile(to: zone.faction) && !$0.isDestroyed }
         let nearestEnemyText = nearestEnemyText(for: divisions, enemyDivisions: enemyDivisions)
+        let engagementPairingNote = engagementPairingText(
+            for: divisions,
+            enemyDivisions: enemyDivisions,
+            influence: influence
+        )
         var attackBonuses: [Int] = []
         var defenseBonuses: [Int] = []
         for division in divisions {
@@ -586,7 +591,113 @@ final class AppContainer: ObservableObject {
             combatNote = "交战：当前接敌攻击 \(bonusRange(attackBonuses))，防御 \(bonusRange(defenseBonuses))\(enemyText)"
         }
 
-        return [roadNote, roadBenefitNote, combatNote].compactMap { $0 }
+        return [roadNote, roadBenefitNote, combatNote, engagementPairingNote].compactMap { $0 }
+    }
+
+    private enum EngagementPairingPerspective {
+        case attack
+        case defense
+
+        var sortRank: Int {
+            switch self {
+            case .attack:
+                return 0
+            case .defense:
+                return 1
+            }
+        }
+
+        func modifierText(for bonus: Int) -> String {
+            switch self {
+            case .attack:
+                return "攻\(bonus > 0 ? "+\(bonus)" : "\(bonus)")"
+            case .defense:
+                return "防\(bonus > 0 ? "+\(bonus)" : "\(bonus)")"
+            }
+        }
+    }
+
+    private struct EngagementPairingCandidate {
+        let attacker: Division
+        let defender: Division
+        let distance: Int
+        let bonus: Int
+        let perspective: EngagementPairingPerspective
+    }
+
+    private func engagementPairingText(
+        for divisions: [Division],
+        enemyDivisions: [Division],
+        influence: GeneralInfluence
+    ) -> String? {
+        var candidates: [EngagementPairingCandidate] = []
+        let activeDivisions = divisions.filter { !$0.isDestroyed }
+
+        for division in activeDivisions {
+            for enemy in enemyDivisions {
+                let distance = division.coord.distance(to: enemy.coord)
+                if distance <= division.range {
+                    let summary = influence.combatSummary(attacker: division, defender: enemy, in: gameState)
+                    candidates.append(
+                        EngagementPairingCandidate(
+                            attacker: division,
+                            defender: enemy,
+                            distance: distance,
+                            bonus: summary.attackBonus,
+                            perspective: .attack
+                        )
+                    )
+                }
+                if distance <= enemy.range {
+                    let summary = influence.combatSummary(attacker: enemy, defender: division, in: gameState)
+                    candidates.append(
+                        EngagementPairingCandidate(
+                            attacker: enemy,
+                            defender: division,
+                            distance: distance,
+                            bonus: summary.defenseBonus,
+                            perspective: .defense
+                        )
+                    )
+                }
+            }
+        }
+
+        let selected = candidates.sorted { lhs, rhs in
+            let lhsHasBonus = lhs.bonus != 0
+            let rhsHasBonus = rhs.bonus != 0
+            if lhsHasBonus != rhsHasBonus {
+                return lhsHasBonus && !rhsHasBonus
+            }
+
+            let lhsMagnitude = abs(lhs.bonus)
+            let rhsMagnitude = abs(rhs.bonus)
+            if lhsMagnitude != rhsMagnitude {
+                return lhsMagnitude > rhsMagnitude
+            }
+            if lhs.distance != rhs.distance {
+                return lhs.distance < rhs.distance
+            }
+            if lhs.perspective.sortRank != rhs.perspective.sortRank {
+                return lhs.perspective.sortRank < rhs.perspective.sortRank
+            }
+            if lhs.attacker.thematicDisplayName != rhs.attacker.thematicDisplayName {
+                return lhs.attacker.thematicDisplayName < rhs.attacker.thematicDisplayName
+            }
+            if lhs.defender.thematicDisplayName != rhs.defender.thematicDisplayName {
+                return lhs.defender.thematicDisplayName < rhs.defender.thematicDisplayName
+            }
+            if lhs.attacker.id != rhs.attacker.id {
+                return lhs.attacker.id < rhs.attacker.id
+            }
+            return lhs.defender.id < rhs.defender.id
+        }.first
+
+        guard let selected else {
+            return nil
+        }
+
+        return "接敌配对：\(selected.attacker.thematicDisplayName) -> \(selected.defender.thematicDisplayName)，\(selected.perspective.modifierText(for: selected.bonus))，距 \(selected.distance) 格"
     }
 
     private func nearestEnemyText(for divisions: [Division], enemyDivisions: [Division]) -> String? {

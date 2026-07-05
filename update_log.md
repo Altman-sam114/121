@@ -3633,6 +3633,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，军队详情当前官道受压文案在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 该摘要只读展示当前 hex 的 hostile 邻接压迫，不代表完整路径安全、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 武将面板当前接敌配对摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 在当前选中武将防区已接敌时，追加一条当前接敌配对摘要。
+- 新增私有 `engagementPairingText`，复用 `GeneralInfluence.combatSummary(attacker:defender:in:)`，只读显示当前射程内的攻/防配对、对应攻防修正和 hex 距离，例如 `接敌配对：曹骑兵军 -> 袁步卒营，攻+1，距 1 格`。
+- 配对选择继续沿用 `Faction.isHostile(to:)` 敌对口径，并排除已毁灭敌军；多个配对同时存在时，优先非零修正，再按修正幅度、距离、攻防方向、军队名和 id 稳定选择。
+- 保持 `MovementRules`、`CombatRules`、`GeneralInfluence` 规则结果、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做武将面板只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_engagement_pairing_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `rg -n "[[:blank:]]+$" README.md update_log.md md/flow/flow.md md/flow/flowchart.md md/prompt/README.md md/prompt/v2.0-三国迁移/v2.4_general_panel_engagement_pairing_summary.md WWIIHexV0/App/AppContainer.swift` 无命中。
+- `rg -n "^(<<<<<<<|=======|>>>>>>>)" README.md update_log.md md/flow/flow.md md/flow/flowchart.md md/prompt/README.md md/prompt/v2.0-三国迁移/v2.4_general_panel_engagement_pairing_summary.md WWIIHexV0/App/AppContainer.swift` 无命中。
+- `rg -n "默认先跑|默认 Probe|Probe -> Smoke|Stage Regression -> Full|代码改动按 .*Probe" AGENTS.md md/flow/flow.md` 无命中。
+- `git diff --check` 通过。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，道路与交战摘要新增接敌配对后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该摘要只读展示当前静态射程内配对，不代表完整路径安全、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
+
 ## v2.4 - 武将面板道路与交战近敌摘要兼容层
 
 完成日期：2026-07-05
