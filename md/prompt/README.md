@@ -85,6 +85,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_unit_road_mobility_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_reachable_road_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_target_comparison.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_target_stance_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_strength_outcome_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_combat_log_strength_outcome.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_risk_preview.md`

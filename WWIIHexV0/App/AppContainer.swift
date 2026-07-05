@@ -770,7 +770,9 @@ final class AppContainer: ObservableObject {
         )
         let riskText = combatPreviewRiskText(for: targetOutcome)
             .map { "；风险：\($0)" } ?? ""
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)；距 \(distance) 格"
+        let stanceText = combatTargetStanceText(for: target)
+            .map { "；态势：\($0)" } ?? ""
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)；距 \(distance) 格"
     }
 
     private func combatCounterPreviewText(
@@ -853,6 +855,29 @@ final class AppContainer: ObservableObject {
         } else if outcome.shouldRetreat {
             fragments.append(sideName.map { "\($0)可能撤退" } ?? "可能撤退")
         }
+
+        guard !fragments.isEmpty else {
+            return nil
+        }
+        return fragments.joined(separator: "，")
+    }
+
+    private func combatTargetStanceText(for target: Division) -> String? {
+        var fragments: [String] = []
+        if let tile = gameState.map.tile(at: target.coord) {
+            fragments.append(tile.baseTerrain.displayName)
+            if tile.cityName != nil {
+                fragments.append("据城")
+            } else if tile.fortressName != nil {
+                fragments.append("据关")
+            }
+            if tile.hasRoad {
+                fragments.append("临官道")
+            }
+        }
+
+        fragments.append(target.supplyState.shortDisplayName)
+        fragments.append(target.retreatMode.shortDisplayCode)
 
         guard !fragments.isEmpty else {
             return nil

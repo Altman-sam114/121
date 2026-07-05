@@ -2842,6 +2842,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“可达官道”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 预判只统计本回合可达官道，不计算跨回合道路接入计划、完整补给线安全、修路收益或多势力借道/同盟通行。
 
+## v2.4 - 军队接战目标态势预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 的三目标接战预判行新增“态势”片段，显示目标地形、据城/据关、临官道、粮道短名和撤退姿态短码。
+- 目标态势复用 `HexTile`、`SupplyState` 和 `RetreatMode` 的现有只读字段，不新增规则状态、不写日志、不修改持久数据。
+- 预判行保留预计伤害、结算后敌我剩余兵力、撤退/歼灭风险、反击风险和距离排序，让玩家能同时看到数值结果和目标防守环境。
+- 保持 `CombatRules`、`CommandExecutor`、`SupplyRules`、`MovementRules`、`WarCommandExecutor`、`RuleEngine`、真实伤害、防御、反击、撤退、围城、粮道、道路和地形规则不变；本轮只做军队详情接战预判文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_target_stance_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“态势”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 态势摘要只展示当前格和目标自身状态，不解释完整伤害公式；完整目标评分、AI 推荐、胜率和多回合围攻计划仍待后续版本。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
