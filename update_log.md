@@ -2294,6 +2294,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮仍不是完整跨郡县主干路规划；复杂道路网络需要多轮太守修路逐步形成。
 - 未做运行时 UI 烟测，事件日志坐标、AI 面板换行和实际道路可读性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 武将战术塑形兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `GeneralAgent.plan` 在军师层之后、`WarCommandExecutor` 之前，继续只返回调整后的 `DirectiveEnvelope`，不直接修改 `GameState`。
+- 攻势军令会按武将忠诚、满意度、风格和技能快照塑形为合法攻势 tactic：低忠诚/满意度优先佯攻，跨防区协同或会师点优先合围，器械/攻坚技能优先箭雨/器械压制，骑兵/快速 exploitation 风格优先疾袭或突击，突破/反击/进攻规划技能可改用破阵。
+- 守势军令会按压力、预备队、风格和防守技能塑形为合法守势 tactic：高压且无纵深预备队可死守，谨慎/防守/参谋/预备队技能优先层层设防，低压且有反击目标的进取武将可诱敌/退守，城防或纪律技能可维持固守。
+- 复用现有 `TacticConditionChecker` 过滤机动、器械/远程、预备队等轻量可用性，避免武将把防区改成明显不可执行的 tactic。
+- `GeneralDecisionRecord` 记录塑形后的 tactic；rationale 补充武将姓名、忠诚/满意度、风格、技能摘要和最终战术。
+- 保持道路机动、攻防数值、交战因素审计、命令校验、执行器和规则引擎边界不变。
+
+关键系统：
+
+- `WWIIHexV0/Agents/GeneralAgent.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_tactic_shaping.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只做 `GeneralAgent` 的 deterministic tactic shaping，不实现完整武将技能树、士气、疲劳、单挑、战报 UI 或真实 LLM。
+- 未做运行时 AI 回合或 UI 烟测，武将塑形后的实际日志换行、AI 面板显示和战术效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -66,7 +66,13 @@ struct GeneralAgent {
         }
 
         let general = registry.general(id: assignment.generalId)
-        let shaped = shape(directive: directive, zone: zone, assignment: assignment, general: general)
+        let shaped = shape(
+            directive: directive,
+            zone: zone,
+            assignment: assignment,
+            general: general,
+            state: state
+        )
         return (
             shaped.directive,
             record(
@@ -85,7 +91,8 @@ struct GeneralAgent {
         directive: ZoneDirective,
         zone: FrontZone,
         assignment: GeneralAssignment,
-        general: GeneralData?
+        general: GeneralData?,
+        state: GameState
     ) -> (directive: ZoneDirective, action: String, rationale: String) {
         switch directive.parameters {
         case .attack(let attack):
@@ -94,7 +101,8 @@ struct GeneralAgent {
                 attack: attack,
                 zone: zone,
                 assignment: assignment,
-                general: general
+                general: general,
+                state: state
             )
         case .defend(let defense):
             return shapeDefense(
@@ -102,7 +110,8 @@ struct GeneralAgent {
                 defense: defense,
                 zone: zone,
                 assignment: assignment,
-                general: general
+                general: general,
+                state: state
             )
         }
     }
@@ -112,7 +121,8 @@ struct GeneralAgent {
         attack: AttackParameters,
         zone: FrontZone,
         assignment: GeneralAssignment,
-        general: GeneralData?
+        general: GeneralData?,
+        state: GameState
     ) -> (directive: ZoneDirective, action: String, rationale: String) {
         let style = general?.commandStyle ?? commandStyle(from: assignment)
         var intensity = attack.intensity
@@ -131,6 +141,22 @@ struct GeneralAgent {
             action = "谨慎推进"
         }
 
+        let tactic = shapedAttackTactic(
+            current: directive.tactic,
+            attack: attack,
+            zone: zone,
+            assignment: assignment,
+            general: general,
+            style: style,
+            state: state
+        )
+        action = actionWithTactic(
+            base: action,
+            tactic: tactic,
+            previous: directive.tactic,
+            defaultTactic: .standardAttack
+        )
+
         let adjusted = ZoneDirective(
             zoneId: directive.zoneId,
             attack: AttackParameters(
@@ -144,11 +170,11 @@ struct GeneralAgent {
                 maxCommittedUnits: maxCommittedUnits,
                 exploitDepth: attack.exploitDepth
             ),
-            category: directive.category,
-            tactic: directive.tactic,
+            category: .offense,
+            tactic: tactic,
             commandTarget: directive.commandTarget
         )
-        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction) 与 \(style.displayName)风格处理攻势。"
+        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核攻势，采用\(tactic.displayName)。"
         return (adjusted, action, rationale)
     }
 
@@ -157,11 +183,12 @@ struct GeneralAgent {
         defense: DefenseParameters,
         zone: FrontZone,
         assignment: GeneralAssignment,
-        general: GeneralData?
+        general: GeneralData?,
+        state: GameState
     ) -> (directive: ZoneDirective, action: String, rationale: String) {
         let style = general?.commandStyle ?? commandStyle(from: assignment)
         let reserveTarget: Int
-        let action: String
+        var action: String
         if assignment.satisfaction < 35 || assignment.loyalty < 35 {
             reserveTarget = min(zone.unitsDepth.count, defense.targetReserves + 1)
             action = "增调预备"
@@ -173,6 +200,22 @@ struct GeneralAgent {
             action = "保持防务"
         }
 
+        let tactic = shapedDefenseTactic(
+            current: directive.tactic,
+            defense: defense,
+            zone: zone,
+            assignment: assignment,
+            general: general,
+            style: style,
+            state: state
+        )
+        action = actionWithTactic(
+            base: action,
+            tactic: tactic,
+            previous: directive.tactic,
+            defaultTactic: .holdPosition
+        )
+
         let adjusted = ZoneDirective(
             zoneId: directive.zoneId,
             defense: DefenseParameters(
@@ -183,12 +226,171 @@ struct GeneralAgent {
                 strongpointRegionIds: defense.strongpointRegionIds,
                 maxFrontCommitment: defense.maxFrontCommitment
             ),
-            category: directive.category,
-            tactic: directive.tactic,
+            category: .defense,
+            tactic: tactic,
             commandTarget: directive.commandTarget
         )
-        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、防区压力 \(zone.pressure) 调整防务。"
+        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、防区压力 \(zone.pressure)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核防务，采用\(tactic.displayName)。"
         return (adjusted, action, rationale)
+    }
+
+    private func shapedAttackTactic(
+        current: TacticName?,
+        attack: AttackParameters,
+        zone: FrontZone,
+        assignment: GeneralAssignment,
+        general: GeneralData?,
+        style: ZoneCommanderAgentConfig.CommandStyle,
+        state: GameState
+    ) -> TacticName {
+        let fallback = offensiveTactic(from: current)
+        let skills = skillSet(assignment: assignment, general: general)
+
+        if assignment.satisfaction < 35 || assignment.loyalty < 35 {
+            return firstUsable(
+                [.feint, .standardAttack],
+                zone: zone,
+                assignment: assignment,
+                general: general,
+                style: style,
+                state: state
+            ) ?? fallback
+        }
+
+        var candidates: [TacticName] = []
+        let coordinatedZoneIds = attack.coordinatedZoneIds ?? []
+        let hasCrossZoneCoordination = coordinatedZoneIds.count > 1 || coordinatedZoneIds.contains { $0 != zone.id }
+        if attack.convergenceRegionId != nil || hasCrossZoneCoordination {
+            candidates.append(.pincerMovement)
+        }
+        if hasAnySkill(["fortress_operations", "siegecraft", "set_piece_attack"], in: skills) {
+            candidates.append(.fireCoverage)
+        }
+        if style == .aggressive,
+           hasAnySkill(["cavalry_charge", "rapid_exploitation", "armor_expert"], in: skills) {
+            candidates.append((attack.exploitDepth ?? 0) > 0 || !zone.unitsDepth.isEmpty ? .blitzkrieg : .spearhead)
+            candidates.append(.spearhead)
+        }
+        if hasAnySkill(["breakthrough", "counterattack", "offensive_planning"], in: skills) {
+            candidates.append(.breakthrough)
+        }
+        if style == .cautious {
+            candidates.append(.feint)
+        }
+        candidates.append(fallback)
+        candidates.append(.standardAttack)
+
+        return firstUsable(
+            candidates,
+            zone: zone,
+            assignment: assignment,
+            general: general,
+            style: style,
+            state: state
+        ) ?? .standardAttack
+    }
+
+    private func shapedDefenseTactic(
+        current: TacticName?,
+        defense: DefenseParameters,
+        zone: FrontZone,
+        assignment: GeneralAssignment,
+        general: GeneralData?,
+        style: ZoneCommanderAgentConfig.CommandStyle,
+        state: GameState
+    ) -> TacticName {
+        let fallback = defensiveTactic(from: current)
+        let skills = skillSet(assignment: assignment, general: general)
+
+        var candidates: [TacticName] = []
+        if zone.pressure >= 3 && zone.unitsDepth.isEmpty {
+            candidates.append(.lastStand)
+        }
+        if assignment.satisfaction < 35 || assignment.loyalty < 35 {
+            candidates.append(.defenseInDepth)
+            candidates.append(.holdPosition)
+        }
+        if style == .cautious ||
+            hasAnySkill(["defensive_master", "staff_coordination", "reserve_control"], in: skills) {
+            candidates.append(.defenseInDepth)
+        }
+        if style == .aggressive,
+           zone.pressure == 0,
+           !(defense.counterattackRegionIds ?? []).isEmpty {
+            candidates.append(.elasticDefense)
+        }
+        if hasAnySkill(["fortress_operations", "discipline"], in: skills) {
+            candidates.append(.holdPosition)
+        }
+        candidates.append(fallback)
+        candidates.append(.holdPosition)
+
+        return firstUsable(
+            candidates,
+            zone: zone,
+            assignment: assignment,
+            general: general,
+            style: style,
+            state: state
+        ) ?? .holdPosition
+    }
+
+    private func firstUsable(
+        _ tactics: [TacticName],
+        zone: FrontZone,
+        assignment: GeneralAssignment,
+        general: GeneralData?,
+        style: ZoneCommanderAgentConfig.CommandStyle,
+        state: GameState
+    ) -> TacticName? {
+        let checker = TacticConditionChecker()
+        let config = ZoneCommanderAgentConfig(
+            id: assignment.generalId,
+            name: generalName(general, fallback: assignment.generalDisplayName ?? assignment.generalId),
+            faction: zone.faction,
+            assignedZoneId: zone.id,
+            skills: Array(skillSet(assignment: assignment, general: general)).sorted(),
+            commandStyle: style
+        )
+        for tactic in stableUnique(tactics) where checker.canUseTactic(
+            tactic,
+            commander: config,
+            zone: zone,
+            state: state
+        ) {
+            return tactic
+        }
+        return nil
+    }
+
+    private func offensiveTactic(from tactic: TacticName?) -> TacticName {
+        guard let tactic, tactic.category == .offense else {
+            return .standardAttack
+        }
+        return tactic
+    }
+
+    private func defensiveTactic(from tactic: TacticName?) -> TacticName {
+        guard let tactic, tactic.category == .defense else {
+            return .holdPosition
+        }
+        return tactic
+    }
+
+    private func actionWithTactic(
+        base: String,
+        tactic: TacticName,
+        previous: TacticName?,
+        defaultTactic: TacticName
+    ) -> String {
+        if previous == tactic || (previous == nil && tactic == defaultTactic) {
+            return base
+        }
+        let tacticAction = "改用\(tactic.displayName)"
+        if base.hasPrefix("保持") {
+            return tacticAction
+        }
+        return "\(base)，\(tacticAction)"
     }
 
     private func record(
@@ -231,6 +433,31 @@ struct GeneralAgent {
             return generalContext
         }
         return "\(context) \(generalContext)"
+    }
+
+    private func skillSet(assignment: GeneralAssignment, general: GeneralData?) -> Set<String> {
+        Set(assignment.skills).union(general?.skills ?? [])
+    }
+
+    private func hasAnySkill(_ candidates: [String], in skills: Set<String>) -> Bool {
+        !Set(candidates).isDisjoint(with: skills)
+    }
+
+    private func stableUnique(_ tactics: [TacticName]) -> [TacticName] {
+        var seen: Set<TacticName> = []
+        var result: [TacticName] = []
+        for tactic in tactics where seen.insert(tactic).inserted {
+            result.append(tactic)
+        }
+        return result
+    }
+
+    private func skillSummary(assignment: GeneralAssignment, general: GeneralData?) -> String {
+        let skills = Array(skillSet(assignment: assignment, general: general)).sorted()
+        guard !skills.isEmpty else {
+            return "无技能快照"
+        }
+        return "技能 \(skills.prefix(3).joined(separator: "/"))"
     }
 
     private func inferredStyle(from assignment: GeneralAssignment) -> ZoneCommanderAgentConfig.CommandStyle {
