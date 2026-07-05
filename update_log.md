@@ -2916,6 +2916,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“首选理由”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 首选理由不是胜率，不计算撤退目的地、撤退失败、士气、疲劳、单挑或跨回合围攻计划；真实结果仍以 `CommandExecutor` 结算日志为准。
 
+## v2.4 - 军队接战官道压制预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 在首选理由后新增“接战官道”摘要，把道路机动与首选目标交战判断连起来。
+- 摘要复用 `MovementRules.movementRange` 和 `isEnemyZoneOfControl`，统计本回合可从多少个官道位置压制首选目标，并拆分安全官道位与受敌控区压迫的官道位。
+- 若当前没有可用官道压制位，会明确显示“无可用官道压制位”；若我方或目标当前在官道，也会补充对应片段。
+- 保持 `MovementRules`、`CombatRules`、`CommandExecutor`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、真实移动成本、敌控区停止、道路加成、伤害、防御、反击、撤退、围城和粮道规则不变；本轮只做军队详情接战预判解释文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_road_approach_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“接战官道”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只看本回合可达官道压制位，不计算最佳路径、跨回合道路计划、完整粮道安全、同盟借道通行或真实胜率；真实结果仍以 `CommandExecutor` 结算日志为准。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

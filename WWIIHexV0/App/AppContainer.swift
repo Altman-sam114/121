@@ -362,6 +362,7 @@ final class AppContainer: ObservableObject {
         }
 
         let combatRules = CombatRules()
+        let movementRules = MovementRules()
         let previews: [(
             target: Division,
             damage: CombatDamage,
@@ -432,6 +433,14 @@ final class AppContainer: ObservableObject {
                 comparedTargetCount: previews.count
             )
         ]
+
+        if let roadApproach = combatRoadApproachText(
+            attacker: division,
+            target: leadingPreview.target,
+            movementRules: movementRules
+        ) {
+            notes.append(roadApproach)
+        }
 
         notes.append(contentsOf: previews.prefix(3).enumerated().map { index, preview in
             combatTargetPreviewLine(
@@ -816,6 +825,51 @@ final class AppContainer: ObservableObject {
 
         reasons.append("距 \(distance) 格")
         return "首选理由：\(target.thematicDisplayName)，\(reasons.joined(separator: "，"))"
+    }
+
+    private func combatRoadApproachText(
+        attacker: Division,
+        target: Division,
+        movementRules: MovementRules
+    ) -> String? {
+        var candidateCoords = movementRules.movementRange(for: attacker, in: gameState)
+        candidateCoords.insert(attacker.coord)
+
+        let roadAttackCoords = candidateCoords.filter { coord in
+            gameState.map.tile(at: coord)?.hasRoad == true &&
+                coord.distance(to: target.coord) <= attacker.range
+        }
+        let attackerOnRoad = gameState.map.tile(at: attacker.coord)?.hasRoad == true
+        let targetOnRoad = gameState.map.tile(at: target.coord)?.hasRoad == true
+
+        var fragments: [String] = []
+        if roadAttackCoords.isEmpty {
+            fragments.append("无可用官道压制位")
+        } else {
+            let pressuredCount = roadAttackCoords.filter {
+                movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+            }.count
+            let safeCount = roadAttackCoords.count - pressuredCount
+            fragments.append("\(roadAttackCoords.count) 个官道压制位")
+            if safeCount > 0 {
+                fragments.append("安全 \(safeCount)")
+            }
+            if pressuredCount > 0 {
+                fragments.append("受敌控区 \(pressuredCount)")
+            }
+        }
+
+        if attackerOnRoad {
+            fragments.append("我方在官道")
+        }
+        if targetOnRoad {
+            fragments.append("目标临官道")
+        }
+
+        guard !fragments.isEmpty else {
+            return nil
+        }
+        return "接战官道：\(fragments.joined(separator: "，"))"
     }
 
     private func combatCounterPreviewText(
