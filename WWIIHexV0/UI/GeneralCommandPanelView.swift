@@ -55,7 +55,7 @@ struct GeneralCommandPanelView: View {
                         .lineLimit(3)
 
                     if !general.skills.isEmpty {
-                        Text(general.skills.joined(separator: ", "))
+                        Text(general.skillDisplayNames.joined(separator: " / "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

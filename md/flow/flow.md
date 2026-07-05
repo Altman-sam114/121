@@ -59,7 +59,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `CombatRules.combatAuditSummary` 使用同一套攻击/防御 profile 生成只读交战审计摘要，把有效攻击/防御变化、地形、河流、器械攻城、围城、死守和侧击写入攻击/反击日志；该摘要不改变伤害、撤退或反击规则。
-- `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralAgent` 会读取这些快照，把军师后的 `ZoneDirective.tactic` 收束为攻守类别合法、且符合机动/器械/预备队条件的战术；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
+- `GeneralAssignment` 现在保存武将姓名、风格和技能快照；`GeneralSkillDisplay` 将 raw skill id 显示为粮道调度、骑兵突击、守备专精等中文标签，规则和 JSON 仍保留原 id；`GeneralAgent` 会读取这些快照，把军师后的 `ZoneDirective.tactic` 收束为攻守类别合法、且符合机动/器械/预备队条件的战术；`GeneralInfluence` 会读取防区武将分配，给道路机动、攻击和防御提供小幅规则修正。
 - `CommandExecutor` 会把 `GeneralInfluence` 的道路机动摘要追加到移动日志，把交战审计和攻防修正摘要追加到攻击和反击日志，日志片段中文优先并优先显示武将姓名；`GeneralCommandPanelView` 会只读展示当前选中武将防区的道路机动和接敌攻防摘要；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于玩家和 Agent C 复判“哪个武将影响了道路与交战、哪个命令为什么被拒绝”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接都使用 `Faction.isHostile(to:)` 判定敌对，避免汉室/中立或后续多势力数据被旧二元 `!= faction` 误判为敌军。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
@@ -460,7 +460,13 @@ MarshalAgent / TheaterCommanderPool
 - 按武将忠诚、满意度、指挥风格和防区压力，对军师后的 `ZoneDirective` 和玩家武将面板宏观 `ZoneDirective` 做最后复核。
 - 收束过激攻势、谨慎推进或调整防守预备队，但不生成底层 `Command`。
 - 生成 `GeneralDecisionRecord`，写入 `GameState.generalRecords`，并追加事件日志。
-- 把武将复核摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看；AI 面板会显示武将动作、最终 tactic、风格、目标郡县和 rationale。
+- 把武将复核摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看；AI 面板会显示武将动作、最终 tactic、风格、目标郡县和 rationale，rationale 中的技能使用 `GeneralSkillDisplay` 中文展示名。
+
+`GeneralSkillDisplay` 的职责：
+
+- 保留 `GeneralData.skills` / `GeneralAssignment.skills` 的 raw id，避免破坏 JSON、Codable 和规则判断。
+- 在 `GeneralCommandPanelView`、`GeneralProfileView` 和 `GeneralAgent` rationale 中把常见技能显示为中文，例如粮道调度、骑兵突击、守备专精、攻城术、预备掌控。
+- 未登记的新技能使用基于 raw id 的安全 fallback 展示，不影响规则执行。
 
 `GeneralInfluence` 的职责：
 

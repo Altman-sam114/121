@@ -457,7 +457,8 @@ struct GeneralAgent {
         guard !skills.isEmpty else {
             return "无技能快照"
         }
-        return "技能 \(skills.prefix(3).joined(separator: "/"))"
+        let labels = skills.prefix(3).map(GeneralSkillDisplay.displayName)
+        return "技能 \(labels.joined(separator: "/"))"
     }
 
     private func inferredStyle(from assignment: GeneralAssignment) -> ZoneCommanderAgentConfig.CommandStyle {

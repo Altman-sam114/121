@@ -74,8 +74,70 @@ struct GeneralData: Identifiable, Codable, Equatable {
         )
     }
 
+    var skillDisplayNames: [String] {
+        skills.map(GeneralSkillDisplay.displayName)
+    }
+
     private static func clampPercent(_ value: Int) -> Int {
         max(0, min(100, value))
+    }
+}
+
+enum GeneralSkillDisplay {
+    static func displayName(for rawValue: String) -> String {
+        switch rawValue {
+        case "army_group_coordination":
+            return "集团协同"
+        case "armor_expert", "armor_theory":
+            return "骑战突破"
+        case "breakthrough":
+            return "破阵"
+        case "cavalry_charge":
+            return "骑兵突击"
+        case "coalition_coordination":
+            return "联军协同"
+        case "counterattack":
+            return "反击"
+        case "defensive_master":
+            return "守备专精"
+        case "discipline":
+            return "军纪整肃"
+        case "disciplined_retreat":
+            return "整军退守"
+        case "fortress_operations":
+            return "城关攻守"
+        case "logistics":
+            return "粮道调度"
+        case "night_raid":
+            return "夜袭"
+        case "offensive_planning":
+            return "攻势筹划"
+        case "political_will":
+            return "军心号召"
+        case "pressure_management":
+            return "压迫维持"
+        case "rapid_exploitation":
+            return "疾行追击"
+        case "reserve_control":
+            return "预备掌控"
+        case "set_piece_attack":
+            return "阵地攻坚"
+        case "siegecraft":
+            return "攻城术"
+        case "staff_coordination":
+            return "参谋协同"
+        default:
+            return fallbackDisplayName(for: rawValue)
+        }
+    }
+
+    private static func fallbackDisplayName(for rawValue: String) -> String {
+        rawValue
+            .split(separator: "_")
+            .map { part in
+                part.prefix(1).uppercased() + part.dropFirst()
+            }
+            .joined(separator: " ")
     }
 }
 

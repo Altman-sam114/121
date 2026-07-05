@@ -2454,6 +2454,48 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“道路与交战”摘要在窄屏、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 交战摘要只统计当前射程内敌我配对，不做完整战斗预报、伤害预测、士气、疲劳或单挑展示。
 
+## v2.4 - 武将技能中文展示兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- 新增 `GeneralSkillDisplay`，把 `logistics`、`rapid_exploitation`、`cavalry_charge`、`defensive_master`、`siegecraft` 等技能 raw id 显示为粮道调度、疾行追击、骑兵突击、守备专精、攻城术等中文标签。
+- `GeneralData.skillDisplayNames` 为 UI 提供中文技能列表，但 `GeneralData.skills` 和 `GeneralAssignment.skills` 仍保留 raw id，避免破坏 JSON、Codable、排序和规则匹配。
+- `GeneralCommandPanelView` 和 `GeneralProfileView` 改为显示中文技能标签，不再把 `_` 分隔的开发字段直接展示给玩家。
+- `GeneralAgent` 的武将复核 rationale 继续记录技能摘要，但使用中文技能标签，方便 AI 面板审计。
+- 保持 `GeneralInfluence`、`MovementRules`、`CombatRules`、`WarCommandExecutor`、`RuleEngine` 和所有技能规则判断不变；本轮只做展示层和审计文字中文化。
+
+关键系统：
+
+- `WWIIHexV0/Agents/GeneralRegistry.swift`
+- `WWIIHexV0/Agents/GeneralAgent.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/GeneralProfileView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_skill_display_labels.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- UI 相关 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/GeneralProfileView.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，技能标签在窄屏、长标签和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 未登记的新技能只做英文 fallback 展示，不会影响规则执行；后续新增技能时应同步补中文标签。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

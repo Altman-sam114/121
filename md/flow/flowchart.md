@@ -32,7 +32,7 @@ v2.4 命名边界：
 - `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
-- `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralAgent` 会按武将风格/技能塑形 `ZoneDirective.tactic`，`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
+- `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralAgent` 会按武将风格/技能塑形 `ZoneDirective.tactic`，`GeneralSkillDisplay` 会把技能 raw id 中文化展示，`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
 - `CommandExecutor` 会把中文武将姓名、道路机动、交战审计和攻防修正摘要写入移动、攻击和反击日志；`GeneralCommandPanelView` 会只读显示当前防区道路机动与接敌攻防摘要；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、攻击目标、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立/汉室不会只因不是当前阵营就阻断道路或成为合法攻击目标。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术。玩家武将面板宏观命令也会先经 `GeneralAgent.plan` 塑形 tactic，再进入 `WarCommandExecutor -> RuleEngine`，但不会自动结束玩家回合。
@@ -79,6 +79,7 @@ flowchart TD
     GCMD["太守生产命令<br/>Command.queueProduction<br/>经规则层校验资源并排产"]:::command
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>重排目标 region，写 StrategistDecisionRecord"]:::command
     GENA["武将军令复核与战术塑形<br/>GeneralAgent.plan<br/>按武将分配复核投入和 tactic，写 GeneralDecisionRecord"]:::command
+    GSKILL["武将技能显示<br/>GeneralSkillDisplay<br/>raw skill id -> 中文标签"]:::ui
     GINF["武将战场影响<br/>GeneralInfluence<br/>姓名快照 + 道路机动 + 攻防修正"]:::rules
     GIP["武将影响面板摘要<br/>AppContainer.selectedGeneralInfluenceNotes<br/>道路机动 + 接敌攻防只读展示"]:::ui
     ZD["战争指令<br/>ZoneDirective<br/>战区级 attack/defend 意图"]:::command
@@ -115,6 +116,8 @@ flowchart TD
     ROAD --> CMD
     GCMD --> CMD
     GENA --> GINF
+    GENA --> GSKILL
+    GSKILL --> UI
     GINF --> WCE
     GINF --> RE
     GINF --> GIP

@@ -111,7 +111,7 @@ struct GeneralProfileView: View {
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], alignment: .leading, spacing: 8) {
                     ForEach(general.skills, id: \.self) { skill in
-                        Label(skill.replacingOccurrences(of: "_", with: " "), systemImage: "star.fill")
+                        Label(GeneralSkillDisplay.displayName(for: skill), systemImage: "star.fill")
                             .font(.caption.weight(.semibold))
                             .lineLimit(2)
                             .padding(8)
