@@ -433,7 +433,8 @@ final class AppContainer: ObservableObject {
             return combatOutOfRangePreviewNotes(
                 attacker: division,
                 enemies: enemyDistances,
-                movementRules: movementRules
+                movementRules: movementRules,
+                combatRules: combatRules
             )
         }
 
@@ -853,7 +854,8 @@ final class AppContainer: ObservableObject {
     private func combatOutOfRangePreviewNotes(
         attacker: Division,
         enemies: [(target: Division, distance: Int)],
-        movementRules: MovementRules
+        movementRules: MovementRules,
+        combatRules: CombatRules
     ) -> [String] {
         guard let nearest = enemies.sorted(by: {
             if $0.distance != $1.distance {
@@ -871,6 +873,13 @@ final class AppContainer: ObservableObject {
         var notes = [
             "接战距离：最近 \(nearest.target.thematicDisplayName)，距 \(nearest.distance) 格，射程 \(attacker.range)，需接近 \(approachGap) 格"
         ]
+        let influence = combatRules.generalInfluenceSummary(attacker: attacker, defender: nearest.target, in: gameState)
+        if let generalText = combatApproachGeneralText(influence) {
+            notes.append(generalText)
+        }
+        if let modifierText = combatTargetGeneralModifierText(influence) {
+            notes.append("接近参考：\(modifierText)")
+        }
         if let roadApproach = combatOutOfRangeRoadApproachText(
             attacker: attacker,
             target: nearest.target,
@@ -983,6 +992,19 @@ final class AppContainer: ObservableObject {
         let attackerText = attackerName.map { "我方 \($0)" } ?? "我方未任命"
         let defenderText = defenderName.map { "敌方 \($0)" } ?? "敌方未任命"
         return "交战武将：\(attackerText)，\(defenderText)"
+    }
+
+    private func combatApproachGeneralText(_ influence: GeneralCombatInfluenceSummary) -> String? {
+        let attackerName = influence.attackerGeneralName ?? influence.attackerGeneralId
+        let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId
+
+        guard attackerName != nil || defenderName != nil else {
+            return nil
+        }
+
+        let attackerText = attackerName.map { "我方 \($0)" } ?? "我方未任命"
+        let defenderText = defenderName.map { "敌方 \($0)" } ?? "敌方未任命"
+        return "接近武将：\(attackerText)，\(defenderText)"
     }
 
     private func combatTargetDefenderGeneralText(_ influence: GeneralCombatInfluenceSummary) -> String? {
