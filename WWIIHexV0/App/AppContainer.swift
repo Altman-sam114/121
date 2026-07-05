@@ -869,6 +869,7 @@ final class AppContainer: ObservableObject {
             return []
         }
 
+        let reachableCoords = movementRules.movementRange(for: attacker, in: gameState)
         let approachGap = max(0, nearest.distance - attacker.range)
         var notes = [
             "接战距离：最近 \(nearest.target.thematicDisplayName)，距 \(nearest.distance) 格，射程 \(attacker.range)，需接近 \(approachGap) 格"
@@ -876,6 +877,8 @@ final class AppContainer: ObservableObject {
         if let candidateText = combatOutOfRangeCandidateText(
             attacker: attacker,
             enemies: enemies,
+            reachableCoords: reachableCoords,
+            movementRules: movementRules,
             combatRules: combatRules
         ) {
             notes.append(candidateText)
@@ -893,13 +896,14 @@ final class AppContainer: ObservableObject {
         if let threatText = combatOutOfRangeThreatText(
             attacker: attacker,
             target: nearest.target,
-            movementRules: movementRules
+            reachableCoords: reachableCoords
         ) {
             notes.append(threatText)
         }
         if let roadApproach = combatOutOfRangeRoadApproachText(
             attacker: attacker,
             target: nearest.target,
+            reachableCoords: reachableCoords,
             movementRules: movementRules
         ) {
             notes.append(roadApproach)
@@ -955,6 +959,8 @@ final class AppContainer: ObservableObject {
     private func combatOutOfRangeCandidateText(
         attacker: Division,
         enemies: [(target: Division, distance: Int)],
+        reachableCoords: Set<HexCoord>,
+        movementRules: MovementRules,
         combatRules: CombatRules
     ) -> String? {
         let candidates = enemies.sorted {
@@ -978,6 +984,13 @@ final class AppContainer: ObservableObject {
                 "需 \(approachGap)",
                 "敌射 \(candidate.target.range)"
             ]
+            details.append(contentsOf: combatOutOfRangeCandidateApproachDetails(
+                attacker: attacker,
+                target: candidate.target,
+                currentDistance: candidate.distance,
+                reachableCoords: reachableCoords,
+                movementRules: movementRules
+            ))
             if let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId {
                 details.append("敌将 \(defenderName)")
             }
@@ -986,15 +999,60 @@ final class AppContainer: ObservableObject {
         return "接近候选：\(fragments.joined(separator: "；"))"
     }
 
+    private func combatOutOfRangeCandidateApproachDetails(
+        attacker: Division,
+        target: Division,
+        currentDistance: Int,
+        reachableCoords: Set<HexCoord>,
+        movementRules: MovementRules
+    ) -> [String] {
+        let reachableCloserCoords = reachableCoords.filter {
+            $0.distance(to: target.coord) < currentDistance
+        }
+        guard !reachableCloserCoords.isEmpty else {
+            return ["无可近位"]
+        }
+
+        var details: [String] = []
+        let nearestReachableDistance = reachableCloserCoords
+            .map { $0.distance(to: target.coord) }
+            .min() ?? currentDistance
+        details.append("可达距 \(nearestReachableDistance)")
+        if nearestReachableDistance <= attacker.range {
+            details.append("可入射程")
+        }
+
+        let roadCloserCoords = reachableCloserCoords.filter {
+            gameState.map.tile(at: $0)?.hasRoad == true
+        }
+        if !roadCloserCoords.isEmpty {
+            let safeRoadCount = roadCloserCoords.count {
+                !movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+            }
+            if safeRoadCount > 0 {
+                details.append("安全官道 \(safeRoadCount)")
+            } else {
+                details.append("官道受压 \(roadCloserCoords.count)")
+            }
+        }
+
+        let threatenedApproachCount = reachableCloserCoords.count {
+            $0.distance(to: target.coord) <= target.range
+        }
+        if threatenedApproachCount > 0 {
+            details.append("入敌射 \(threatenedApproachCount)")
+        }
+        return details
+    }
+
     private func combatOutOfRangeThreatText(
         attacker: Division,
         target: Division,
-        movementRules: MovementRules
+        reachableCoords: Set<HexCoord>
     ) -> String? {
         let currentDistance = attacker.coord.distance(to: target.coord)
         let enemyRange = target.range
-        let reachableCloserCoords = movementRules.movementRange(for: attacker, in: gameState)
-            .filter { $0.distance(to: target.coord) < currentDistance }
+        let reachableCloserCoords = reachableCoords.filter { $0.distance(to: target.coord) < currentDistance }
         let threatenedApproachCount = reachableCloserCoords.count {
             $0.distance(to: target.coord) <= enemyRange
         }
@@ -1019,14 +1077,14 @@ final class AppContainer: ObservableObject {
     private func combatOutOfRangeRoadApproachText(
         attacker: Division,
         target: Division,
+        reachableCoords: Set<HexCoord>,
         movementRules: MovementRules
     ) -> String? {
         let currentDistance = attacker.coord.distance(to: target.coord)
-        let reachableRoadCoords = movementRules.movementRange(for: attacker, in: gameState)
-            .filter { coord in
-                gameState.map.tile(at: coord)?.hasRoad == true &&
-                    coord.distance(to: target.coord) < currentDistance
-            }
+        let reachableRoadCoords = reachableCoords.filter { coord in
+            gameState.map.tile(at: coord)?.hasRoad == true &&
+                coord.distance(to: target.coord) < currentDistance
+        }
         let attackerOnRoad = gameState.map.tile(at: attacker.coord)?.hasRoad == true
         let targetOnRoad = gameState.map.tile(at: target.coord)?.hasRoad == true
 

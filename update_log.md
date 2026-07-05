@@ -3288,6 +3288,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“接近候选”文本在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只读展示当前静态接近候选，不模拟敌方下回合 AI 行动、完整路径安全、同盟借道或真实胜率。
 
+## v2.4 - 军队未接敌时接近候选路况与风险预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.combatOutOfRangePreviewNotes` 在未接敌分支中只计算一次 `MovementRules.movementRange`，供最近敌军威胁、官道接近和候选摘要复用。
+- `AppContainer.combatOutOfRangeCandidateText` 的每个接近候选追加本回合可达接近摘要：最近可达距离、是否可入我方射程、是否存在安全官道或受压官道，以及接近位是否会进入敌方射程。
+- 新增 `combatOutOfRangeCandidateApproachDetails`，只读筛选可达且能缩短到候选目标距离的格子；无可达接近位时显示 `无可近位`。
+- 保留既有最近敌军详细预判、接近武将、接近参考、接近态势、接近威胁、官道接近和官道入射程判断；射程内存在敌军时仍走既有三目标接战预判。
+- 保持 `MovementRules`、`CombatRules`、`GeneralInfluence`、`CommandExecutor`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、真实移动、道路、射程、伤害、防御、反击、撤退、围城和粮道规则不变；本轮只做军队详情未接敌接近候选路况与风险解释文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_out_of_range_candidate_road_risk_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“可达距 / 安全官道 / 官道受压 / 入敌射”候选文本在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只读展示当前静态可达格、官道和射程关系，不模拟敌方下回合 AI 行动、完整路径安全、同盟借道、移动后同回合攻击或真实胜率。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
