@@ -423,7 +423,17 @@ final class AppContainer: ObservableObject {
             return []
         }
 
-        var notes = previews.prefix(3).enumerated().map { index, preview in
+        var notes = [
+            combatTargetPriorityText(
+                target: leadingPreview.target,
+                damage: leadingPreview.damage,
+                counterDamage: leadingPreview.counterDamage,
+                distance: leadingPreview.distance,
+                comparedTargetCount: previews.count
+            )
+        ]
+
+        notes.append(contentsOf: previews.prefix(3).enumerated().map { index, preview in
             combatTargetPreviewLine(
                 rank: index,
                 attacker: division,
@@ -432,7 +442,7 @@ final class AppContainer: ObservableObject {
                 counterDamage: preview.counterDamage,
                 distance: preview.distance
             )
-        }
+        })
 
         if let influence = leadingPreview.influence.logFragment {
             notes.append(influence)
@@ -773,6 +783,39 @@ final class AppContainer: ObservableObject {
         let stanceText = combatTargetStanceText(for: target)
             .map { "；态势：\($0)" } ?? ""
         return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)\(stanceText)；距 \(distance) 格"
+    }
+
+    private func combatTargetPriorityText(
+        target: Division,
+        damage: CombatDamage,
+        counterDamage: CombatDamage?,
+        distance: Int,
+        comparedTargetCount: Int
+    ) -> String {
+        let targetOutcome = combatPreviewOutcome(for: target, damage: damage)
+        var reasons = [
+            "\(comparedTargetCount) 敌中伤害 \(damage.strengthDamage)"
+        ]
+
+        if targetOutcome.wasDestroyed {
+            reasons.append("可能歼灭")
+        } else if targetOutcome.shouldRetreat {
+            reasons.append("可能撤退")
+            reasons.append("敌余 \(targetOutcome.remainingStrength)/\(targetOutcome.maxStrength)")
+        } else {
+            reasons.append("敌余 \(targetOutcome.remainingStrength)/\(targetOutcome.maxStrength)")
+        }
+
+        if targetOutcome.wasDestroyed || targetOutcome.shouldRetreat {
+            reasons.append("预计无反击")
+        } else if let counterDamage {
+            reasons.append("反击 \(counterDamage.strengthDamage)")
+        } else {
+            reasons.append("无反击")
+        }
+
+        reasons.append("距 \(distance) 格")
+        return "首选理由：\(target.thematicDisplayName)，\(reasons.joined(separator: "，"))"
     }
 
     private func combatCounterPreviewText(

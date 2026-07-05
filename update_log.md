@@ -2879,6 +2879,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增“态势”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 态势摘要只展示当前格和目标自身状态，不解释完整伤害公式；完整目标评分、AI 推荐、胜率和多回合围攻计划仍待后续版本。
 
+## v2.4 - 军队接战首选理由预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 在三目标接战对比前新增“首选理由”摘要，说明当前首选目标来自多少支射程内敌军对比。
+- 首选理由复用既有只读伤害和风险估算，显示预计伤害、敌方战后余兵、可能撤退/歼灭、反击风险和距离。
+- 三目标候选行、目标态势、撤退/死守/断粮风险、武将影响和交战审计保持原有显示。
+- 保持 `CombatRules`、`CommandExecutor`、`SupplyRules`、`MovementRules`、`WarCommandExecutor`、`RuleEngine`、真实伤害、防御、反击、撤退、围城、粮道、道路和地形规则不变；本轮只做军队详情接战预判解释文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_target_priority_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“首选理由”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 首选理由不是胜率，不计算撤退目的地、撤退失败、士气、疲劳、单挑或跨回合围攻计划；真实结果仍以 `CommandExecutor` 结算日志为准。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
