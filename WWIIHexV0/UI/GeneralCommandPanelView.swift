@@ -9,7 +9,7 @@ struct GeneralCommandPanelView: View {
     let targetRegion: RegionNode?
     let targetZone: FrontZone?
     let hqUnderAttack: Bool
-    let plannedOperations: [PlayerPlannedOperation]
+    let plannedOperationRows: [(id: String, iconName: String, summary: String)]
     let canHoldLine: Bool
     let canAttackRegion: Bool
     let onShowProfile: () -> Void
@@ -126,15 +126,16 @@ struct GeneralCommandPanelView: View {
             }
             .buttonStyle(.bordered)
 
-            if !plannedOperations.isEmpty {
+            if !plannedOperationRows.isEmpty {
                 Text("计划军令")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 4) {
-                    ForEach(plannedOperations) { operation in
-                        Label(operationSummary(operation), systemImage: operationIcon(operation))
+                    ForEach(plannedOperationRows.indices, id: \.self) { index in
+                        let row = plannedOperationRows[index]
+                        Label(row.summary, systemImage: row.iconName)
                             .font(.caption)
-                            .lineLimit(2)
+                            .lineLimit(3)
                     }
                 }
             }
@@ -191,16 +192,6 @@ struct GeneralCommandPanelView: View {
             return "scope"
         }
         return "person.3.fill"
-    }
-
-    private func operationIcon(_ operation: PlayerPlannedOperation) -> String {
-        operation.directiveType == .attack ? "arrow.up.right.circle" : "shield.fill"
-    }
-
-    private func operationSummary(_ operation: PlayerPlannedOperation) -> String {
-        let target = operation.targetRegionId?.rawValue ?? operation.sourceRegionId?.rawValue ?? operation.zoneId.rawValue
-        let tactic = operation.tactic?.displayName ?? "未定战术"
-        return "\(operation.directiveType.displayName) / \(tactic) / \(target)"
     }
 
     private func influenceIcon(for note: String) -> String {

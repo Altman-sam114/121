@@ -594,6 +594,16 @@ final class AppContainer: ObservableObject {
             .suffix(5))
     }
 
+    var selectedGeneralPlannedOperationRows: [(id: String, iconName: String, summary: String)] {
+        selectedGeneralPlannedOperations.map { operation in
+            (
+                id: operation.id,
+                iconName: plannedOperationIconName(for: operation),
+                summary: plannedOperationSummaryText(for: operation)
+            )
+        }
+    }
+
     var canOrderSelectedGeneralHoldLine: Bool {
         canIssuePlayerDirective && selectedGeneralCommandZone != nil
     }
@@ -785,6 +795,127 @@ final class AppContainer: ObservableObject {
 
     private func signedBonus(_ value: Int) -> String {
         value > 0 ? "+\(value)" : "\(value)"
+    }
+
+    private func plannedOperationIconName(for operation: PlayerPlannedOperation) -> String {
+        operation.directiveType == .attack ? "arrow.up.right.circle" : "shield.fill"
+    }
+
+    private func plannedOperationSummaryText(for operation: PlayerPlannedOperation) -> String {
+        let generalPrefix = plannedOperationGeneralName(for: operation).map { "\($0)：" } ?? ""
+        let tactic = operation.tactic?.displayName ?? "未定战术"
+        let target = plannedOperationTargetName(for: operation)
+        let roadText = plannedOperationRoadPressureText(for: operation).map { "；\($0)" } ?? ""
+        return "\(generalPrefix)\(operation.directiveType.displayName) / \(tactic) / \(target)\(roadText)"
+    }
+
+    private func plannedOperationGeneralName(for operation: PlayerPlannedOperation) -> String? {
+        let assignment = gameState.warDeploymentState.frontZones[operation.zoneId]?.generalAssignment
+        if let displayName = assignment?.generalDisplayName,
+           !displayName.isEmpty {
+            return displayName
+        }
+        guard let generalId = operation.createdByGeneralId,
+              !generalId.isEmpty else {
+            return nil
+        }
+        return generalRegistry.general(id: generalId)?.localizedName ?? generalId
+    }
+
+    private func plannedOperationTargetName(for operation: PlayerPlannedOperation) -> String {
+        if let targetRegionId = operation.targetRegionId {
+            return gameState.map.region(id: targetRegionId)?.name ?? targetRegionId.rawValue
+        }
+        if let sourceRegionId = operation.sourceRegionId {
+            return gameState.map.region(id: sourceRegionId)?.name ?? sourceRegionId.rawValue
+        }
+        return gameState.warDeploymentState.frontZones[operation.zoneId]?.name ?? operation.zoneId.rawValue
+    }
+
+    private func plannedOperationRoadPressureText(for operation: PlayerPlannedOperation) -> String? {
+        guard let sourceHex = plannedOperationHex(
+            regionId: operation.sourceRegionId,
+            zoneId: operation.zoneId
+        ) else {
+            return nil
+        }
+        let targetHex = operation.targetRegionId.flatMap {
+            plannedOperationHex(regionId: $0, zoneId: operation.zoneId)
+        }
+        let sourceHasRoad = gameState.map.tile(at: sourceHex)?.hasRoad == true
+        let targetHasRoad = targetHex.flatMap { gameState.map.tile(at: $0)?.hasRoad } ?? false
+        let sourceIsPressured = plannedOperationHexIsPressured(sourceHex, faction: operation.faction)
+        let targetIsPressured = targetHex.map {
+            plannedOperationHexIsPressured($0, faction: operation.faction)
+        } ?? false
+
+        let roadLabel: String
+        if targetHex == nil {
+            roadLabel = sourceHasRoad ? "据道" : "离道"
+        } else if sourceHasRoad && targetHasRoad {
+            roadLabel = "双道"
+        } else if sourceHasRoad {
+            roadLabel = "源道"
+        } else if targetHasRoad {
+            roadLabel = "目道"
+        } else {
+            roadLabel = "无道"
+        }
+
+        var fragments = ["官道 \(roadLabel)"]
+        let pressureText = plannedOperationPressureText(
+            hasTarget: targetHex != nil,
+            sourceIsPressured: sourceIsPressured,
+            targetIsPressured: targetIsPressured
+        )
+        if let pressureText {
+            fragments.append(pressureText)
+        }
+        return fragments.joined(separator: "，")
+    }
+
+    private func plannedOperationHex(regionId: RegionId?, zoneId: FrontZoneId) -> HexCoord? {
+        if let regionId,
+           let hex = gameState.map.representativeHex(for: regionId) {
+            return hex
+        }
+
+        guard let zone = gameState.warDeploymentState.frontZones[zoneId] else {
+            return nil
+        }
+        let hqRegionId = zone.generalAssignment?.hqRegionId ?? zone.regionIds.first
+        guard let hqRegionId else {
+            return nil
+        }
+        return gameState.map.representativeHex(for: hqRegionId)
+    }
+
+    private func plannedOperationHexIsPressured(_ coord: HexCoord, faction: Faction) -> Bool {
+        gameState.divisions.contains { division in
+            division.faction.isHostile(to: faction) &&
+                !division.isDestroyed &&
+                division.coord.distance(to: coord) <= 1
+        }
+    }
+
+    private func plannedOperationPressureText(
+        hasTarget: Bool,
+        sourceIsPressured: Bool,
+        targetIsPressured: Bool
+    ) -> String? {
+        if hasTarget {
+            if sourceIsPressured && targetIsPressured {
+                return "源目受压"
+            }
+            if sourceIsPressured {
+                return "源受压"
+            }
+            if targetIsPressured {
+                return "目受压"
+            }
+            return nil
+        }
+        return sourceIsPressured ? "据点受压" : nil
     }
 
     private func combatTargetPreviewLine(

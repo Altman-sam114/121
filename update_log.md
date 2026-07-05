@@ -3404,6 +3404,50 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，多个计划箭头靠近、长标签和小屏缩放下的实际重叠情况仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 标识只读展示源/目标代表 hex，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
 
+## v2.4 - 武将面板计划军令官道与受压摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralPlannedOperationRows` 基于本回合 `PlayerPlannedOperation` 生成武将面板计划军令摘要。
+- 摘要优先显示防区武将姓名，继续显示指令类型、最终战术和目标名称，并追加源/目标代表 hex 的官道状态与敌军压迫状态。
+- 进攻计划摘要显示 `双道`、`源道`、`目道` 或 `无道`，并按源/目标代表 hex 显示 `源目受压`、`源受压` 或 `目受压`；防御计划显示 `据道` 或 `离道`，受压时显示 `据点受压`。
+- 敌军压迫判断继续使用 `Faction.isHostile(to:)`，只统计未毁灭且距离源/目标代表 hex 0 或 1 格的敌对军队。
+- `GeneralCommandPanelView` 只消费 `AppContainer` 生成的摘要行，不在 SwiftUI View 内直接推导道路、敌军压迫或 region 名称。
+- 保持 `PlayerPlannedOperation` schema、`MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做计划军令面板的只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_road_pressure_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RootGameView.swift` 通过。
+- 核心 + SpriteKit/UI Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/*.swift WWIIHexV0/UI/*.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，计划军令摘要新增武将名、目标名、官道和受压文本后，在窄屏、长武将名、长战术名、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 摘要只读展示源/目标代表 hex，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
