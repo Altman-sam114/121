@@ -110,7 +110,9 @@ struct GeneralCommandPanelView: View {
                 }
             }
 
-            if let targetRegion, targetZone?.faction != zone?.faction {
+            if let targetRegion,
+               let sourceFaction = zone?.faction,
+               targetZone?.faction.isHostile(to: sourceFaction) == true {
                 LabeledContent("目标") {
                     Text(targetRegion.name)
                 }

@@ -4,6 +4,7 @@ struct UnitInspectorView: View {
     let division: Division?
     let playerFaction: Faction
     let strategicState: UnitInspectorStrategicState?
+    let combatPreviewNotes: [String]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -86,6 +87,20 @@ struct UnitInspectorView: View {
             LabeledContent("兵种") {
                 Text(componentSummary(for: division))
                     .multilineTextAlignment(.trailing)
+            }
+
+            if !combatPreviewNotes.isEmpty {
+                Text("接战预判")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(Array(combatPreviewNotes.enumerated()), id: \.offset) { _, note in
+                        Label(note, systemImage: "scope")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
             }
         }
     }

@@ -142,7 +142,8 @@ struct RootGameView: View {
                     UnitInspectorView(
                         division: container.selectedDivision,
                         playerFaction: container.playerFaction,
-                        strategicState: container.selectedUnitInspectorStrategicState
+                        strategicState: container.selectedUnitInspectorStrategicState,
+                        combatPreviewNotes: container.selectedUnitCombatPreviewNotes
                     )
                     RegionInspectorView(inspectorState: container.selectedRegionInspectorState)
                     CommandPanelView(

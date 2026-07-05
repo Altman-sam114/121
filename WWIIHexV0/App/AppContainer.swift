@@ -152,7 +152,7 @@ final class AppContainer: ObservableObject {
 
         let displayedDivisions = mapDisplayAdapter.divisions(displayedAt: coord, viewerFaction: playerFaction)
         if let attacker = selectedActionDivision,
-           let enemy = displayedDivisions.first(where: { $0.faction != attacker.faction }) {
+           let enemy = displayedDivisions.first(where: { $0.faction.isHostile(to: attacker.faction) }) {
             submit(.attack(attackerId: attacker.id, targetId: enemy.id))
             return
         }
@@ -315,6 +315,68 @@ final class AppContainer: ObservableObject {
         return mapDisplayAdapter.unitInspectorState(for: selectedDivision)
     }
 
+    var selectedUnitCombatPreviewNotes: [String] {
+        guard let division = selectedDivision else {
+            return []
+        }
+
+        let targets = gameState.divisions
+            .filter {
+                $0.id != division.id &&
+                    !$0.isDestroyed &&
+                    $0.faction.isHostile(to: division.faction) &&
+                    division.coord.distance(to: $0.coord) <= division.range
+            }
+            .sorted {
+                let lhsDistance = division.coord.distance(to: $0.coord)
+                let rhsDistance = division.coord.distance(to: $1.coord)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance < rhsDistance
+                }
+                return $0.name < $1.name
+            }
+
+        guard let target = targets.first else {
+            return []
+        }
+
+        let combatRules = CombatRules()
+        let damage = combatRules.attackDamage(attacker: division, defender: target, in: gameState)
+        let counterText: String
+        if combatRules.canCounterAttack(defender: target, attacker: division) {
+            let counterDamage = combatRules.counterAttackDamage(defender: target, attacker: division, in: gameState)
+            counterText = "反击 \(counterDamage.strengthDamage)"
+        } else {
+            counterText = "无反击"
+        }
+
+        var notes = [
+            "\(target.thematicDisplayName)：预计伤害 \(damage.strengthDamage)，\(counterText)"
+        ]
+
+        if let influence = combatRules.generalInfluenceSummary(
+            attacker: division,
+            defender: target,
+            in: gameState
+        ).logFragment {
+            notes.append(influence)
+        }
+
+        if let audit = combatRules.combatAuditSummary(
+            attacker: division,
+            defender: target,
+            in: gameState
+        ).logFragment {
+            notes.append(audit)
+        }
+
+        if targets.count > 1 {
+            notes.append("另有 \(targets.count - 1) 支敌军在射程内")
+        }
+
+        return notes
+    }
+
     var selectedGeneralCommandZone: FrontZone? {
         inferredPlayerCommandZone()
     }
@@ -463,7 +525,7 @@ final class AppContainer: ObservableObject {
         guard let selectedRegionId,
               let region = gameState.map.region(id: selectedRegionId),
               let targetZone = gameState.warDeploymentState.zone(for: selectedRegionId),
-              targetZone.faction != playerFaction else {
+              targetZone.faction.isHostile(to: playerFaction) else {
             return nil
         }
         return (region, targetZone)
@@ -549,7 +611,7 @@ final class AppContainer: ObservableObject {
         }
 
         guard let targetZone = selectedGeneralTargetZone,
-              targetZone.faction != playerFaction else {
+              targetZone.faction.isHostile(to: playerFaction) else {
             return nil
         }
 
@@ -885,11 +947,13 @@ final class AppContainer: ObservableObject {
             return
         }
 
-        if let attacker = selectedActionDivision {
+        if let attacker = selectedActionDivision,
+           division.faction.isHostile(to: attacker.faction) {
             submit(.attack(attackerId: attacker.id, targetId: division.id))
         } else {
             selectDivision(division)
-            appendInteractionEvent("Selected enemy unit: \(division.name).")
+            let relation = division.faction.isHostile(to: playerFaction) ? "敌军" : "非敌对军队"
+            appendInteractionEvent("选择\(relation)：\(division.name)。")
         }
     }
 
@@ -923,7 +987,10 @@ final class AppContainer: ObservableObject {
         movementHighlights = MovementRules().movementRange(for: division, in: gameState)
         attackHighlights = Set(
             gameState.divisions
-                .filter { $0.faction != division.faction && division.coord.distance(to: $0.coord) <= division.range }
+                .filter {
+                    $0.faction.isHostile(to: division.faction) &&
+                        division.coord.distance(to: $0.coord) <= division.range
+                }
                 .map(\.coord)
         )
     }
