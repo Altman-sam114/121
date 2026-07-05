@@ -2805,6 +2805,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增风险片段在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 预判不计算撤退目的地、撤退失败惩罚、士气、疲劳、单挑或跨回合围攻概率；真实结果仍以 `CommandExecutor` 结算日志为准。
 
+## v2.4 - 军队可达官道预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitMobilityPreviewNotes` 复用 `MovementRules.movementRange` 的本回合可达格，额外统计可达官道格数。
+- 道路机动预判新增“可达官道”摘要：显示本回合可进入的官道总数、未受敌控区压迫的安全官道格数，以及受敌控区压迫的官道格数。
+- 若军队当前不在官道且本回合无法抵达官道，显示“本回合尚不能接入官道”，让玩家更容易判断是否需要调整行军或等待修路。
+- 保持 `MovementRules`、`CommandExecutor`、`Command.improveRoad`、`CommandValidator`、`RuleEngine`、太守修路、真实移动成本、敌控区停止规则、粮道和战略同步不变；本轮只做军队详情道路机动预判文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_reachable_road_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增“可达官道”文本在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 预判只统计本回合可达官道，不计算跨回合道路接入计划、完整补给线安全、修路收益或多势力借道/同盟通行。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

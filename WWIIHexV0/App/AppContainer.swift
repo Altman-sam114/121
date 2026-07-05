@@ -323,7 +323,8 @@ final class AppContainer: ObservableObject {
 
         let movementRules = MovementRules()
         let summary = movementRules.generalInfluenceSummary(for: division, in: gameState)
-        let reachableCount = movementRules.movementRange(for: division, in: gameState).count
+        let reachableCoords = movementRules.movementRange(for: division, in: gameState)
+        let reachableCount = reachableCoords.count
         var notes = [
             "机动：基础 \(summary.baseMovement)，有效 \(summary.effectiveMovement)，可达 \(reachableCount) 格"
         ]
@@ -342,6 +343,14 @@ final class AppContainer: ObservableObject {
             notes.append("郡县官道：\(roadCount) 格，可作为行军和粮道参考")
         } else {
             notes.append("郡县官道：暂无可用官道")
+        }
+
+        if let roadAccessNote = reachableRoadAccessNote(
+            for: division,
+            reachableCoords: reachableCoords,
+            movementRules: movementRules
+        ) {
+            notes.append(roadAccessNote)
         }
 
         return notes
@@ -859,6 +868,30 @@ final class AppContainer: ObservableObject {
         return region.displayHexes.count {
             gameState.map.tile(at: $0)?.hasRoad == true
         }
+    }
+
+    private func reachableRoadAccessNote(
+        for division: Division,
+        reachableCoords: Set<HexCoord>,
+        movementRules: MovementRules
+    ) -> String? {
+        let reachableRoadCoords = reachableCoords.filter {
+            gameState.map.tile(at: $0)?.hasRoad == true
+        }
+        guard !reachableRoadCoords.isEmpty else {
+            return gameState.map.tile(at: division.coord)?.hasRoad == true
+                ? nil
+                : "可达官道：本回合尚不能接入官道"
+        }
+
+        let contestedRoadCount = reachableRoadCoords.count {
+            movementRules.isEnemyZoneOfControl($0, for: division.faction, in: gameState)
+        }
+        let safeRoadCount = reachableRoadCoords.count - contestedRoadCount
+        if contestedRoadCount > 0 {
+            return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，安全 \(safeRoadCount) 格，敌控压迫 \(contestedRoadCount) 格"
+        }
+        return "可达官道：本回合可入 \(reachableRoadCoords.count) 格，均未受敌控区压迫"
     }
 
     private func submitPlayerDirective(
