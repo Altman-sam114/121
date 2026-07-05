@@ -135,7 +135,7 @@ struct GeneralCommandPanelView: View {
                         let row = plannedOperationRows[index]
                         Label(row.summary, systemImage: row.iconName)
                             .font(.caption)
-                            .lineLimit(3)
+                            .lineLimit(4)
                     }
                 }
             }

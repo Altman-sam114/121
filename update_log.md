@@ -3448,6 +3448,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，计划军令摘要新增武将名、目标名、官道和受压文本后，在窄屏、长武将名、长战术名、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 摘要只读展示源/目标代表 hex，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
 
+## v2.4 - 武将面板计划军令源目与敌距摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralPlannedOperationRows` 的计划军令摘要从单一目标名扩展为源→目标路线。
+- 进攻计划优先显示 `源郡县→目标郡县`，防御计划显示源郡县或防区名，帮助玩家确认该武将军令从哪里出发、往哪里压。
+- 摘要保留武将、指令类型、最终战术、官道状态和源/目标受压文本，并追加当前静态最近敌距。
+- 有源和目标时显示 `敌距 源N/目M`；只有源点时显示 `近敌 N`。
+- 最近敌距只统计 `Faction.isHostile(to:)` 判定为敌对且未毁灭的军队，读取当前军队坐标和源/目标代表 hex 距离。
+- `GeneralCommandPanelView` 将计划军令行显示上限从 3 行调整为 4 行，降低源→目标、官道和敌距文本被截断的概率。
+- 保持 `PlayerPlannedOperation` schema、`MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做计划军令面板的只读源目/敌距反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_route_enemy_distance_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- 核心 + SpriteKit/UI Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/*.swift WWIIHexV0/UI/*.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，计划军令摘要新增源→目标和敌距后，在窄屏、长武将名、长战术名、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 敌距摘要只读展示源/目标代表 hex 到最近敌军的当前静态距离，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

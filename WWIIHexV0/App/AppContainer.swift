@@ -804,9 +804,10 @@ final class AppContainer: ObservableObject {
     private func plannedOperationSummaryText(for operation: PlayerPlannedOperation) -> String {
         let generalPrefix = plannedOperationGeneralName(for: operation).map { "\($0)：" } ?? ""
         let tactic = operation.tactic?.displayName ?? "未定战术"
-        let target = plannedOperationTargetName(for: operation)
+        let route = plannedOperationRouteName(for: operation)
         let roadText = plannedOperationRoadPressureText(for: operation).map { "；\($0)" } ?? ""
-        return "\(generalPrefix)\(operation.directiveType.displayName) / \(tactic) / \(target)\(roadText)"
+        let enemyDistanceText = plannedOperationEnemyDistanceText(for: operation).map { "；\($0)" } ?? ""
+        return "\(generalPrefix)\(operation.directiveType.displayName) / \(tactic) / \(route)\(roadText)\(enemyDistanceText)"
     }
 
     private func plannedOperationGeneralName(for operation: PlayerPlannedOperation) -> String? {
@@ -822,14 +823,61 @@ final class AppContainer: ObservableObject {
         return generalRegistry.general(id: generalId)?.localizedName ?? generalId
     }
 
-    private func plannedOperationTargetName(for operation: PlayerPlannedOperation) -> String {
-        if let targetRegionId = operation.targetRegionId {
-            return gameState.map.region(id: targetRegionId)?.name ?? targetRegionId.rawValue
+    private func plannedOperationRouteName(for operation: PlayerPlannedOperation) -> String {
+        let sourceName = plannedOperationRegionName(operation.sourceRegionId)
+        let targetName = plannedOperationRegionName(operation.targetRegionId)
+
+        if let sourceName, let targetName, sourceName != targetName {
+            return "\(sourceName)→\(targetName)"
         }
-        if let sourceRegionId = operation.sourceRegionId {
-            return gameState.map.region(id: sourceRegionId)?.name ?? sourceRegionId.rawValue
+        if let targetName {
+            return targetName
+        }
+        if let sourceName {
+            return sourceName
         }
         return gameState.warDeploymentState.frontZones[operation.zoneId]?.name ?? operation.zoneId.rawValue
+    }
+
+    private func plannedOperationRegionName(_ regionId: RegionId?) -> String? {
+        guard let regionId else {
+            return nil
+        }
+        return gameState.map.region(id: regionId)?.name ?? regionId.rawValue
+    }
+
+    private func plannedOperationEnemyDistanceText(for operation: PlayerPlannedOperation) -> String? {
+        guard let sourceHex = plannedOperationHex(
+            regionId: operation.sourceRegionId,
+            zoneId: operation.zoneId
+        ) else {
+            return nil
+        }
+        let targetHex = operation.targetRegionId.flatMap {
+            plannedOperationHex(regionId: $0, zoneId: operation.zoneId)
+        }
+        let sourceDistance = plannedOperationNearestHostileDistance(from: sourceHex, faction: operation.faction)
+        let targetDistance = targetHex.flatMap {
+            plannedOperationNearestHostileDistance(from: $0, faction: operation.faction)
+        }
+
+        if let targetDistance, let sourceDistance {
+            return "敌距 源\(sourceDistance)/目\(targetDistance)"
+        }
+        if let targetDistance {
+            return "敌距 目\(targetDistance)"
+        }
+        if let sourceDistance {
+            return "近敌 \(sourceDistance)"
+        }
+        return nil
+    }
+
+    private func plannedOperationNearestHostileDistance(from coord: HexCoord, faction: Faction) -> Int? {
+        gameState.divisions
+            .filter { $0.faction.isHostile(to: faction) && !$0.isDestroyed }
+            .map { $0.coord.distance(to: coord) }
+            .min()
     }
 
     private func plannedOperationRoadPressureText(for operation: PlayerPlannedOperation) -> String? {
