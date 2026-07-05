@@ -3559,6 +3559,43 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，军队详情“道路机动”和“接战预判”放开截断后在窄屏、长军队名、长武将名、长敌将名和 Dynamic Type 下的实际高度与滚动体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 该改动只影响 `UnitInspectorView` 文本展示，不代表完整路径安全、攻击合法性、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 军队当前官道受压预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitMobilityPreviewNotes` 在选中军队当前位于官道时，不再只显示“当前位置：已在官道”，而是追加当前官道是否受敌控区压迫。
+- 新增私有 `currentRoadStatusNote(for:movementRules:)`，复用 `MovementRules.isEnemyZoneOfControl` 和既有 `Faction.isHostile(to:)` 敌对口径，只读判断当前位置是否受 hostile 敌军邻接压迫。
+- 当前不在官道时保留既有郡县官道数量或暂无官道文案；本回合可达官道安全/受压统计保持不变。
+- 保持 `MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和微操锁规则不变；本轮只做军队详情道路机动预判文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_current_road_pressure_preview.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `rg -n "[[:blank:]]+$" README.md update_log.md md/flow/flow.md md/flow/flowchart.md md/prompt/README.md md/prompt/v2.0-三国迁移/v2.4_unit_current_road_pressure_preview.md WWIIHexV0/App/AppContainer.swift` 无命中。
+- `rg -n "^(<<<<<<<|=======|>>>>>>>)" README.md update_log.md md/flow/flow.md md/flow/flowchart.md md/prompt/README.md md/prompt/v2.0-三国迁移/v2.4_unit_current_road_pressure_preview.md WWIIHexV0/App/AppContainer.swift` 无命中。
+- `rg -n "默认先跑|默认 Probe|Probe -> Smoke|Stage Regression -> Full|代码改动按 .*Probe" AGENTS.md md/flow/flow.md` 无命中。
+- `git diff --check` 通过。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，军队详情当前官道受压文案在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 该摘要只读展示当前 hex 的 hostile 邻接压迫，不代表完整路径安全、隐藏敌军、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
+
 ## v2.4 - 武将面板道路与交战近敌摘要兼容层
 
 完成日期：2026-07-05

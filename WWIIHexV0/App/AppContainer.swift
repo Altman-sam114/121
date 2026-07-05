@@ -337,8 +337,8 @@ final class AppContainer: ObservableObject {
             notes.append("道路：未分配武将，按基础机动行军")
         }
 
-        if gameState.map.tile(at: division.coord)?.hasRoad == true {
-            notes.append("当前位置：已在官道")
+        if let currentRoadStatus = currentRoadStatusNote(for: division, movementRules: movementRules) {
+            notes.append(currentRoadStatus)
         } else if let roadCount = currentRegionRoadCount(for: division), roadCount > 0 {
             notes.append("郡县官道：\(roadCount) 格，可作为行军和粮道参考")
         } else {
@@ -1548,6 +1548,17 @@ final class AppContainer: ObservableObject {
         return region.displayHexes.count {
             gameState.map.tile(at: $0)?.hasRoad == true
         }
+    }
+
+    private func currentRoadStatusNote(for division: Division, movementRules: MovementRules) -> String? {
+        guard gameState.map.tile(at: division.coord)?.hasRoad == true else {
+            return nil
+        }
+
+        if movementRules.isEnemyZoneOfControl(division.coord, for: division.faction, in: gameState) {
+            return "当前位置：已在官道，受敌控区压迫"
+        }
+        return "当前位置：已在官道，未受敌控区压迫"
     }
 
     private func reachableRoadAccessNote(
