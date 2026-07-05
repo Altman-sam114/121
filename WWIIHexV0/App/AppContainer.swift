@@ -536,6 +536,7 @@ final class AppContainer: ObservableObject {
 
         let enemyDivisions = gameState.divisions
             .filter { $0.faction.isHostile(to: zone.faction) && !$0.isDestroyed }
+        let nearestEnemyText = nearestEnemyText(for: divisions, enemyDivisions: enemyDivisions)
         var attackBonuses: [Int] = []
         var defenseBonuses: [Int] = []
         for division in divisions {
@@ -555,12 +556,41 @@ final class AppContainer: ObservableObject {
 
         let combatNote: String
         if attackBonuses.isEmpty && defenseBonuses.isEmpty {
-            combatNote = "交战：当前未接敌，进入射程后计算武将攻防"
+            let enemyText = nearestEnemyText.map { "，\($0)" } ?? ""
+            combatNote = "交战：当前未接敌\(enemyText)，进入射程后计算武将攻防"
         } else {
-            combatNote = "交战：当前接敌攻击 \(bonusRange(attackBonuses))，防御 \(bonusRange(defenseBonuses))"
+            let enemyText = nearestEnemyText.map { "；\($0)" } ?? ""
+            combatNote = "交战：当前接敌攻击 \(bonusRange(attackBonuses))，防御 \(bonusRange(defenseBonuses))\(enemyText)"
         }
 
         return [roadNote, combatNote]
+    }
+
+    private func nearestEnemyText(for divisions: [Division], enemyDivisions: [Division]) -> String? {
+        let nearest = divisions
+            .flatMap { division in
+                enemyDivisions.map { enemy in
+                    (
+                        division: division,
+                        enemy: enemy,
+                        distance: division.coord.distance(to: enemy.coord)
+                    )
+                }
+            }
+            .min {
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+                if $0.enemy.thematicDisplayName != $1.enemy.thematicDisplayName {
+                    return $0.enemy.thematicDisplayName < $1.enemy.thematicDisplayName
+                }
+                return $0.division.thematicDisplayName < $1.division.thematicDisplayName
+            }
+
+        guard let nearest else {
+            return nil
+        }
+        return "近敌 \(nearest.enemy.thematicDisplayName) 距 \(nearest.distance) 格（\(nearest.division.thematicDisplayName)）"
     }
 
     var selectedGeneralHQUnderAttack: Bool {

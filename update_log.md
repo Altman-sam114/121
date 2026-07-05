@@ -3491,6 +3491,48 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，计划军令摘要新增源→目标和敌距后，在窄屏、长武将名、长战术名、长郡县名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 敌距摘要只读展示源/目标代表 hex 到最近敌军的当前静态距离，不代表完整行军路径全程安全，不模拟移动后同回合攻击、敌方回合反制、同盟借道或真实胜率。
 
+## v2.4 - 武将面板道路与交战近敌摘要兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 在当前选中武将防区的道路与交战摘要中追加最近敌军对象。
+- 最近敌军摘要显示最近敌对军队、当前 hex 距离，以及与该敌军最近的麾下军队，例如 `近敌 袁骑兵军 2 距 3 格（曹步卒营 1）`。
+- 当前未接敌时，交战行会显示近敌对象并保留“进入射程后计算武将攻防”的提示；当前接敌时，交战行保留攻击/防御修正范围并追加近敌对象。
+- 敌军过滤继续使用 `Faction.isHostile(to:)`，只统计未毁灭敌对军队；近敌距离只读使用当前军队坐标，不模拟路径、胜率或敌方回合反制。
+- `GeneralCommandPanelView` 将“道路与交战”摘要行显示上限从 2 行调整为 3 行，降低近敌对象和接敌修正文案被截断的概率。
+- 保持 `MovementRules`、`CombatRules`、`GeneralInfluence`、`WarCommandExecutor`、`CommandValidator`、`RuleEngine`、真实移动、道路、交战、补给和计划军令行为不变；本轮只做武将面板只读反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_nearest_enemy_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- 核心 + SpriteKit/UI Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/*.swift WWIIHexV0/UI/*.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
