@@ -120,6 +120,11 @@ struct RegionInspectorView: View {
                 Text(unitNames(state.visibleEnemyDivisions))
                     .multilineTextAlignment(.trailing)
             }
+
+            LabeledContent("可见非敌对军队") {
+                Text(unitNames(state.visibleNonHostileDivisions))
+                    .multilineTextAlignment(.trailing)
+            }
         }
     }
 

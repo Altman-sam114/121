@@ -91,7 +91,10 @@ struct CommandPanelView: View {
         }
 
         guard selectedDivision.faction == playerFaction else {
-            return "已选择敌军，不能下令。"
+            if selectedDivision.faction.isHostile(to: playerFaction) {
+                return "已选择敌军，不能下令。"
+            }
+            return "已选择非敌对军队，只能查看。"
         }
 
         guard activeFaction == playerFaction, phase == .alliedPlayer else {

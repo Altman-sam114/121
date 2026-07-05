@@ -52,6 +52,7 @@ struct RegionInspectorState: Equatable {
     let passableHexCount: Int
     let friendlyDivisions: [Division]
     let visibleEnemyDivisions: [Division]
+    let visibleNonHostileDivisions: [Division]
     let objectiveNames: [String]
     let objectiveStatus: String
     let cityLevel: CityLevel
@@ -198,7 +199,13 @@ struct MapDisplayAdapter {
         }
         let friendly = divisions.filter { $0.faction == viewerFaction }
         let visibleEnemy = divisions.filter { division in
-            division.faction != viewerFaction && isDivisionVisible(division, viewerFaction: viewerFaction)
+            division.faction.isHostile(to: viewerFaction) &&
+                isDivisionVisible(division, viewerFaction: viewerFaction)
+        }
+        let visibleNonHostile = divisions.filter { division in
+            division.faction != viewerFaction &&
+                !division.faction.isHostile(to: viewerFaction) &&
+                isDivisionVisible(division, viewerFaction: viewerFaction)
         }
         let objectiveNames = state.map.objectives
             .filter { objective in
@@ -232,6 +239,7 @@ struct MapDisplayAdapter {
             passableHexCount: passableHexCount,
             friendlyDivisions: friendly,
             visibleEnemyDivisions: visibleEnemy,
+            visibleNonHostileDivisions: visibleNonHostile,
             objectiveNames: objectiveNames,
             objectiveStatus: objectiveStatus,
             cityLevel: cityLevel,

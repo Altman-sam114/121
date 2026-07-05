@@ -3533,6 +3533,86 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，道路与交战摘要新增近敌对象后，在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 近敌摘要只读展示当前静态最近敌对军队和距离，不代表完整行军路径安全、同盟借道、移动后同回合攻击、敌方回合反制或真实胜率。
 
+## v2.4 - 郡县检查器敌对可见军队口径兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `MapDisplayAdapter.inspectorState` 将 `RegionInspectorState.visibleEnemyDivisions` 从旧的“非己方军队”收口为真正 hostile 军队。
+- 郡县检查器的“可见敌军”现在只统计 `Faction.isHostile(to:)` 判定为敌对且当前可见的军队，避免中立、友好或后续借道势力被误写成敌军。
+- `RegionInspectorState` 新增 `visibleNonHostileDivisions`，保留当前可见但非敌对的非己方军队，避免修正敌军口径后丢失中立/友军态势。
+- `RegionInspectorView` 新增“可见非敌对军队”行，与“可见敌军”分开展示，便于玩家判断郡县内的多势力态势。
+- 保持 `Faction.isHostile(to:)` 当前最小实现、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、真实攻击、敌控区、道路、粮道、补给和外交关系规则不变；本轮只做郡县检查器只读显示口径收口和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_hostile_visibility.md`
+
+验证记录：
+
+- 本轮在当前命令行工具链中实际尝试了下列 `swiftc -parse` 轻量语法检查并通过；这不是后续本机默认重测试要求，后续仍以 `md/test/test.md` 为准，遇到 SwiftUI / SpriteKit / SDK 依赖、耗时或报错应立即停止并记录。
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 核心 + SpriteKit/UI Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/*.swift WWIIHexV0/UI/*.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，郡县检查器新增“可见非敌对军队”行后，在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 当前 `Faction.isHostile(to:)` 仍是最小兼容敌对判断，不代表完整同盟、借道、停战或臣属制度已经落地。
+
+## v2.4 - 命令面板敌对状态文案兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `CommandPanelView.statusText` 在玩家选择非己方军队时，不再一律显示“已选择敌军”。
+- 若所选军队对玩家势力 hostile，仍显示“已选择敌军，不能下令”；若所选军队非己方但非 hostile，则显示“已选择非敌对军队，只能查看”。
+- 下令权限、按钮可用性和真实命令执行保持不变：`canCommandSelectedUnit` 仍只允许玩家当前回合指挥己方、未行动军队。
+- 保持 `Faction.isHostile(to:)` 当前最小实现、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、补给和外交关系规则不变；本轮只做命令面板只读状态文案收口和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/UI/CommandPanelView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_command_panel_hostile_status_text.md`
+
+验证记录：
+
+- 本轮在当前命令行工具链中实际尝试了下列 `swiftc -parse` 轻量语法检查并通过；这不是后续本机默认重测试要求，后续仍以 `md/test/test.md` 为准，遇到 SwiftUI / SDK 依赖、耗时或报错应立即停止并记录。
+- `swiftc -parse WWIIHexV0/UI/CommandPanelView.swift` 通过。
+- 核心 + SpriteKit/UI Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/*.swift WWIIHexV0/UI/*.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，命令面板新增“非敌对军队”状态文案后，在窄屏和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 当前 `Faction.isHostile(to:)` 仍未接完整外交关系、停战、同盟和借道制度；本轮只避免 UI 文案把非 hostile 军队误称为敌军。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
