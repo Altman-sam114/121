@@ -33,7 +33,7 @@ v2.4 命名边界：
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
 - `SupplyRules.isBesieged` 以城池/关隘、粮道断绝、敌军邻接判定围城；`CombatRules.effectiveDefense` 对围城守军降低有效防御，恢复仍沿用 supplied / 安全后方规则。
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralAgent` 会按武将风格/技能塑形 `ZoneDirective.tactic`，`GeneralSkillDisplay` 会把技能 raw id 中文化展示，`GeneralInfluence` 让武将分配影响道路机动和交战攻防。
-- `CommandExecutor` 会把中文武将姓名、道路机动、交战审计、攻防修正摘要和结算后剩余兵力写入移动、攻击和反击日志；`GeneralCommandPanelView` 会只读显示当前防区道路机动与接敌攻防摘要；`UnitInspectorView` 会通过 `UnitInspectorStrategicState.generalAssignment` 显示选中军队所属武将、风格、忠诚/满意和中文技能摘要，通过 `AppContainer.selectedUnitMobilityPreviewNotes` 对选中军队显示基础/有效机动、武将官道加成、可达格数和官道状态，通过 `selectedUnitCombatPreviewNotes` 显示最多三名射程内敌军的预计伤害、战后敌我剩余兵力、反击风险和距离排序，首选目标继续显示武将影响和交战审计；`RegionInspectorView` 会显示当前郡县官道覆盖和当前地格官道状态；这些 UI 只读复用移动/交战/地图派生计算，不执行命令；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
+- `CommandExecutor` 会把中文武将姓名、道路机动、交战审计、攻防修正摘要和结算后剩余兵力写入移动、攻击和反击日志；`GeneralCommandPanelView` 会只读显示当前防区道路机动与接敌攻防摘要；`UnitInspectorView` 会通过 `UnitInspectorStrategicState.generalAssignment` 显示选中军队所属武将、风格、忠诚/满意和中文技能摘要，通过 `AppContainer.selectedUnitMobilityPreviewNotes` 对选中军队显示基础/有效机动、武将官道加成、可达格数和官道状态，通过 `selectedUnitCombatPreviewNotes` 显示最多三名射程内敌军的预计伤害、结算后敌我剩余兵力、撤退/死守/断粮额外损失/歼灭风险、反击风险和距离排序，首选目标继续显示武将影响和交战审计；`RegionInspectorView` 会显示当前郡县官道覆盖和当前地格官道状态；这些 UI 只读复用移动/交战/地图派生计算，不执行命令；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - 道路敌控区、玩家地图点击攻击、攻击高亮、武将宏观目标选择、粮道阻断和安全补员邻接统一使用 `Faction.isHostile(to:)` 判断敌对；中立不会只因不是当前阵营就阻断道路或成为合法攻击目标。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术。玩家武将面板宏观命令也会先经 `GeneralAgent.plan` 塑形 tactic，再进入 `WarCommandExecutor -> RuleEngine`，但不会自动结束玩家回合。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
@@ -84,7 +84,7 @@ flowchart TD
     GIP["武将影响面板摘要<br/>AppContainer.selectedGeneralInfluenceNotes<br/>道路机动 + 接敌攻防只读展示"]:::ui
     UGA["军队所属武将摘要<br/>UnitInspectorStrategicState.generalAssignment<br/>姓名 + 风格 + 忠诚满意 + 技能"]:::ui
     UMP["军队道路机动预判<br/>AppContainer.selectedUnitMobilityPreviewNotes<br/>基础/有效机动 + 官道状态 + 可达格"]:::ui
-    UCP["军队接战预判<br/>AppContainer.selectedUnitCombatPreviewNotes<br/>三目标排序 + 敌我余兵 + 首选武将影响 + 交战审计"]:::ui
+    UCP["军队接战预判<br/>AppContainer.selectedUnitCombatPreviewNotes<br/>三目标排序 + 敌我余兵 + 撤退/歼灭风险 + 首选武将影响 + 交战审计"]:::ui
     RRP["郡县官道摘要<br/>RegionInspectorState / RegionInspectorView<br/>官道覆盖 + 当前地格官道"]:::ui
     ZD["战争指令<br/>ZoneDirective<br/>战区级 attack/defend 意图"]:::command
     WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令"]:::command

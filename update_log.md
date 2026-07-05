@@ -2767,6 +2767,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，事件日志中新增“余 当前/上限”在日志面板窄宽、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 日志只展示单次攻击/反击结算后的兵力余量，不实现完整胜负概率、士气、疲劳、撤退路径预测、单挑或跨回合战斗规划。
 
+## v2.4 - 军队接战风险预判兼容层
+
+完成日期：2026-07-05
+
+核心更新：
+
+- `AppContainer.selectedUnitCombatPreviewNotes` 的三目标接战预判进一步贴近真实结算，敌方剩余兵力改为按基础伤害、死守额外损失和断粮撤退额外损失后的只读预估值展示。
+- 预判行新增中文风险片段：可能撤退、死守额外损失约值、断粮撤退额外损失约值和可能歼灭。
+- 若目标预估会撤退或被歼灭，反击提示改为“预计无反击”，避免继续把不会发生的反击伤害展示成确定风险。
+- 若目标仍能反击，我方反击后剩余兵力也使用同一套只读风险估算，并在需要时提示我方可能撤退或被歼。
+- 保持 `CombatRules`、`CommandExecutor`、`SupplyRules`、`WarCommandExecutor`、`RuleEngine`、真实伤害、撤退路径、撤退失败、死守、歼灭和日志写入逻辑不变；本轮只做单位详情接战预判文案和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_combat_risk_preview.md`
+
+验证记录：
+
+- 核心 Swift parse 通过：`swiftc -parse WWIIHexV0/Core/*.swift WWIIHexV0/Data/*.swift WWIIHexV0/Commands/*.swift WWIIHexV0/Rules/*.swift WWIIHexV0/Agents/*.swift WWIIHexV0/Turn/*.swift WWIIHexV0/App/AppContainer.swift`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，新增风险片段在窄屏、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 预判不计算撤退目的地、撤退失败惩罚、士气、疲劳、单挑或跨回合围攻概率；真实结果仍以 `CommandExecutor` 结算日志为准。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

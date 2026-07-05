@@ -22,6 +22,7 @@ final class AppContainer: ObservableObject {
     let warPipelineMode: WarPipelineMode
     let turnManager: TurnManager?
     private var isRunningAI = false
+    private let combatPreviewRetreatLossThreshold = 0.35
 
     init(
         gameState: GameState,
@@ -748,36 +749,106 @@ final class AppContainer: ObservableObject {
         distance: Int
     ) -> String {
         let prefix = rank == 0 ? "首选" : "候选 \(rank + 1)"
-        let targetOutcome = combatStrengthOutcomeText(
+        let targetOutcome = combatPreviewOutcome(for: target, damage: damage)
+        let targetOutcomeText = combatStrengthOutcomeText(
             label: "敌余",
-            strength: target.strength,
-            maxStrength: target.maxStrength,
-            damage: damage.strengthDamage
+            outcome: targetOutcome
         )
-        let counterOutcome = combatCounterPreviewText(counterDamage, attacker: attacker)
-        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcome)；\(counterOutcome)；距 \(distance) 格"
+        let counterOutcome = combatCounterPreviewText(
+            counterDamage,
+            attacker: attacker,
+            targetOutcome: targetOutcome
+        )
+        let riskText = combatPreviewRiskText(for: targetOutcome)
+            .map { "；风险：\($0)" } ?? ""
+        return "\(prefix) \(target.thematicDisplayName)：伤害 \(damage.strengthDamage)，\(targetOutcomeText)\(riskText)；\(counterOutcome)；距 \(distance) 格"
     }
 
-    private func combatCounterPreviewText(_ counterDamage: CombatDamage?, attacker: Division) -> String {
+    private func combatCounterPreviewText(
+        _ counterDamage: CombatDamage?,
+        attacker: Division,
+        targetOutcome: CombatPreviewOutcome
+    ) -> String {
+        if targetOutcome.wasDestroyed {
+            return "预计无反击（目标可能歼灭）"
+        }
+        if targetOutcome.shouldRetreat {
+            return "预计无反击（目标可能撤退）"
+        }
         guard let counterDamage else {
             return "无反击"
         }
-        let attackerOutcome = combatStrengthOutcomeText(
+        let attackerOutcome = combatPreviewOutcome(for: attacker, damage: counterDamage)
+        var text = "反击 \(counterDamage.strengthDamage)，"
+        text += combatStrengthOutcomeText(
             label: "我余",
-            strength: attacker.strength,
-            maxStrength: attacker.maxStrength,
-            damage: counterDamage.strengthDamage
+            outcome: attackerOutcome
         )
-        return "反击 \(counterDamage.strengthDamage)，\(attackerOutcome)"
+        if let riskText = combatPreviewRiskText(for: attackerOutcome, sideName: "我方") {
+            text += "（\(riskText)）"
+        }
+        return text
     }
 
     private func combatStrengthOutcomeText(
         label: String,
-        strength: Int,
-        maxStrength: Int,
-        damage: Int
+        outcome: CombatPreviewOutcome
     ) -> String {
-        "\(label) \(max(0, strength - damage))/\(maxStrength)"
+        "\(label) \(outcome.remainingStrength)/\(outcome.maxStrength)"
+    }
+
+    private func combatPreviewOutcome(for division: Division, damage: CombatDamage) -> CombatPreviewOutcome {
+        var remainingStrength = max(0, division.strength - damage.strengthDamage)
+        var shouldRetreat = false
+        var holdExtraStrengthDamage = 0
+        var encircledRetreatExtraStrengthDamage = 0
+
+        if remainingStrength > 0 {
+            shouldRetreat = division.retreatMode == .retreatable &&
+                damage.lossRatio >= combatPreviewRetreatLossThreshold
+
+            if division.retreatMode == .hold {
+                holdExtraStrengthDamage = max(1, Int((Double(damage.strengthDamage) * 0.2).rounded()))
+                remainingStrength = max(0, remainingStrength - holdExtraStrengthDamage)
+            }
+
+            if shouldRetreat && division.supplyState == .encircled && remainingStrength > 0 {
+                encircledRetreatExtraStrengthDamage = max(1, damage.strengthDamage / 2)
+                remainingStrength = max(0, remainingStrength - encircledRetreatExtraStrengthDamage)
+            }
+        }
+
+        return CombatPreviewOutcome(
+            remainingStrength: remainingStrength,
+            maxStrength: division.maxStrength,
+            shouldRetreat: shouldRetreat,
+            wasDestroyed: remainingStrength <= 0,
+            holdExtraStrengthDamage: holdExtraStrengthDamage,
+            encircledRetreatExtraStrengthDamage: encircledRetreatExtraStrengthDamage
+        )
+    }
+
+    private func combatPreviewRiskText(
+        for outcome: CombatPreviewOutcome,
+        sideName: String? = nil
+    ) -> String? {
+        var fragments: [String] = []
+        if outcome.holdExtraStrengthDamage > 0 {
+            fragments.append("死守额外损失约 \(outcome.holdExtraStrengthDamage)")
+        }
+        if outcome.encircledRetreatExtraStrengthDamage > 0 {
+            fragments.append("断粮撤退额外损失约 \(outcome.encircledRetreatExtraStrengthDamage)")
+        }
+        if outcome.wasDestroyed {
+            fragments.append(sideName.map { "\($0)可能被歼" } ?? "可能歼灭")
+        } else if outcome.shouldRetreat {
+            fragments.append(sideName.map { "\($0)可能撤退" } ?? "可能撤退")
+        }
+
+        guard !fragments.isEmpty else {
+            return nil
+        }
+        return fragments.joined(separator: "，")
     }
 
     private func currentRegionRoadCount(for division: Division) -> Int? {
@@ -1141,4 +1212,13 @@ final class AppContainer: ObservableObject {
         }
     }
 
+}
+
+private struct CombatPreviewOutcome {
+    let remainingStrength: Int
+    let maxStrength: Int
+    let shouldRetreat: Bool
+    let wasDestroyed: Bool
+    let holdExtraStrengthDamage: Int
+    let encircledRetreatExtraStrengthDamage: Int
 }
