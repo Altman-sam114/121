@@ -873,6 +873,13 @@ final class AppContainer: ObservableObject {
         var notes = [
             "接战距离：最近 \(nearest.target.thematicDisplayName)，距 \(nearest.distance) 格，射程 \(attacker.range)，需接近 \(approachGap) 格"
         ]
+        if let candidateText = combatOutOfRangeCandidateText(
+            attacker: attacker,
+            enemies: enemies,
+            combatRules: combatRules
+        ) {
+            notes.append(candidateText)
+        }
         let influence = combatRules.generalInfluenceSummary(attacker: attacker, defender: nearest.target, in: gameState)
         if let generalText = combatApproachGeneralText(influence) {
             notes.append(generalText)
@@ -943,6 +950,40 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "接战官道：\(fragments.joined(separator: "，"))"
+    }
+
+    private func combatOutOfRangeCandidateText(
+        attacker: Division,
+        enemies: [(target: Division, distance: Int)],
+        combatRules: CombatRules
+    ) -> String? {
+        let candidates = enemies.sorted {
+            if $0.distance != $1.distance {
+                return $0.distance < $1.distance
+            }
+            if $0.target.name != $1.target.name {
+                return $0.target.name < $1.target.name
+            }
+            return $0.target.id < $1.target.id
+        }
+        guard candidates.count > 1 else {
+            return nil
+        }
+
+        let fragments = candidates.prefix(3).map { candidate in
+            let approachGap = max(0, candidate.distance - attacker.range)
+            let influence = combatRules.generalInfluenceSummary(attacker: attacker, defender: candidate.target, in: gameState)
+            var details = [
+                "距 \(candidate.distance)",
+                "需 \(approachGap)",
+                "敌射 \(candidate.target.range)"
+            ]
+            if let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId {
+                details.append("敌将 \(defenderName)")
+            }
+            return "\(candidate.target.thematicDisplayName) \(details.joined(separator: "/"))"
+        }
+        return "接近候选：\(fragments.joined(separator: "；"))"
     }
 
     private func combatOutOfRangeThreatText(
