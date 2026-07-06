@@ -31,6 +31,8 @@
 
 **当前命令结果展示名边界：** `RuleEngine` 成功 `CommandResult.message` 已改为 state-aware 中文摘要，移动/交战会使用 `Division.thematicDisplayName`，修路会显示郡县名，外交会显示国家或势力名；`AppContainer` 玩家交互日志不再重复拼接 raw id 版 `Command.displayName`，`AgentPanelView` 的命令结果标题显示“进军命令 / 交战命令 / 修缮道路命令”等类别。`Command.displayName` 本体、`CommandResultSummary.commandDisplayName` 存储字段、Codable/rawValue 和旧 AI 兼容判断不变。
 
+**当前指令诊断展示边界：** 旧 `RegionCommand.displayName` 兼容层已收口为“郡县进军 / 郡县交战 / 郡县固守 / 郡县补给”等安全类别；`CommandIntentAdapterError` 和 `TheaterDirectiveDecoderError` 的可见说明已改为中文军师/郡县语义，缺失防区、方面或郡县时不把 raw id 当作玩家文案；`TurnManager` 的外交和太守命令成功诊断复用 `CommandResult.message`。底层 region 命令、军师指令 JSON、Codable schema、rawValue、命令校验和规则执行不变。
+
 **当前剧本胜负条件边界：** `DataLoader` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 和 hex controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，并在 HUD 的“胜负”中显示中文胜利原因。`RegionVictoryRules` / `RegionRuleSystem` 的只读战略分析也会先按同一剧本条件评估，避免 region 层分析继续只看旧阿登城市名。旧 `VictoryReason` rawValue、阿登目标名和歼灭/断粮 fallback 规则保留作历史兼容；本轮不实现多目标计分、限回合条件、歼灭模板条件或完整胜利面板。
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。

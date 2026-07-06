@@ -451,7 +451,7 @@ struct TurnManager {
             nextState = result.state
             commandResults.append(.diplomatCommand(record: adjustment.record, result: result))
             if result.succeeded {
-                diagnostics.append("外交提案已经规则层执行：\(command.displayName)。")
+                diagnostics.append("外交提案已经规则层执行：\(result.message)。")
             } else {
                 diagnostics.append("外交提案被规则层拒绝：\(result.validation.displayMessage)。")
             }
@@ -525,7 +525,7 @@ struct TurnManager {
                 commandIndex: commandIndex
             ))
             if result.succeeded {
-                diagnostics.append("太守推荐已经规则层执行：\(command.displayName)。")
+                diagnostics.append("太守推荐已经规则层执行：\(result.message)。")
             } else {
                 diagnostics.append("太守推荐被规则层拒绝：\(result.validation.displayMessage)。")
             }

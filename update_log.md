@@ -6330,6 +6330,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和任务面板仍待后续阶段。
 - 胜负触发的真实行为仍需等待云端 CI 和后续 Agent C artifact 复判；本地未做运行时 UI 烟测。
 
+## v2.4 - 郡县命令与军师指令诊断三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移可见审计闭环，把旧 `RegionCommand`、region-to-hex adapter 和 `TheaterDirectiveDecoder` 的英文 / raw id 诊断改为中文郡县、军师、防区和方面语义。
+
+完成内容：
+
+- `RegionCommand.displayName` 改为“郡县进军 / 郡县交战 / 郡县固守 / 郡县补给”等安全类别，不再拼接军队 id、郡县 id 或 `unknown`。
+- `CommandIntentAdapterError.errorDescription` 改为中文；保留必要 hex 坐标，但不再把 `RegionId` 或 `divisionId` 当作玩家文案。
+- `DirectiveTarget` 解码失败说明和 `TheaterDirectiveDecoderError.errorDescription` 改为中文军师指令语义；缺失防区、目标方面或郡县时显示类型，不拼 raw id。
+- `TurnManager` 外交和太守命令成功诊断改为复用 `CommandResult.message`，避免继续显示 raw id 版 `Command.displayName`。
+- 本轮只改可见诊断 / displayName 文案，不改变 `RegionCommand`、`Command`、`ZoneDirective`、`TheaterDirective` JSON、Codable schema、rawValue、命令校验或规则执行。
+
+关键文件：
+
+- `WWIIHexV0/Commands/RegionCommand.swift`
+- `WWIIHexV0/Commands/CommandIntentAdapter.swift`
+- `WWIIHexV0/Commands/WarDirective.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_command_directive_diagnostics_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/RegionCommand.swift WWIIHexV0/Commands/CommandIntentAdapter.swift WWIIHexV0/Commands/WarDirective.swift WWIIHexV0/Turn/TurnManager.swift` 通过。
+- 可见旧 region / 军师指令诊断固定字符串扫描无命中：`RegionMove`、`RegionAttack`、`RegionHold`、`RegionResupply`、`Hex ... region`、`Division ... found`、`Theater directive`、`target theater`、`command.displayName`。
+- 宽松残留扫描只命中 `FrontZoneId` 类型名、schema 字段和 helper 函数名，未命中玩家可见字符串；本轮保持 Codable / JSON schema 兼容不改类型名。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `Command.displayName` 本体仍保留 raw id 兼容输出；`SupplyRules`、`EconomyRules`、`VictoryRules`、`TheaterSystem` 和部分武将/道路/交战 UI 摘要仍待后续切片继续扫描。
+- 本轮不做运行时 UI 烟测；实际 AI 面板和错误记录呈现仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+
 ## v2.4 - 命令结果展示名三国化
 
 完成日期：2026-07-07

@@ -142,7 +142,7 @@ extension DirectiveTarget: Codable {
             return
         }
         throw DecodingError.dataCorrupted(
-            DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "DirectiveTarget requires theater or region.")
+            DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "指令目标必须提供方面或郡县。")
         )
     }
 
@@ -535,27 +535,27 @@ enum TheaterDirectiveDecoderError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidUTF8:
-            return "Theater directive JSON is not valid UTF-8."
+            return "军师指令 JSON 不是有效 UTF-8。"
         case .malformedJSON(let detail):
-            return "Malformed theater directive JSON: \(detail)"
+            return "军师指令 JSON 格式错误：\(detail)"
         case .unsupportedSchemaVersion(let version):
-            return "Unsupported theater directive schemaVersion \(version)."
-        case .issuerMismatch(let expected, let actual):
-            return "Theater directive issuer mismatch. Expected \(expected), got \(actual)."
-        case .turnMismatch(let expected, let actual):
-            return "Theater directive turn mismatch. Expected \(expected), got \(actual)."
+            return "不支持的军师指令 schemaVersion：\(version)。"
+        case .issuerMismatch:
+            return "军师指令签发者不一致。"
+        case .turnMismatch:
+            return "军师指令回合不一致。"
         case .factionMismatch(let expected, let actual):
-            return "Theater directive faction mismatch. Expected \(expected.displayName), got \(actual.displayName)."
-        case .missingZone(let zoneId):
-            return "Theater directive references missing FrontZone \(zoneId.rawValue)."
-        case .zoneFactionMismatch(let zoneId, let expected, let actual):
-            return "Theater directive zone \(zoneId.rawValue) belongs to \(actual.displayName), expected \(expected.displayName)."
-        case .missingTargetTheater(let theaterId):
-            return "Theater directive references missing target theater \(theaterId.rawValue)."
-        case .missingRegion(let regionId):
-            return "Theater directive references missing region \(regionId.rawValue)."
-        case .tacticCategoryMismatch(let directiveId, let tactic, let category):
-            return "Theater directive \(directiveId) uses tactic \(tactic.displayName) outside category \(category.displayName)."
+            return "军师指令势力不一致：期望 \(expected.displayName)，实际 \(actual.displayName)。"
+        case .missingZone:
+            return "军师指令引用了不存在的防区。"
+        case .zoneFactionMismatch(_, let expected, let actual):
+            return "军师指令防区归属不一致：期望 \(expected.displayName)，实际 \(actual.displayName)。"
+        case .missingTargetTheater:
+            return "军师指令引用了不存在的目标方面。"
+        case .missingRegion:
+            return "军师指令引用了不存在的郡县。"
+        case .tacticCategoryMismatch(_, let tactic, let category):
+            return "战术 \(tactic.displayName) 不属于 \(category.displayName) 指令类别。"
         }
     }
 }

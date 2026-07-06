@@ -8,15 +8,14 @@ enum RegionCommand: Codable, Equatable {
 
     var displayName: String {
         switch self {
-        case .move(let divisionId, let from, let to):
-            return "RegionMove(\(divisionId): \(from.rawValue) -> \(to.rawValue))"
-        case .attack(let attackerId, let from, let targetDivisionId, let targetRegionId):
-            let target = targetRegionId?.rawValue ?? "unknown"
-            return "RegionAttack(\(attackerId) @ \(from.rawValue) -> \(targetDivisionId) @ \(target))"
-        case .hold(let divisionId, let regionId):
-            return "RegionHold(\(divisionId) @ \(regionId?.rawValue ?? "unknown"))"
-        case .resupply(let divisionId, let regionId):
-            return "RegionResupply(\(divisionId) @ \(regionId?.rawValue ?? "unknown"))"
+        case .move:
+            return "郡县进军"
+        case .attack:
+            return "郡县交战"
+        case .hold:
+            return "郡县固守"
+        case .resupply:
+            return "郡县补给"
         }
     }
 
@@ -31,4 +30,3 @@ enum RegionCommand: Codable, Equatable {
         }
     }
 }
-
