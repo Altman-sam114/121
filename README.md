@@ -19,6 +19,8 @@
 
 **当前武将显示边界：** `GeneralData.rank` raw 字段和旧 `generals.json` fallback 数据保留兼容；武将军令面板和武将档案使用 `rankDisplayName` 把旧英文军衔映射为三国语义显示名，头像占位的辅助功能文案显示为中文“头像”。武将统军风格由 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 统一展示为进取、持重、谨慎；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 执行口径一致。武将道路/交战日志、军队详情预览、计划军令摘要、武将复核事件和军机面板记录缺少姓名快照时使用“未命名武将 / 未知郡县 / 未知防区”等中文占位，不把 raw `generalId`、`RegionId` 或 `FrontZoneId` 当作玩家文案 fallback；底层 id、Codable 和调试 JSON 仍保留。
 
+**当前外交面板显示边界：** `DiplomacyPanelView` 只读展示 `DiplomacyState`，势力、集团、关系、君主重点防区和外交对象优先使用国家名、集团名、势力名和防区展示名；空名或等于 raw id 时显示“未知势力 / 未知集团 / 未知防区”等中文占位，不直接把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 作为玩家文案 fallback。外交关系、借道、敌对和交战规则仍由 `DiplomacyState`、`Command.proposeDiplomacy` 与规则系统决定。
+
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 
 **当前检查器展示边界：** 军队详情和郡县详情由 `MapDisplayAdapter` 生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，优先读取 `RegionNode.name`、`TheaterNode.name`、`FrontZone.name`；空名、等于 raw id 或明显内部 id 时退回势力简称与郡县名摘要。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId`、`GeneralAssignment.generalId`、Codable rawValue、动态方面/防区/战线规则不变。

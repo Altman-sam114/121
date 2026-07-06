@@ -213,7 +213,8 @@ struct RootGameView: View {
                 case .diplomacy:
                     DiplomacyPanelView(
                         diplomacyState: container.gameState.diplomacyState,
-                        activeFaction: container.gameState.activeFaction
+                        activeFaction: container.gameState.activeFaction,
+                        frontZoneDisplayNames: agentPanelFrontZoneDisplayNames
                     )
                 case .agent:
                     AgentPanelView(

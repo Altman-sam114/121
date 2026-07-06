@@ -5984,6 +5984,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不隐藏完整调试 JSON，因此调试区域仍可能显示 schema 内部字段名；后续可单独决定开发态隐藏或本地化策略。
 - 本轮不做 UI 截图/模拟器验收；中文占位的实际换行和宽度仍需后续人工或授权运行环境确认。
 
+## v2.4 - 外交面板展示名收敛
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进三国多势力、道路和交战边界可读性，避免 `DiplomacyPanelView` 在势力、集团、关系、君主重点防区和外交对象展示中直接露出 raw `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId`。
+
+完成内容：
+
+- `DiplomacyPanelView` 增加 `frontZoneDisplayNames` 只读入参，默认空字典以兼容旧调用。
+- 国家行优先显示 `CountryProfile.name`，空名或等于 raw id 时回退 `Faction.displayName`。
+- 国家所属集团和集团列表优先显示 `DiplomaticBloc.name`，空名或等于 raw id 时回退 `Faction.shortDisplayName + "集团"`。
+- 关系列表使用国家展示名，不再拼接 `firstCountryId.rawValue` / `secondCountryId.rawValue`。
+- 君主和外交官记录使用 `AgentDecisionRecord.displayName(forAgentId:)`；君主重点防区使用 `RootGameView` 已有防区展示名；外交对象使用国家展示名，缺资料时显示中文占位。
+- `RootGameView` 将 `agentPanelFrontZoneDisplayNames` 传给外交面板，复用军机面板已有防区 fallback 口径。
+- 本轮不改变 `DiplomacyState` schema、外交关系状态、外交命令、道路、粮道、交战、借道或 AI 决策规则。
+- 本轮计划使用并发只读子 Agent 定位残留；当前工具上下文未暴露可调用的子 Agent 接口，因此主线程用并行 `rg` / `nl` 读取替代，只读定位外交面板残留后完成窄切片改动。
+
+关键文件：
+
+- `WWIIHexV0/UI/DiplomacyPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_panel_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/UI/RootGameView.swift` 通过。
+- 外交面板 raw id 展示扫描只命中展示名过滤比较、compact tab rawValue 和 label 文字；未命中 `country.blocId.rawValue`、关系双方 raw id、君主重点防区 raw id、外交对象 raw id 或 Agent id 直接展示。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做 UI 截图/模拟器验收；外交面板关系行在窄宽度下的换行和截断效果需后续人工或授权运行环境确认。
+- 外交制度仍是最小关系状态兼容层；完整借道、臣属、贡赋、共同作战堆叠和共享补给源仍待后续阶段。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

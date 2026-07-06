@@ -166,3 +166,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_inspector_strategic_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_style_display_consistency.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_visible_identity_fallback.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_panel_display_names.md`
