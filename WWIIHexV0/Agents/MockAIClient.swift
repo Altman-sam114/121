@@ -124,23 +124,25 @@ struct MockAIClient: DecisionProvider {
                         continue
                     }
                     if let target = frontAttackTarget(for: division, segment: segment, context: context) {
+                        let segmentText = segment.isEncircled ? "受围前线接触段" : "前线接触段"
                         orders.append(
                             AgentOrder(
                                 type: .attack,
                                 divisionId: unitId,
                                 targetDivisionId: target.id,
                                 stance: segment.isEncircled ? "closePocket" : "frontAttack",
-                                reason: "部署兼容层：前线军队在 \(segment.regionId.rawValue) 段发起接战。"
+                                reason: "部署兼容层：前线军队在\(segmentText)发起接战。"
                             )
                         )
                     } else {
+                        let segmentText = segment.isEncircled ? "受围前线接触段" : "前线接触段"
                         orders.append(
                             AgentOrder(
                                 type: .hold,
                                 divisionId: unitId,
                                 toRegionId: division.regionId,
                                 stance: segment.isEncircled ? "containPocket" : "holdFront",
-                                reason: "部署兼容层：前线军队固守 \(segment.regionId.rawValue) 段。"
+                                reason: "部署兼容层：前线军队固守\(segmentText)。"
                             )
                         )
                     }

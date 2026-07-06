@@ -869,7 +869,7 @@ struct TheaterCommanderPool {
         let style: ZoneCommanderAgentConfig.CommandStyle = zone.faction == .germany ? .aggressive : .balanced
         return ZoneCommanderAgentConfig(
             id: "auto_\(zone.id.rawValue)",
-            name: "\(zone.faction.shortDisplayName)防区指挥官（\(zone.id.rawValue)）",
+            name: "\(zone.faction.shortDisplayName)防区指挥官",
             faction: zone.faction,
             assignedZoneId: zone.id,
             skills: [],

@@ -55,7 +55,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `Division` 当前显示为军队/步卒营/骑兵军/器械营/弓弩营/亲卫营/舟师营，但 `Division.coord` 仍是单位位置权威。
 - `ComponentType` 保留旧 rawValue `tank/motorizedInfantry/infantry/artillery`，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用；旧阿登模板仍可加载。
 - `TacticName` 仍保留旧 Codable rawValue 作为指令 schema，但 `displayName`、AI 面板和模拟元帅 rationale 已显示为正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
-- `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留。
+- `EconomyResources.manpower/industry/supplies` 当前显示为人口/军械/粮草，但字段名暂保留；`EconomyRules` 的经济启动、排产、府库结算、战略粮草短缺、自动补员、粮草辎重完成、生产军队部署和无安全后方部署格事件日志已使用中文三国语义，规则数值和生产队列 schema 不变。
 - `SupplyRules.isBesieged` 将“城池/关隘位置、粮道断绝、有敌军邻接”判为围城；围城守军在 `CombatRules.effectiveDefense` 中降低有效防御，恢复仍受既有 supplied / enemy-adjacent 规则约束。
 - `CombatRules.effectiveAttack` 已有骑兵/旧装甲平原攻击加成和困难地形惩罚；`MovementRules` 对骑兵/旧装甲进入困难地形追加移动成本；`Division.range` 让弓弩和器械可远程攻击；`isSiegeCapable` 让旧炮兵/三国攻城器械攻击城池、关隘、cityName 或 fortressName hex 时获得攻坚加成。
 - `CombatRules.combatAuditSummary` 使用同一套攻击/防御 profile 生成只读交战审计摘要，把有效攻击/防御变化、地形、河流、器械攻城、围城、死守和侧击写入攻击/反击日志；该摘要不改变伤害、撤退或反击规则。
@@ -65,11 +65,13 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `UnitNode` 地图兵牌已由旧 NATO APP-6 图形改为中心三国兵种 glyph，底部姿态短标记使用 `RetreatMode.shortDisplayCode` 的 `退/守`；这只改变 SpriteKit 显示，不改变 `Division`、`ComponentType`、`RetreatMode` rawValue、移动、交战或撤退规则。
 - `MapDisplayAdapter` 现在为军队详情和郡县详情生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，`UnitInspectorView` / `RegionInspectorView` 消费这些展示字段，不再直接把 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId` 的 rawValue 或 `None/controlled` 英文 fallback 显示给玩家；typed id、Codable rawValue、动态方面/防区/战线派生和规则行为保持不变，武将显示名缺失时使用中文占位，不把 `generalId` 直接作为军队详情文案。
 - `SupplyRules` 的玩家可见事件日志当前已覆盖整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿中文化；这只改变 `GameState.appendEvent(...)` 文案，不改变补给路径、围城判定、撤退目的地、损耗数值或事件类别。
+- `EconomyRules` 的玩家可见事件日志当前已覆盖经济账本启动、排产成功/失败、回合府库结算、战略粮草耗尽、自动补员、粮草辎重入库、生产军队后方部署和无安全后方部署格中文化；资源摘要统一为人口、军械、粮草，生产部署优先显示军队展示名和郡县后方安全格；这只改变 `GameState.appendEvent(...)` 文案，不改变收入、维护费、补员、生产部署、安全后方筛选或事件类别。
 - 道路敌控区、粮道上的敌对单位阻断、粮道控制格通行、撤退安全格控制格、战略郡县粮道控制区通行、撤退安全郡县、宏观军令落点敌控优先级、围城邻接、安全补员邻接、部署层敌军存在、相邻敌对防区接触、动态前线敌对接触、Legacy AgentContext 敌军摘要、MockAICommander 威胁估算、ZoneCommanderAgent / MarshalBattlefieldSummarizer / RulerStrategicSnapshot / StrategistBattlefieldSnapshot 单位级 AI hostile 摘要、玩家地图点击攻击、攻击高亮、武将宏观目标选择、攻击合法性、执行器单位目标筛选、区域交战压力和郡县可见敌军展示优先使用 `DiplomacyState` 的 `DiplomaticRelation.status`，缺外交建档时 fallback 到 `Faction.isHostile(to:)`，避免中立、停战、同盟或共同作战势力被误判为可攻击、切粮、阻断战略郡县粮道、阻止战略撤退安全郡县、围城、阻止撤退安全格、阻止补员、生成敌对部署接触、生成敌对前线或进入 AI 敌军摘要的敌军；objective / region controller 来源、非同 faction 堆叠阻挡、非己方控制 hex / region 的部署压力分类、前线压力/补给/包围拓扑和 encirclement 拓扑仍保留原控制权/阵营语义；移动后自动占领的 hex controller 改写单独由 `OccupationRules.canOccupy` 按外交 hostile / atWar gate 收束。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
 - `DiplomacyPanelView` 只读展示 `DiplomacyState`，国家、集团、关系双方、君主重点防区和外交对象优先使用 `CountryProfile.name`、`DiplomaticBloc.name`、`Faction.displayName` 和 `RootGameView` 生成的防区展示名；空名或等于 raw id 时使用“未知势力 / 未知集团 / 未知防区”等中文占位，不把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 当作玩家文案 fallback；这不改变外交关系、道路、粮道、交战或命令执行。
 - 君主、外交官、太守、军师和模拟军机追加到 `DirectiveEnvelope.theaterContext`、record rationale 或 `DiplomacyState.summary` 的展示文本同样使用国家、郡县和防区展示名：防区优先 `FrontZone.name`，否则用势力简称和前两个郡县名；郡县优先 `RegionNode.name`；外交对象优先 `CountryProfile.name`；legacy `.germany/.allies` 外交 profile 的可见名称显示为曹操/袁绍语义，原 id、bloc id、Codable 和调试 JSON 保持兼容。
+- Legacy Agent D 的 `AgentDecisionParserError` 和 `AgentCommandMappingError` 可见错误说明当前已改为中文军机/军令语义；`schemaVersion`、`agentId`、`turn`、`toRegionId`、`targetDivisionId` 等机器字段、parser / mapper 控制流和命令管线保持兼容，Legacy Agent D 仍只作回归参考。
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、优先从已有官道或外部官道入口连缀最多两格战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，也接入玩家武将面板宏观军令执行前；它读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格、技能和防区压力复核军令，塑形 `ZoneDirective.tactic` 并写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
@@ -565,7 +567,7 @@ EconomyPanelView
   -> EconomyRules.queueProduction
 ```
 
-排产时预付资源，完成时才部署单位或发放 supply stockpile。完成单位只能放到本方控制、passable、空置、非敌邻，且位于首都、城镇/大都会、工厂、高基建、高补给 region 或 supply source 的后方 hex。找不到安全部署点时订单保留到下回合继续尝试。
+排产时预付资源，完成时才部署单位或发放粮草辎重。完成单位只能放到本方控制、passable、空置、非敌邻，且位于首都、城镇/大都会、工厂、高基建、高补给 region 或 supply source 的后方 hex。找不到安全部署点时订单保留到下回合继续尝试；玩家可见日志会显示中文资源摘要、军队展示名和郡县后方安全格，但规则行为不变。
 
 自动补员在 active faction 结束回合时发生，只处理：
 

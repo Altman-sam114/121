@@ -23,6 +23,10 @@
 
 **当前 Agent 上下文显示边界：** 君主、外交官、太守、军师和模拟军机写入 `DirectiveEnvelope.theaterContext`、rationale 或 `DiplomacyState.summary` 时，防区优先显示 `FrontZone.name` 或势力简称加郡县名，郡县优先显示 `RegionNode.name`，外交对象优先显示 `CountryProfile.name`，缺资料时使用中文占位；legacy `.germany/.allies` 外交 profile 的可见名称已按曹操/袁绍语义显示。底层 id、bloc id、Codable、调试 JSON 和执行规则不变。
 
+**当前 Legacy Agent D 错误边界：** `AgentDecisionParserError` 和 `AgentCommandMappingError` 的可见错误说明已改为中文军机/军令语义；`schemaVersion`、`agentId`、`toRegionId`、`targetDivisionId` 等 JSON 字段名和 parser / mapper 行为仍保持兼容，Legacy Agent D 也仍只作回归参考，不恢复为默认战争 AI 主路径。
+
+**当前经济/生产日志边界：** `EconomyRules` 的经济启动、排产、府库结算、战略粮草短缺、自动补员、粮草辎重完成、生产军队部署和无安全后方部署格事件日志已改为中文三国语义；资源摘要显示人口、军械、粮草，生产部署优先显示军队展示名和郡县后方安全格。底层 `EconomyResources` 字段、`ProductionKind` rawValue、生产队列、收入、维护费、补员、部署筛选和命令管线不变。
+
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 
 **当前检查器展示边界：** 军队详情和郡县详情由 `MapDisplayAdapter` 生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，优先读取 `RegionNode.name`、`TheaterNode.name`、`FrontZone.name`；空名、等于 raw id 或明显内部 id 时退回势力简称与郡县名摘要。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId`、`GeneralAssignment.generalId`、Codable rawValue、动态方面/防区/战线规则不变。

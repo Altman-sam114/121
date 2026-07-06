@@ -6078,6 +6078,213 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做 UI 截图/模拟器验收；上下文文本在面板中的实际换行仍需后续人工或授权运行环境确认。
 - legacy `.germany/.allies` 的 id 仍保留用于兼容；完整势力 id 迁移和多势力 turn order 仍待后续阶段。
 
+## v2.4 - Local LLM prompt 正文三国化补强
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续清理 Legacy `AgentPromptBuilder` 中仍残留的英文任务说明、section label 和 `str/supply/acted` 摘要，使本地 LLM 路径启用时更明确围绕武将、官道、粮草、郡县和可见交战生成 intent / reason。
+
+完成内容：
+
+- `systemPrompt` 改为中文军机决策层说明，势力显示使用 `Faction.displayName`，兼容 raw id 仅作括注。
+- `userPrompt` 的任务、可用军令、战场摘要、己方军队、已知敌对军队、目标、可见郡县、粮草与补给、近期战报和玩家指示标题改为中文三国语义。
+- 军队摘要使用兵力、郡县 id、`SupplyState.displayName` 和已行动字段；目标与郡县摘要使用控制方展示名和地形展示名。
+- JSON schema 的字段名、`move/attack/hold/resupply` rawValue、`divisionId`、`toRegionId`、`targetDivisionId`、parser、mapper、MockAI 和命令执行链保持兼容不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/AgentPromptBuilder.swift`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift WWIIHexV0/Agents/AgentDecisionParser.swift WWIIHexV0/Agents/AgentCommandMapper.swift WWIIHexV0/Agents/ZoneCommanderAgent.swift WWIIHexV0/Agents/MockAIClient.swift WWIIHexV0/Agents/AgentPromptBuilder.swift` 通过。
+- Local LLM prompt 旧英文任务/section/placeholder 固定字符串扫描无命中：`Current task:`、`Available commands:`、`Battlefield summary:`、`Friendly armies:`、`Known hostile armies:`、`Visible regions:`、`Grain and supply:`、`Recent events:`、`Player directive:`、`Issue operational orders`、`short Three Kingdoms operational intent`、`existing division id`、`existing visible region id`、`short reason mentioning`。
+- MockAI 前线 reason raw 郡县 id 固定字符串扫描无命中：`segment.regionId.rawValue`。
+- 自动防区指挥官 raw id 回归固定字符串扫描无命中：`防区指挥官（`。
+- Legacy Agent D 旧英文错误固定字符串扫描无命中。
+- 经济/生产旧英文事件固定字符串扫描无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不启用真实 LLM，也不改变 Local LLM 输出 schema；提示词中仍保留 JSON key 和 id 作为机器协议。
+
+## v2.4 - MockAI 前线 reason raw 郡县 id 回归修正
+
+完成日期：2026-07-06
+
+目标：
+
+- 修正 Legacy `MockAIClient` 部署兼容层 reason 仍把 `segment.regionId.rawValue` 写入 AI 面板/调试 JSON 可见文案的问题，保持既有 MockAI 可见文本三国化边界。
+
+完成内容：
+
+- `MockAIClient` 前线 attack / hold reason 从“在 region_raw 段发起接战 / 固守 region_raw 段”改为“在前线接触段发起接战 / 固守前线接触段”。
+- 受围段显示为“受围前线接触段”，保留原 `segment.isEncircled` 对 stance 的影响。
+- 不改变 Bastogne fallback 目标选择、stance 字符串、排序、评分、JSON schema、parser、mapper 或命令执行链。
+
+关键文件：
+
+- `WWIIHexV0/Agents/MockAIClient.swift`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift WWIIHexV0/Agents/AgentDecisionParser.swift WWIIHexV0/Agents/AgentCommandMapper.swift WWIIHexV0/Agents/ZoneCommanderAgent.swift WWIIHexV0/Agents/MockAIClient.swift` 通过。
+- MockAI 前线 reason raw 郡县 id 固定字符串扫描无命中：`segment.regionId.rawValue`。
+- 自动防区指挥官 raw id 回归固定字符串扫描无命中：`防区指挥官（`。
+- Legacy Agent D 旧英文错误固定字符串扫描无命中。
+- 经济/生产旧英文事件固定字符串扫描无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- MockAI 仍是 Legacy Agent D 兼容 provider，目标选择、stance、排序和评分行为仍按既有兼容算法保留。
+
+## v2.4 - 自动防区指挥官 raw id 回归修正
+
+完成日期：2026-07-06
+
+目标：
+
+- 修正 `ZoneCommanderAgent.defaultConfig` 中自动防区指挥官名称重新显示 `FrontZoneId.rawValue` 的回归，恢复既有 `短势力名 + 防区指挥官` 展示边界。
+
+完成内容：
+
+- `TheaterCommanderPool.automatic` fallback 生成的 `ZoneCommanderAgentConfig.name` 从 `曹军防区指挥官（front_zone_xxx）` 恢复为 `曹军防区指挥官` / `袁军防区指挥官` 口径。
+- 保留 `id: "auto_\(zone.id.rawValue)"`、`assignedZoneId`、战术选择、命令执行和 Codable 兼容不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift WWIIHexV0/Agents/AgentDecisionParser.swift WWIIHexV0/Agents/AgentCommandMapper.swift WWIIHexV0/Agents/ZoneCommanderAgent.swift` 通过。
+- 自动防区指挥官 raw id 回归固定字符串扫描无命中：`防区指挥官（`。
+- Legacy Agent D 旧英文错误固定字符串扫描无命中。
+- 经济/生产旧英文事件固定字符串扫描无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 该修正只处理自动防区指挥官展示名，不改变完整防区命名、武将分配或多势力 turn order。
+
+## v2.4 - Legacy Agent D 错误文案三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进 Legacy Agent D 兼容路径的玩家/审计可见中文化，避免 parser / mapper 缺字段或解析失败时显示 `Move order`、`Attack order`、`Malformed agent decision JSON` 等英文诊断。
+
+完成内容：
+
+- `AgentDecisionParserError.errorDescription` 改为中文军机决策诊断，覆盖 JSON 格式错误、schemaVersion 不支持、执行者不匹配、回合不匹配和行军军令缺目标郡县。
+- `AgentCommandMappingError.errorDescription` 改为中文军令诊断，覆盖行军缺目标坐标、行军缺目标郡县和攻击缺目标军队。
+- 保留 `schemaVersion`、`agentId`、`turn`、`toRegionId`、`targetDivisionId` 等机器字段和 Codable schema；不改变 parser / mapper 行为、MockAI、Local LLM prompt、命令映射、命令校验或规则执行链。
+
+关键文件：
+
+- `WWIIHexV0/Agents/AgentDecisionParser.swift`
+- `WWIIHexV0/Agents/AgentCommandMapper.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_legacy_agent_error_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift WWIIHexV0/Agents/AgentDecisionParser.swift WWIIHexV0/Agents/AgentCommandMapper.swift` 通过。
+- Legacy Agent D 旧英文错误固定字符串扫描无命中：`Malformed agent decision JSON`、`Unsupported agent decision schemaVersion`、`Agent decision agentId mismatch`、`Agent decision turn mismatch`、`Move order for`、`Attack order for`、`missing destination`、`missing toRegionId`、`missing targetDivisionId`。
+- 经济/生产旧英文事件固定字符串扫描仍无命中：`Economy state bootstrapped`、`lacks resources for`、`queued ... cost`、`turn(s)`、`economy:`、`strategic supply stockpile is depleted`、`supplied units degrade to Low Supply`、`received automatic replacements`、`completed ... supplies`、`deployed ... at`、`no safe rear deployment hex`、`MP / IC / SUP`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- Legacy Agent D 仍保留 `divisionId` 等机器 id 作为错误定位锚点；本轮只中文化错误说明，不新增 id 到展示名的映射层。
+- Legacy Agent D 仍只作回归参考，默认战争 AI 主路径不回退旧管线。
+
+## v2.4 - 经济与生产日志三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进三国多势力、武将、道路、粮道和交战迁移，把 `EconomyRules` 中玩家可见的经济结算、自动补员和生产部署英文事件日志改为中文三国语义。
+
+完成内容：
+
+- `EconomyRules.bootstrapIfNeeded` 的经济账本启动事件改为“按受控城池、工坊、粮道枢纽和郡县补建府库账本”。
+- 排产资源不足和排产成功事件改为中文，资源摘要统一为人口、军械、粮草。
+- 回合经济结算事件改为府库结算，展示收入、军粮维护、补员消耗和府库余量。
+- 战略粮草耗尽事件改为中文，说明原本粮草充足的军队降为粮草不足。
+- 自动补员事件使用 `Division.thematicDisplayName` 和中文兵力变化，不再显示旧英文 replacement 文案。
+- 粮草辎重完成、生产军队后方部署和无安全后方部署格事件改为中文；部署事件优先显示郡县后方安全格。
+- 本轮不改变 `EconomyResources` 字段、`ProductionKind` rawValue、生产队列、收入、维护费、补员、部署筛选、安全后方敌邻判断、道路、粮道、交战、外交、Codable schema 或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_economy_production_log_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift` 通过。
+- 经济/生产旧英文事件固定字符串扫描无命中：`Economy state bootstrapped`、`lacks resources for`、`queued ... cost`、`turn(s)`、`economy:`、`strategic supply stockpile is depleted`、`supplied units degrade to Low Supply`、`received automatic replacements`、`completed ... supplies`、`deployed ... at`、`no safe rear deployment hex`、`MP / IC / SUP`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做运行时 UI 烟测；经济和生产日志在事件日志面板中的换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 生产、补员和粮草仍是当前最小兼容层；完整屯田、治安、独立粮仓、多势力经济回合和共享补给制度仍待后续阶段。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

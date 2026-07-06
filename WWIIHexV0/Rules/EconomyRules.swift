@@ -40,7 +40,7 @@ struct EconomyRules {
         let factions = next.divisions.map(\.faction) + Faction.allCases
         next.economyState = makeInitialState(map: next.map, factions: factions, turn: next.turn)
         next.appendEvent(
-            "Economy state bootstrapped from controlled cities, factories, supply hubs, and regions.",
+            "已按受控城池、工坊、粮道枢纽和郡县补建府库账本。",
             category: .supply
         )
         return next
@@ -54,7 +54,7 @@ struct EconomyRules {
         var ledger = state.economyState.ledger(for: faction)
         guard ledger.stockpile.canAfford(kind.cost) else {
             state.appendEvent(
-                "\(faction.displayName) lacks resources for \(kind.displayName).",
+                "\(faction.displayName) 府库不足，无法排产 \(kind.displayName)：需要 \(resourceSummary(kind.cost))。",
                 category: .supply
             )
             return false
@@ -71,7 +71,7 @@ struct EconomyRules {
         ledger.lastUpdatedTurn = state.turn
         state.economyState.updateLedger(ledger)
         state.appendEvent(
-            "\(faction.displayName) queued \(kind.displayName): cost \(resourceSummary(kind.cost)), \(kind.buildTurns) turn(s).",
+            "\(faction.displayName) 排产 \(kind.displayName)：消耗 \(resourceSummary(kind.cost))，预计 \(kind.buildTurns) 回合。",
             category: .supply
         )
         return true
@@ -141,7 +141,7 @@ struct EconomyRules {
         state.economyState.updateLedger(ledger)
         state.economyState.lastResolvedTurn = state.turn
         state.appendEvent(
-            "\(faction.displayName) economy: +\(resourceSummary(turnIncome)); upkeep \(resourceSummary(upkeep)); reinforcement \(resourceSummary(reinforcementSpend)); stockpile \(resourceSummary(ledger.stockpile)).",
+            "\(faction.displayName) 府库结算：收入 +\(resourceSummary(turnIncome))；军粮维护 \(resourceSummary(upkeep))；补员消耗 \(resourceSummary(reinforcementSpend))；府库余量 \(resourceSummary(ledger.stockpile))。",
             category: .supply
         )
     }
@@ -245,7 +245,7 @@ struct EconomyRules {
         }
 
         state.appendEvent(
-            "\(faction.displayName) strategic supply stockpile is depleted; supplied units degrade to Low Supply this turn.",
+            "\(faction.displayName) 战略粮草耗尽，本回合原本粮草充足的军队降为粮草不足。",
             category: .supply
         )
     }
@@ -294,7 +294,7 @@ struct EconomyRules {
             if restored > 0 {
                 state.divisions[index].reinforceStrength(restored)
                 state.appendEvent(
-                    "\(state.divisions[index].name) received automatic replacements: +\(restored) strength.",
+                    "\(state.divisions[index].thematicDisplayName) 后方自动补员：兵力 +\(restored)。",
                     category: .reinforce
                 )
             }
@@ -346,7 +346,7 @@ struct EconomyRules {
             if order.kind == .supplyStockpile {
                 ledger.stockpile.add(EconomyResources(supplies: order.kind.supplyOutput))
                 state.appendEvent(
-                    "\(faction.displayName) completed \(order.kind.displayName): +\(order.kind.supplyOutput) supplies.",
+                    "\(faction.displayName) 完成 \(order.kind.displayName)：粮草 +\(order.kind.supplyOutput)。",
                     category: .supply
                 )
                 continue
@@ -362,13 +362,13 @@ struct EconomyRules {
                 state.divisions.append(division)
                 order.deploymentRegionId = deployment.regionId
                 state.appendEvent(
-                    "\(faction.displayName) deployed \(division.name) at \(deployment.coord.q),\(deployment.coord.r).",
+                    "\(faction.displayName) 在 \(deploymentSummary(for: deployment, in: state)) 部署 \(division.thematicDisplayName)。",
                     category: .reinforce
                 )
             } else {
                 remainingOrders.append(order)
                 state.appendEvent(
-                    "\(order.kind.displayName) is ready, but no safe rear deployment hex is available.",
+                    "\(order.kind.displayName) 已整备完成，但当前没有安全后方部署格，留待下回合继续寻找。",
                     category: .reinforce
                 )
             }
@@ -787,6 +787,19 @@ struct EconomyRules {
     }
 
     private func resourceSummary(_ resources: EconomyResources) -> String {
-        "MP \(resources.manpower), IC \(resources.industry), SUP \(resources.supplies)"
+        "人口 \(resources.manpower)、军械 \(resources.industry)、粮草 \(resources.supplies)"
+    }
+
+    private func deploymentSummary(
+        for deployment: (coord: HexCoord, regionId: RegionId?),
+        in state: GameState
+    ) -> String {
+        let coordText = "\(deployment.coord.q),\(deployment.coord.r)"
+        guard let regionId = deployment.regionId,
+              let region = state.map.region(id: regionId),
+              !region.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "后方安全格 \(coordText)"
+        }
+        return "\(region.name) 后方安全格 \(coordText)"
     }
 }

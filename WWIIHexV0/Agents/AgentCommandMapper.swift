@@ -46,11 +46,11 @@ enum AgentCommandMappingError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingDestination(let divisionId):
-            return "Move order for \(divisionId) is missing destination."
+            return "军队 \(divisionId) 的行军军令缺少目标坐标。"
         case .missingRegionDestination(let divisionId):
-            return "Move order for \(divisionId) is missing toRegionId."
+            return "军队 \(divisionId) 的行军军令缺少目标郡县。"
         case .missingTarget(let divisionId):
-            return "Attack order for \(divisionId) is missing targetDivisionId."
+            return "军队 \(divisionId) 的攻击军令缺少目标军队。"
         case .regionMappingFailed(let detail):
             return detail
         }
