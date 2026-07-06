@@ -531,6 +531,35 @@ final class AppContainer: ObservableObject {
         }
     }
 
+    var selectedGeneralTargetPreviewNotes: [String] {
+        guard let zone = selectedGeneralCommandZone,
+              let targetRegion = selectedGeneralTargetRegion,
+              let targetZone = selectedGeneralTargetZone,
+              targetZone.faction.isHostile(to: zone.faction) else {
+            return []
+        }
+
+        let sourceRegionId = sourceRegionId(for: zone, targetZoneId: targetZone.id)
+        let sourceHex = plannedOperationHex(regionId: sourceRegionId, zoneId: zone.id)
+        let targetHex = gameState.map.representativeHex(for: targetRegion.id)
+        var notes: [String] = []
+        if let roadNote = generalTargetRoadPreviewNote(
+            sourceHex: sourceHex,
+            targetHex: targetHex,
+            faction: zone.faction
+        ) {
+            notes.append(roadNote)
+        }
+        if let enemyNote = generalTargetVisibleEnemyPreviewNote(
+            sourceHex: sourceHex,
+            targetHex: targetHex,
+            faction: zone.faction
+        ) {
+            notes.append(enemyNote)
+        }
+        return notes
+    }
+
     var selectedGeneralInfluenceNotes: [String] {
         guard let zone = selectedGeneralCommandZone,
               let assignment = selectedGeneralAssignment else {
@@ -903,6 +932,96 @@ final class AppContainer: ObservableObject {
             return "scope"
         }
         return "person.3.fill"
+    }
+
+    private func generalTargetRoadPreviewNote(
+        sourceHex: HexCoord?,
+        targetHex: HexCoord?,
+        faction: Faction
+    ) -> String? {
+        guard sourceHex != nil || targetHex != nil else {
+            return nil
+        }
+
+        let sourceText = sourceHex.map {
+            "源\(generalTargetRoadStateText(for: $0, faction: faction))"
+        }
+        let targetText = targetHex.map {
+            "目\(generalTargetRoadStateText(for: $0, faction: faction))"
+        }
+        return "目标官道：\([sourceText, targetText].compactMap { $0 }.joined(separator: "，"))"
+    }
+
+    private func generalTargetRoadStateText(for coord: HexCoord, faction: Faction) -> String {
+        let roadText = gameState.map.tile(at: coord)?.hasRoad == true ? "据道" : "离道"
+        let pressureText = generalTargetHexIsVisiblyPressured(coord, faction: faction) ? "/受压" : ""
+        return "\(roadText)\(pressureText)"
+    }
+
+    private func generalTargetHexIsVisiblyPressured(_ coord: HexCoord, faction: Faction) -> Bool {
+        gameState.divisions.contains { division in
+            division.faction.isHostile(to: faction) &&
+                !division.isDestroyed &&
+                mapDisplayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
+                division.coord.distance(to: coord) <= 1
+        }
+    }
+
+    private func generalTargetVisibleEnemyPreviewNote(
+        sourceHex: HexCoord?,
+        targetHex: HexCoord?,
+        faction: Faction
+    ) -> String? {
+        let sourceEnemy = sourceHex.flatMap {
+            nearestVisibleHostileSummary(from: $0, faction: faction)
+        }
+        let targetEnemy = targetHex.flatMap {
+            nearestVisibleHostileSummary(from: $0, faction: faction)
+        }
+
+        if let sourceEnemy, let targetEnemy {
+            return "目标近敌：源\(sourceEnemy.name)距\(sourceEnemy.distance)格，目\(targetEnemy.name)距\(targetEnemy.distance)格"
+        }
+        if let targetEnemy {
+            return "目标近敌：目\(targetEnemy.name)距\(targetEnemy.distance)格"
+        }
+        if let sourceEnemy {
+            return "目标近敌：源\(sourceEnemy.name)距\(sourceEnemy.distance)格"
+        }
+        return nil
+    }
+
+    private func nearestVisibleHostileSummary(
+        from coord: HexCoord,
+        faction: Faction
+    ) -> (name: String, distance: Int)? {
+        let nearest = gameState.divisions
+            .filter {
+                $0.faction.isHostile(to: faction) &&
+                    !$0.isDestroyed &&
+                    mapDisplayAdapter.isDivisionVisible($0, viewerFaction: faction)
+            }
+            .map {
+                (
+                    name: $0.thematicDisplayName,
+                    distance: $0.coord.distance(to: coord),
+                    id: $0.id
+                )
+            }
+            .min {
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+                if $0.name != $1.name {
+                    return $0.name < $1.name
+                }
+                return $0.id < $1.id
+            }
+
+        guard let nearest else {
+            return nil
+        }
+        return (nearest.name, nearest.distance)
     }
 
     var selectedGeneralHQUnderAttack: Bool {

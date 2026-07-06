@@ -8,6 +8,7 @@ struct GeneralCommandPanelView: View {
     let influenceNotes: [String]
     let targetRegion: RegionNode?
     let targetZone: FrontZone?
+    let targetPreviewNotes: [String]
     let hqUnderAttack: Bool
     let plannedOperationRows: [(id: String, iconName: String, summary: String)]
     let canHoldLine: Bool
@@ -128,6 +129,19 @@ struct GeneralCommandPanelView: View {
                 LabeledContent("目标") {
                     Text(targetRegion.name)
                 }
+
+                if !targetPreviewNotes.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(Array(targetPreviewNotes.enumerated()), id: \.offset) { _, note in
+                            Label(note, systemImage: targetPreviewIcon(for: note))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(nil)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
             }
 
             HStack(spacing: 8) {
@@ -209,6 +223,10 @@ struct GeneralCommandPanelView: View {
 
     private func influenceIcon(for note: String) -> String {
         note.hasPrefix("道路") ? "arrow.up.right.circle" : "shield.lefthalf.filled"
+    }
+
+    private func targetPreviewIcon(for note: String) -> String {
+        note.hasPrefix("目标官道") ? "arrow.up.right.circle" : "scope"
     }
 
     private var commandHintText: String? {

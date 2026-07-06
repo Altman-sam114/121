@@ -4328,6 +4328,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，麾下军队行追加官道和接敌摘要后，在窄屏、长军队名、长敌军名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 麾下军队道路与接敌摘要是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、同盟借道或敌方回合反制制度。
 
+## v2.4 - 武将面板目标郡县官道与近敌预览兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `AppContainer.selectedGeneralTargetPreviewNotes` 在玩家选择敌对目标郡县、尚未提交“进攻郡县”时，生成提交前只读目标预览。
+- 预览读取当前武将防区源代表 hex 与目标郡县 representative hex，显示源/目标是否据官道或离道；若该代表 hex 邻近当前 viewer 可见 hostile 军队，则追加受压提示。
+- 目标近敌摘要只统计当前 viewer 可见、未毁灭且 `Faction.isHostile(to:)` 判定 hostile 的敌军，并显示源/目标到最近可见敌军的 hex 距离。
+- `GeneralCommandPanelView` 新增 `targetPreviewNotes` 输入，只在目标郡县名下展示这些 notes；`RootGameView` 两个入口统一传入 `selectedGeneralTargetPreviewNotes`。
+- 保持 `PlayerPlannedOperation` schema、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实 `ZoneDirective` 执行、移动、攻击、道路、粮道、补给、外交和动态防区归属不变；本轮只做武将面板只读下令前反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_target_road_enemy_preview.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/RootGameView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，目标郡县名下新增预览在窄屏、长郡县名、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 目标郡县官道与近敌预览是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
