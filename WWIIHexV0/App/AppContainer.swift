@@ -159,7 +159,9 @@ final class AppContainer: ObservableObject {
 
         let displayedDivisions = mapDisplayAdapter.divisions(displayedAt: coord, viewerFaction: playerFaction)
         if let attacker = selectedActionDivision,
-           let enemy = displayedDivisions.first(where: { $0.faction.isHostile(to: attacker.faction) }) {
+           let enemy = displayedDivisions.first(where: {
+               isDiplomaticallyHostile($0.faction, to: attacker.faction)
+           }) {
             submit(.attack(attackerId: attacker.id, targetId: enemy.id))
             return
         }
@@ -1099,7 +1101,7 @@ final class AppContainer: ObservableObject {
         guard let targetZone = gameState.warDeploymentState.zone(for: selectedRegionId) else {
             return "选中郡县未映射防区，暂不能生成进攻军令。"
         }
-        guard targetZone.faction.isHostile(to: playerFaction) else {
+        guard isDiplomaticallyHostile(targetZone.faction, to: playerFaction) else {
             return targetZone.faction == playerFaction
                 ? "目标是己方防区；请选择敌方前线郡县。"
                 : "目标防区当前非敌对；请选择交战中的敌方郡县。"
@@ -1156,7 +1158,7 @@ final class AppContainer: ObservableObject {
         guard let selectedRegionId,
               let region = gameState.map.region(id: selectedRegionId),
               let targetZone = gameState.warDeploymentState.zone(for: selectedRegionId),
-              targetZone.faction.isHostile(to: playerFaction) else {
+              isDiplomaticallyHostile(targetZone.faction, to: playerFaction) else {
             return nil
         }
         return (region, targetZone)
@@ -1246,7 +1248,7 @@ final class AppContainer: ObservableObject {
         }
 
         guard let targetZone = selectedGeneralTargetZone,
-              targetZone.faction.isHostile(to: playerFaction) else {
+              isDiplomaticallyHostile(targetZone.faction, to: playerFaction) else {
             return nil
         }
 
@@ -2350,7 +2352,7 @@ final class AppContainer: ObservableObject {
         }
 
         if let attacker = selectedActionDivision,
-           division.faction.isHostile(to: attacker.faction) {
+           isDiplomaticallyHostile(division.faction, to: attacker.faction) {
             submit(.attack(attackerId: attacker.id, targetId: division.id))
         } else {
             selectDivision(division)
@@ -2390,7 +2392,7 @@ final class AppContainer: ObservableObject {
         attackHighlights = Set(
             gameState.divisions
                 .filter {
-                    $0.faction.isHostile(to: division.faction) &&
+                    isDiplomaticallyHostile($0.faction, to: division.faction) &&
                         mapDisplayAdapter.isDivisionVisible($0, viewerFaction: playerFaction) &&
                         division.coord.distance(to: $0.coord) <= division.range
                 }

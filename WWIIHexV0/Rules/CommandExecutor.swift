@@ -92,6 +92,9 @@ struct CommandExecutor {
 
         let attacker = state.divisions[attackerIndex]
         let defender = state.divisions[targetIndex]
+        guard state.diplomacyState.isHostile(between: defender.faction, and: attacker.faction) else {
+            return
+        }
         let damage = combatRules.attackDamage(attacker: attacker, defender: defender, in: state)
         let combatAudit = combatRules.combatAuditSummary(attacker: attacker, defender: defender, in: state)
         let generalInfluence = combatRules.generalInfluenceSummary(attacker: attacker, defender: defender, in: state)

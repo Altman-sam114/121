@@ -19,7 +19,7 @@ struct RegionCombatRules {
         }
 
         var pressure = 0
-        for division in state.divisions where division.faction.isHostile(to: faction) {
+        for division in state.divisions where state.diplomacyState.isHostile(between: division.faction, and: faction) {
             guard let enemyRegion = state.map.region(for: division.coord),
                   let distance = graph.distance(from: enemyRegion, to: regionId),
                   distance <= radius else {

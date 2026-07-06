@@ -4743,6 +4743,60 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮仍未修改实际命令入口：地图点击自动攻击、攻击高亮、武将“进攻郡县”按钮可用性、`selectedAttackTarget` 和相邻己方防区反推仍使用 `Faction.isHostile(to:)`，需要后续单独切片决定是否把玩家 UI 命令 affordance 接到外交 hostile。
 - 完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
 
+## v2.4 外交敌对攻击入口兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 让玩家点击攻击、攻击高亮、武将宏观进攻 affordance、底层攻击校验和 AI 单位攻击目标筛选使用同一 `DiplomacyState` hostile / atWar 口径，避免只读预览、提交入口和 `RuleEngine` 校验分叉。
+
+完成内容：
+
+- `WWIIHexV0/App/AppContainer.swift` 的地图点击自动攻击、点击非己方军队直接攻击、攻击高亮、武将“进攻郡县”按钮可用性、`selectedAttackTarget` 和相邻己方防区反推改用 `isDiplomaticallyHostile`。
+- `WWIIHexV0/Rules/CommandValidator.swift` 的 `.attack` 目标合法性改用 `state.diplomacyState.isHostile(between:and:)`。
+- `WWIIHexV0/Rules/CommandExecutor.swift` 在 `executeAttack` 增加同口径防绕过 guard，避免直接调用执行器时结算外交非敌对目标。
+- `WWIIHexV0/Rules/RegionCommandValidator.swift` 的旧 region attack 兼容校验改用 `DiplomacyState`。
+- `WWIIHexV0/Commands/WarCommandExecutor.swift` 的单位级敌军强度、敌军存在和可见攻击目标筛选改用 `DiplomacyState`。
+- `WWIIHexV0/Rules/RegionCombatRules.swift` 的区域交战压力只统计外交 hostile / atWar 单位。
+
+关键文件：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Rules/CommandValidator.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Rules/RegionCommandValidator.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Rules/RegionCombatRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_attack_entry.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/CommandValidator.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/CommandExecutor.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/RegionCommandValidator.swift` 通过。
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/RegionCombatRules.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 道路敌控区、粮道通行、安全补员邻接、部署层敌军存在/相邻敌对防区接触和非己方控制 hex/region 的推进/压力分类仍使用原控制权或 `Faction.isHostile(to:)` 口径；完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
+- 本轮没有运行本机运行时烟测；复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

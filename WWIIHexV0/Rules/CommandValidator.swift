@@ -73,7 +73,7 @@ struct CommandValidator {
             return .invalid(.targetNotFound)
         }
 
-        guard target.faction.isHostile(to: attacker.faction) else {
+        guard state.diplomacyState.isHostile(between: target.faction, and: attacker.faction) else {
             return .invalid(.invalidTargetFaction)
         }
 
