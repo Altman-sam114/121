@@ -5064,6 +5064,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `WWIIHexV0/Rules/OccupationRules.swift` 的 `canOccupy` 改为仅允许占领无控制者或外交 hostile / atWar 控制格；同 faction、非 capturable、已有其他单位仍不可占领。
 - `WWIIHexV0/Commands/WarCommandExecutor.swift` 在命令执行前记录该移动是否真实可占领，并只用真实可占领/已占领 region 驱动动态方面推进；普通 affected region 仍参与战略同步，但不再单独造成突破推进。
 - 保持 `Command` / `ZoneDirective` schema、移动路径、交战伤害、补给、外交状态和完整借道制度不变。
+- 根据并发 review 结果，同步修正 `README.md`、`md/flow/flow.md` 和 `md/flow/flowchart.md` 中关于 `OccupationRules.canOccupy` 与动态方面推进来源的旧口径，避免与外交 hostile gate 分叉。
 
 关键文件：
 
