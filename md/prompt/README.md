@@ -50,6 +50,7 @@ Agent A 写提示词时必须明确：
 
 ## 5. 当前三国迁移阶段记录
 
+- `md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`（总提示词 / 路线入口）
 - `md/prompt/v2.0-三国迁移/v2.0_audit_and_contract.md`
 - `md/prompt/v2.0-三国迁移/v2.1_neutral_faction_foundation.md`
 - `md/prompt/v2.0-三国迁移/v2.1_sanguo_power_profiles.md`
@@ -89,6 +90,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_planned_operation_wrapping.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_target_road_enemy_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_road_pressure_tags.md`
+- `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_visible_enemy_tags.md`
 - `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_tactic_labels.md`
 - `md/prompt/v2.0-三国迁移/v2.4_player_general_tactic_shaping.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_influence_panel_summary.md`

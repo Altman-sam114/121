@@ -353,7 +353,15 @@ final class BoardScene: SKScene {
                     sourceHex: sourceHex,
                     targetHex: targetHex,
                     faction: operation.faction,
-                    state: renderState.gameState
+                    state: renderState.gameState,
+                    displayAdapter: renderState.displayAdapter
+                )
+                let enemyTag = operationEnemyTag(
+                    sourceHex: sourceHex,
+                    targetHex: targetHex,
+                    faction: operation.faction,
+                    state: renderState.gameState,
+                    displayAdapter: renderState.displayAdapter
                 )
                 drawOperationArrow(
                     from: sourcePoint,
@@ -380,7 +388,8 @@ final class BoardScene: SKScene {
                     operationLabelText(
                         for: operation,
                         state: renderState.gameState,
-                        roadTag: roadSummary.label
+                        roadTag: roadSummary.label,
+                        enemyTag: enemyTag
                     ),
                     at: operationLabelPoint(from: sourcePoint, to: targetPoint),
                     type: operation.directiveType
@@ -390,7 +399,15 @@ final class BoardScene: SKScene {
                     sourceHex: sourceHex,
                     targetHex: nil,
                     faction: operation.faction,
-                    state: renderState.gameState
+                    state: renderState.gameState,
+                    displayAdapter: renderState.displayAdapter
+                )
+                let enemyTag = operationEnemyTag(
+                    sourceHex: sourceHex,
+                    targetHex: nil,
+                    faction: operation.faction,
+                    state: renderState.gameState,
+                    displayAdapter: renderState.displayAdapter
                 )
                 drawOperationHoldMarker(at: sourcePoint)
                 drawOperationRoadMarker(
@@ -404,7 +421,8 @@ final class BoardScene: SKScene {
                     operationLabelText(
                         for: operation,
                         state: renderState.gameState,
-                        roadTag: roadSummary.label
+                        roadTag: roadSummary.label,
+                        enemyTag: enemyTag
                     ),
                     at: CGPoint(x: sourcePoint.x, y: sourcePoint.y + layout.hexSize * 0.76),
                     type: operation.directiveType
@@ -522,15 +540,15 @@ final class BoardScene: SKScene {
         let color = operationColor(for: type)
         let label = SKLabelNode(text: text)
         label.fontName = "AvenirNext-DemiBold"
-        label.fontSize = 11
+        label.fontSize = text.count > 16 ? 10 : 11
         label.fontColor = SKColor(white: 0.98, alpha: 1)
         label.horizontalAlignmentMode = .center
         label.verticalAlignmentMode = .center
         label.zPosition = 30
 
-        let estimatedWidth = max(42, min(128, CGFloat(text.count) * 10 + 16))
+        let estimatedWidth = max(42, min(168, CGFloat(text.count) * 9 + 18))
         let background = SKShapeNode(
-            rectOf: CGSize(width: estimatedWidth, height: 20),
+            rectOf: CGSize(width: estimatedWidth, height: 22),
             cornerRadius: 6
         )
         background.fillColor = SKColor(white: 0.06, alpha: 0.78)
@@ -560,10 +578,12 @@ final class BoardScene: SKScene {
     private func operationLabelText(
         for operation: PlayerPlannedOperation,
         state: GameState,
-        roadTag: String?
+        roadTag: String?,
+        enemyTag: String?
     ) -> String {
         let tactic = operation.tactic.map(operationTacticLabel) ?? operation.directiveType.displayName
-        let suffix = roadTag.map { " · \($0)" } ?? ""
+        let suffixFragments = [roadTag, enemyTag].compactMap { $0 }
+        let suffix = suffixFragments.isEmpty ? "" : " · \(suffixFragments.joined(separator: "/"))"
         guard let generalName = operationGeneralName(for: operation, state: state) else {
             return "\(operationTypeLabel(operation.directiveType))\(tactic)\(suffix)"
         }
@@ -633,13 +653,19 @@ final class BoardScene: SKScene {
         sourceHex: HexCoord,
         targetHex: HexCoord?,
         faction: Faction,
-        state: GameState
+        state: GameState,
+        displayAdapter: MapDisplayAdapter
     ) -> (label: String, sourceHasRoad: Bool, targetHasRoad: Bool, sourceIsPressured: Bool, targetIsPressured: Bool) {
         let sourceHasRoad = state.map.tile(at: sourceHex)?.hasRoad == true
         let targetHasRoad = targetHex.flatMap { state.map.tile(at: $0)?.hasRoad } ?? false
-        let sourceIsPressured = operationHexIsPressured(sourceHex, faction: faction, state: state)
+        let sourceIsPressured = operationHexIsPressured(
+            sourceHex,
+            faction: faction,
+            state: state,
+            displayAdapter: displayAdapter
+        )
         let targetIsPressured = targetHex.map {
-            operationHexIsPressured($0, faction: faction, state: state)
+            operationHexIsPressured($0, faction: faction, state: state, displayAdapter: displayAdapter)
         } ?? false
 
         let roadLabel: String
@@ -661,12 +687,91 @@ final class BoardScene: SKScene {
         return (label, sourceHasRoad, targetHasRoad, sourceIsPressured, targetIsPressured)
     }
 
-    private func operationHexIsPressured(_ coord: HexCoord, faction: Faction, state: GameState) -> Bool {
+    private func operationHexIsPressured(
+        _ coord: HexCoord,
+        faction: Faction,
+        state: GameState,
+        displayAdapter: MapDisplayAdapter
+    ) -> Bool {
         state.divisions.contains { division in
             division.faction.isHostile(to: faction) &&
                 !division.isDestroyed &&
+                displayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
                 division.coord.distance(to: coord) <= 1
         }
+    }
+
+    private func operationEnemyTag(
+        sourceHex: HexCoord,
+        targetHex: HexCoord?,
+        faction: Faction,
+        state: GameState,
+        displayAdapter: MapDisplayAdapter
+    ) -> String? {
+        let anchors = [sourceHex, targetHex].compactMap { $0 }
+        let nearest = anchors
+            .compactMap {
+                operationNearestVisibleHostileSummary(
+                    from: $0,
+                    faction: faction,
+                    state: state,
+                    displayAdapter: displayAdapter
+                )
+            }
+            .min {
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+                if $0.name != $1.name {
+                    return $0.name < $1.name
+                }
+                return $0.id < $1.id
+            }
+
+        guard let nearest else {
+            return nil
+        }
+        return "近\(shortOperationEnemyName(nearest.name))\(nearest.distance)"
+    }
+
+    private func operationNearestVisibleHostileSummary(
+        from coord: HexCoord,
+        faction: Faction,
+        state: GameState,
+        displayAdapter: MapDisplayAdapter
+    ) -> (name: String, distance: Int, id: String)? {
+        state.divisions
+            .filter {
+                $0.faction.isHostile(to: faction) &&
+                    !$0.isDestroyed &&
+                    displayAdapter.isDivisionVisible($0, viewerFaction: faction)
+            }
+            .map {
+                (
+                    name: $0.thematicDisplayName,
+                    distance: $0.coord.distance(to: coord),
+                    id: $0.id
+                )
+            }
+            .min {
+                if $0.distance != $1.distance {
+                    return $0.distance < $1.distance
+                }
+                if $0.name != $1.name {
+                    return $0.name < $1.name
+                }
+                return $0.id < $1.id
+            }
+    }
+
+    private func shortOperationEnemyName(_ name: String) -> String {
+        let compact = name
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+        guard compact.count > 3 else {
+            return compact
+        }
+        return String(compact.prefix(3))
     }
 
     private func operationColor(for type: DirectiveType) -> SKColor {

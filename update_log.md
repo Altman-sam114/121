@@ -4368,6 +4368,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，目标郡县名下新增预览在窄屏、长郡县名、长军队名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 目标郡县官道与近敌预览是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
 
+## v2.4 - 地图计划军令可见近敌短标签兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `BoardScene` 的计划军令标签在既有武将、攻守战术和官道短标签基础上，追加最近可见 hostile 敌军短标签，例如 `近袁骑2`。
+- 地图计划军令的官道受压判断改为只统计当前 operation faction 可见、未毁灭且 `Faction.isHostile(to:)` 判定 hostile 的敌军，避免隐藏敌军通过地图标签泄漏。
+- `AppContainer.selectedGeneralPlannedOperationRows` 的源/目标受压和近敌对象/距离摘要同步改为可见 hostile 口径，与提交前目标郡县预览一致。
+- 地图计划军令标签对长文本做小幅字号和背景宽度适配，降低近敌短标签挤出背景的概率。
+- `md/prompt/README.md` 补入 `codex-v2.0-三国aiagent迁移总提示词.md` 总提示词入口，避免阶段索引漏掉当前长期目标的路线文件。
+- 保持 `PlayerPlannedOperation` schema、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实 `ZoneDirective` 执行、移动、攻击、道路、粮道、补给、外交和动态防区归属不变；本轮只做只读地图/面板反馈和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_map_planned_operation_visible_enemy_tags.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift WWIIHexV0/SpriteKit/BoardScene.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，地图计划军令短标签在密集箭头、长武将名、长敌军名、小屏和 Dynamic Type 下的实际遮挡仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 地图和面板计划军令近敌/受压摘要是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

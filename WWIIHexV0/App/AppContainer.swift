@@ -1383,7 +1383,11 @@ final class AppContainer: ObservableObject {
         faction: Faction
     ) -> (name: String, distance: Int)? {
         let nearest = gameState.divisions
-            .filter { $0.faction.isHostile(to: faction) && !$0.isDestroyed }
+            .filter {
+                $0.faction.isHostile(to: faction) &&
+                    !$0.isDestroyed &&
+                    mapDisplayAdapter.isDivisionVisible($0, viewerFaction: faction)
+            }
             .map {
                 (
                     name: $0.thematicDisplayName,
@@ -1469,6 +1473,7 @@ final class AppContainer: ObservableObject {
         gameState.divisions.contains { division in
             division.faction.isHostile(to: faction) &&
                 !division.isDestroyed &&
+                mapDisplayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
                 division.coord.distance(to: coord) <= 1
         }
     }
