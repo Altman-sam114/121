@@ -5135,8 +5135,49 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- `MockAIClient` 的 legacy 决策文本仍可能在意图、理由和调试 JSON 中出现 Bastogne / armor / artillery；后续按 `v2.4_mockai_visible_text_localization` 或 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+- `MockAIClient` 的 legacy 目标选择、stance、排序和评分仍保留 Bastogne / armor / artillery 行为语义；后续若要迁移行为，应单独处理。
 - `AgentPanelView` 中防区、目标郡县和部分 directive summary 仍可能显示 raw region / zone id；后续按 UnitInspector / AgentPanel 战略锚点名称小切片迁移。
+
+## v2.4 - MockAI 可见文本三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 将 Legacy `MockAIClient` 输出到 `AgentDecisionRecord`、AI 面板、调试 JSON 和命令结果里的 intent / reason 文案改为三国、官道、粮草、器械和防区部署语义；不改目标选择、stance 字符串、排序、评分或 JSON schema。
+
+完成内容：
+
+- `WWIIHexV0/Agents/MockAIClient.swift` 的普通 resupply / move / hold reason 改为粮草、官道、可见机会等中文文案。
+- 普通 intent 改为沿官道集中机动力量、等待器械支援、突破要地等三国语义。
+- FrontZone deployment 兼容路径的 reason / intent 改为防区、前线、纵深预备队、守备军等中文文案。
+- `attackReason` 的器械攻城和普通攻击原因改为中文。
+- 保留 Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序、攻击评分、`AgentDecisionEnvelope` schema、parser、mapper 和执行链不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/MockAIClient.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_mockai_visible_text_localization.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/MockAIClient.swift` 通过。
+- 改动文件尾随空白扫描、冲突标记扫描均无命中。
+- 旧可见英文 MockAI 文案扫描无命中：`Break through toward Bastogne`、`Advance toward`、`No useful visible`、`v0.33 deployment`、`Artillery fires`、`Target is within range`、`unit supply is`、`armor on roads`、`artillery support`。
+- prompt 索引 Ruby 检查无缺项；`git diff --check` 通过。
+- 并发子 Agent 复核确认：本轮只改 reason / intent / 注释文本；未改 Bastogne 目标选择、stance 结构化字符串、schemaVersion、攻击过滤/评分、射程逻辑或移动目标排序。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `MockAIClient` 算法仍按旧 fallback 目标和 armor/artillery 语义排序/评分；后续若要迁移行为，应单独做 `v2.4_mockai_behavior_sanguo_compatibility.md`。
+- `stance` 字符串仍保留 `fireSupport`、`breakthrough`、`roadAdvance`、`frontAttack` 等兼容 schema 值；如要迁移展示层，需要先确认下游 parser / mapper / 测试兼容边界。
 
 ## v2.4 外交敌对 AI 上游摘要兼容层
 

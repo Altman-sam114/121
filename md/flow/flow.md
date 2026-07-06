@@ -597,6 +597,8 @@ AppContainer.bootstrap()
 
 `AgentDecisionRecord` 继续存储 raw `agentId`、`provider` 和 `rawJSON` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和 `debugJSONDisplay` 映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。
 
+`MockAIClient` 仍是 Legacy Agent D 兼容 provider；本轮只把 intent / reason 文案改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分保持旧兼容算法，不在可见文本切片里迁移行为。
+
 `DataLoader.loadInitialGameState()` 当前优先走编辑器兼容 JSON：
 
 ```text

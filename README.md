@@ -142,7 +142,7 @@ WWIIHexV0/
 | `UI/RootGameView.swift` | 启动触发 | `.task { container.runAIIfNeeded() }` |
 
 **MockAI 行为（兼容 id `guderian`，三国显示名张辽，旧启发式仍待迁移）：**
-跳过已行动单位 → 低补给/包围优先 resupply → 射程内低 hp 敌军优先 attack（炮兵优先打城市/要塞）→ 装甲沿道路向 Bastogne move → 否则 hold
+跳过已行动单位 → 粮草紧张/粮道断绝优先 resupply → 射程内低兵力敌军优先 attack（器械优先压制城池/关隘）→ 机动军队沿道路向旧兼容目标 move → 否则 hold；可见 intent / reason 已改为三国官道、粮草、防区和器械语义，但 fallback 目标选择、stance 字符串、排序和评分仍保留旧兼容算法。
 
 **v0.7 ZoneDirective 战术行为：**
 `ZoneCommanderAgent` 读取所属 `FrontZone` 的前线/部署摘要，`visibleEnemyStrengthByRegion` 和敌军存在判断只统计 `DiplomacyState` hostile / atWar 单位；`BinaryTacticClassifier` 会结合兵力比、机动兵力、炮兵支援、纵深预备队、压力和补给警告，在 `standardAttack`、`blitzkrieg`、`spearhead`、`breakthrough`、`pincerMovement`、`fireCoverage`、`feint`、`guerrillaWarfare`、`holdPosition`、`elasticDefense`、`defenseInDepth`、`lastStand` 之间分类；`WarCommandExecutor` 将这些战术降级为 `move / attack / hold / allowRetreat`，仍统一交给 `RuleEngine` 校验执行。`WarDirectiveRecord` 记录 `category` / `tactic` / `commanderAgentId` / `commandTarget`，便于后续接真 LLM 回放与审计。
