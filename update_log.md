@@ -5880,6 +5880,58 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做截图/模拟器视觉验收；方面/防区 fallback 文案的最终宽度和换行仍需后续 UI 预览、人工查看或授权运行环境确认。
 - `DiplomacyPanelView` 等其他面板仍可能有 country/bloc raw id 展示残留，建议后续继续拆小切片处理。
 
+## v2.4 - 武将风格展示一致性与军机摘要中文化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进武将相关迁移，统一武将统军风格展示口径，并处理军机面板可见的防区/方面指令英文摘要。
+
+完成内容：
+
+- `ZoneCommanderAgentConfig.CommandStyle` 提供共享 `displayName`，输出进取、持重、谨慎。
+- `GeneralAssignment` 增加 `resolvedCommandStyle` 和 `commandStyleDisplayName`；assignment 快照风格缺失或坏值时按忠诚/满意推断，和 `GeneralAgent` 实际执行口径一致。
+- `GeneralAgent`、`AgentPanelView`、`GeneralCommandPanelView`、`GeneralProfileView`、`UnitInspectorView` 复用共享风格展示入口，删除重复风格 switch。
+- `GeneralAgent` 的 rationale、record `generalName` 和战术检查 config 优先使用武将档案名或 assignment 展示名，缺名时显示“未命名武将”，不再把 raw `generalId` 当作玩家文案 fallback；record 身份字段 `generalId` 仍保留。
+- `TheaterCommanderPool`、模拟元帅 JSON 摘要、元帅编译 context 和 fallback diagnostics 改为中文，避免 `zone directive(s)` / `theater directive(s)` / `fallback used` 出现在军机面板。
+- 本轮不改变 `CommandStyle` rawValue、Codable、JSON schema、战术塑形规则、道路/交战数值、命令执行或规则系统。
+- 使用两个并发只读子 Agent 审计武将风格显示重复、武将姓名/记录面板 raw id 和旧兼容名残留，主线程完成本切片改动。
+
+关键文件：
+
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `WWIIHexV0/Agents/GeneralAgent.swift`
+- `WWIIHexV0/Core/GeneralAssignment.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/GeneralProfileView.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_style_display_consistency.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/ZoneCommanderAgent.swift WWIIHexV0/Agents/GeneralAgent.swift WWIIHexV0/Core/GeneralAssignment.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/GeneralProfileView.swift WWIIHexV0/UI/UnitInspectorView.swift` 通过。
+- 重复风格显示 helper、武将 raw id 玩家文案 fallback 和英文 directive 摘要扫描无命中：`styleLabel(`、`commandStyleDisplayName(`、`zone directive(s)`、`theater directive(s)`、`Compiled ... zone directive`、`Fallback TheaterCommanderPool`、`fallback used`、`Marshal directive decode`、`generalName(general, fallback: assignment.generalId)`、`assignment.generalDisplayName ?? assignment.generalId`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不处理 `DiplomacyPanelView` 的 country/bloc raw id，也不处理 Legacy Agent D prompt 中面向模型的开发字段。
+- `GeneralAssignment` 仍保留 raw `commandStyleRawValue` 以兼容 Codable 和数据快照。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -72,7 +72,7 @@ struct GeneralProfileView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             LabeledContent("统军风格") {
-                Text(styleLabel(general.commandStyle))
+                Text(general.commandStyle.displayName)
             }
             if let zone {
                 LabeledContent("所属防区") {
@@ -169,14 +169,4 @@ struct GeneralProfileView: View {
         return letters.isEmpty ? String(general.name.prefix(2)).uppercased() : String(letters).uppercased()
     }
 
-    private func styleLabel(_ style: ZoneCommanderAgentConfig.CommandStyle) -> String {
-        switch style {
-        case .aggressive:
-            return "进取"
-        case .balanced:
-            return "持重"
-        case .cautious:
-            return "谨慎"
-        }
-    }
 }

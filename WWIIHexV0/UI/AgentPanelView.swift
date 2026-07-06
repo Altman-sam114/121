@@ -275,7 +275,7 @@ struct AgentPanelView: View {
 
     private func generalRecordSummary(_ record: GeneralDecisionRecord) -> String {
         let tactic = record.tactic?.displayName ?? "未定战术"
-        let style = commandStyleDisplayName(record.commandStyle)
+        let style = record.commandStyle?.displayName ?? "未定风格"
         let targets = regionDisplayList(record.targetRegionIds)
         let targetText = targets.isEmpty ? "无目标" : targets
         return "\(frontZoneDisplayName(for: record.zoneId)) / \(record.directiveType.displayName) / \(tactic) / \(style) / \(targetText)"
@@ -305,20 +305,6 @@ struct AgentPanelView: View {
     private func countryDisplayName(for countryId: CountryId) -> String {
         let displayName = countryDisplayNames[countryId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return displayName.isEmpty ? countryId.rawValue : displayName
-    }
-
-    private func commandStyleDisplayName(_ style: ZoneCommanderAgentConfig.CommandStyle?) -> String {
-        guard let style else {
-            return "未定风格"
-        }
-        switch style {
-        case .aggressive:
-            return "进取"
-        case .balanced:
-            return "持重"
-        case .cautious:
-            return "谨慎"
-        }
     }
 
     private func resultLine(_ result: CommandResultSummary) -> String {

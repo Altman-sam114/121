@@ -174,7 +174,7 @@ struct GeneralAgent {
             tactic: tactic,
             commandTarget: directive.commandTarget
         )
-        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核攻势，采用\(tactic.displayName)。"
+        let rationale = "\(generalDisplayName(general: general, assignment: assignment)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核攻势，采用\(tactic.displayName)。"
         return (adjusted, action, rationale)
     }
 
@@ -230,7 +230,7 @@ struct GeneralAgent {
             tactic: tactic,
             commandTarget: directive.commandTarget
         )
-        let rationale = "\(generalName(general, fallback: assignment.generalId)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、防区压力 \(zone.pressure)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核防务，采用\(tactic.displayName)。"
+        let rationale = "\(generalDisplayName(general: general, assignment: assignment)) 依据忠诚 \(assignment.loyalty)、满意 \(assignment.satisfaction)、防区压力 \(zone.pressure)、\(style.displayName)风格和\(skillSummary(assignment: assignment, general: general))复核防务，采用\(tactic.displayName)。"
         return (adjusted, action, rationale)
     }
 
@@ -346,7 +346,7 @@ struct GeneralAgent {
         let checker = TacticConditionChecker()
         let config = ZoneCommanderAgentConfig(
             id: assignment.generalId,
-            name: generalName(general, fallback: assignment.generalDisplayName ?? assignment.generalId),
+            name: generalDisplayName(general: general, assignment: assignment),
             faction: zone.faction,
             assignedZoneId: zone.id,
             skills: Array(skillSet(assignment: assignment, general: general)).sorted(),
@@ -410,7 +410,8 @@ struct GeneralAgent {
             faction: zone?.faction ?? state.activeFaction,
             zoneId: directive.zoneId,
             generalId: generalId,
-            generalName: general.map { generalName($0, fallback: $0.id) },
+            generalName: assignment.map { generalDisplayName(general: general, assignment: $0) }
+                ?? general.map { generalName($0, fallback: "未命名武将") },
             commandStyle: general?.commandStyle ?? assignment.map { commandStyle(from: $0) },
             directiveType: directive.type,
             tactic: directive.tactic,
@@ -418,6 +419,11 @@ struct GeneralAgent {
             action: action,
             rationale: rationale
         )
+    }
+
+    private func generalDisplayName(general: GeneralData?, assignment: GeneralAssignment) -> String {
+        let assignmentName = assignment.generalDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return generalName(general, fallback: assignmentName.isEmpty ? "未命名武将" : assignmentName)
     }
 
     private func appendGeneralContext(_ context: String?, records: [GeneralDecisionRecord]) -> String? {
@@ -461,22 +467,8 @@ struct GeneralAgent {
         return "技能 \(labels.joined(separator: "/"))"
     }
 
-    private func inferredStyle(from assignment: GeneralAssignment) -> ZoneCommanderAgentConfig.CommandStyle {
-        if assignment.loyalty < 45 || assignment.satisfaction < 45 {
-            return .cautious
-        }
-        if assignment.loyalty >= 75 && assignment.satisfaction >= 65 {
-            return .aggressive
-        }
-        return .balanced
-    }
-
     private func commandStyle(from assignment: GeneralAssignment) -> ZoneCommanderAgentConfig.CommandStyle {
-        if let rawValue = assignment.commandStyleRawValue,
-           let style = ZoneCommanderAgentConfig.CommandStyle(rawValue: rawValue) {
-            return style
-        }
-        return inferredStyle(from: assignment)
+        assignment.resolvedCommandStyle
     }
 
     private func minOptional(_ current: Int?, _ cap: Int) -> Int? {
@@ -491,18 +483,5 @@ struct GeneralAgent {
             return fallback
         }
         return general.localizedName.isEmpty ? general.name : general.localizedName
-    }
-}
-
-private extension ZoneCommanderAgentConfig.CommandStyle {
-    var displayName: String {
-        switch self {
-        case .aggressive:
-            return "进取"
-        case .balanced:
-            return "持重"
-        case .cautious:
-            return "谨慎"
-        }
     }
 }

@@ -15,6 +15,29 @@ struct ZoneCommanderAgentConfig: Codable, Equatable, Identifiable {
     }
 }
 
+extension ZoneCommanderAgentConfig.CommandStyle {
+    var displayName: String {
+        switch self {
+        case .aggressive:
+            return "进取"
+        case .balanced:
+            return "持重"
+        case .cautious:
+            return "谨慎"
+        }
+    }
+
+    static func displayName(forRawValue rawValue: String?) -> String {
+        guard let rawValue else {
+            return "未定风格"
+        }
+        guard let style = Self(rawValue: rawValue) else {
+            return "自定风格"
+        }
+        return style.displayName
+    }
+}
+
 struct TacticConditionChecker {
     func canUseTactic(
         _ tactic: TacticName,
@@ -855,7 +878,7 @@ struct TheaterCommanderPool {
     }
 
     private func contextSummary(for faction: Faction, directives: [ZoneDirective]) -> String {
-        "\(faction.displayName): \(directives.count) zone directive(s)."
+        "\(faction.displayName)：生成 \(directives.count) 条防区指令。"
     }
 }
 
@@ -1367,7 +1390,7 @@ struct SimulatedMarshalLLMClient: MarshalLLMClient {
             faction: summary.faction,
             strategicIntent: strategicIntent(summary: summary, bias: config.strategicBias),
             directives: directives,
-            summary: "\(summary.marshalName): \(directives.count) theater directive(s) from summarized fronts."
+            summary: "\(summary.marshalName)：基于汇总战线生成 \(directives.count) 条方面指令。"
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -1494,7 +1517,7 @@ struct TheaterDirectiveCompiler {
             turn: theaterEnvelope.turn,
             directives: compiledDirectives,
             commanderAgentId: theaterEnvelope.issuerId,
-            theaterContext: "\(theaterEnvelope.strategicIntent) Compiled \(compiledDirectives.count) zone directive(s)."
+            theaterContext: "\(theaterEnvelope.strategicIntent) 已编译 \(compiledDirectives.count) 条防区指令。"
         )
     }
 
@@ -1613,7 +1636,7 @@ struct MarshalAgent {
                 rawTheaterJSON: nil,
                 theaterEnvelope: nil,
                 directiveEnvelope: fallback,
-                diagnostics: ["Marshal \(config.id) belongs to \(config.faction.displayName), fallback used for \(faction.displayName)."]
+                diagnostics: ["军师 \(config.id) 属于 \(config.faction.displayName)，本回合改用 \(faction.displayName) 的兼容防区指挥。"]
             )
         }
 
@@ -1645,7 +1668,7 @@ struct MarshalAgent {
                 rawTheaterJSON: nil,
                 theaterEnvelope: nil,
                 directiveEnvelope: fallback,
-                diagnostics: ["Marshal directive decode/compile failed: \(error.localizedDescription). Fallback TheaterCommanderPool used."]
+                diagnostics: ["军师指令解码或编译失败：\(error.localizedDescription)。已改用兼容防区指挥。"]
             )
         }
     }

@@ -120,6 +120,28 @@ struct GeneralAssignment: Codable, Equatable, Identifiable {
         )
     }
 
+    var resolvedCommandStyle: ZoneCommanderAgentConfig.CommandStyle {
+        if let commandStyleRawValue,
+           let style = ZoneCommanderAgentConfig.CommandStyle(rawValue: commandStyleRawValue) {
+            return style
+        }
+        return inferredCommandStyle
+    }
+
+    var commandStyleDisplayName: String {
+        resolvedCommandStyle.displayName
+    }
+
+    private var inferredCommandStyle: ZoneCommanderAgentConfig.CommandStyle {
+        if loyalty < 45 || satisfaction < 45 {
+            return .cautious
+        }
+        if loyalty >= 75 && satisfaction >= 65 {
+            return .aggressive
+        }
+        return .balanced
+    }
+
     private static func clampPercent(_ value: Int) -> Int {
         max(0, min(100, value))
     }

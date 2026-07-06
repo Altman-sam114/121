@@ -172,18 +172,7 @@ private extension GeneralAssignment {
     }
 
     var styleDisplayName: String {
-        switch commandStyleRawValue {
-        case "aggressive":
-            return "进取"
-        case "balanced":
-            return "持重"
-        case "cautious":
-            return "谨慎"
-        case .some:
-            return "自定风格"
-        case nil:
-            return "未定风格"
-        }
+        commandStyleDisplayName
     }
 
     var skillDisplaySummary: String {

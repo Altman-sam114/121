@@ -17,7 +17,7 @@
 
 **当前补给/撤退控制格边界：** `SupplyRules` 的粮道控制格通行和撤退安全格控制格阻断、`RegionSupplyRules` 的战略郡县粮道控制区通行和撤退安全郡县已按 `DiplomacyState` hostile / atWar 口径判断；非敌对控制格不会仅因旧二元阵营关系切断粮道或阻止安全撤退，但非同 faction 堆叠、补给源共享和完整借道制度仍未实现。
 
-**当前武将显示边界：** `GeneralData.rank` raw 字段和旧 `generals.json` fallback 数据保留兼容；武将军令面板和武将档案使用 `rankDisplayName` 把旧英文军衔映射为三国语义显示名，头像占位的辅助功能文案显示为中文“头像”。
+**当前武将显示边界：** `GeneralData.rank` raw 字段和旧 `generals.json` fallback 数据保留兼容；武将军令面板和武将档案使用 `rankDisplayName` 把旧英文军衔映射为三国语义显示名，头像占位的辅助功能文案显示为中文“头像”。武将统军风格由 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 统一展示为进取、持重、谨慎；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 执行口径一致。
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 

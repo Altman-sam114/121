@@ -46,7 +46,7 @@ struct GeneralCommandPanelView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(general.localizedName)
                                 .font(.subheadline.weight(.semibold))
-                            Text("\(general.rankDisplayName) / \(styleLabel(general.commandStyle))")
+                            Text("\(general.rankDisplayName) / \(general.commandStyle.displayName)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -207,17 +207,6 @@ struct GeneralCommandPanelView: View {
         let words = general.localizedName.split(separator: " ")
         let letters = words.prefix(2).compactMap(\.first)
         return letters.isEmpty ? String(general.name.prefix(2)).uppercased() : String(letters).uppercased()
-    }
-
-    private func styleLabel(_ style: ZoneCommanderAgentConfig.CommandStyle) -> String {
-        switch style {
-        case .aggressive:
-            return "进取"
-        case .balanced:
-            return "持重"
-        case .cautious:
-            return "谨慎"
-        }
     }
 
     private func influenceIcon(for note: String) -> String {

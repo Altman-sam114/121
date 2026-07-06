@@ -71,6 +71,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、优先从已有官道或外部官道入口连缀最多两格战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，也接入玩家武将面板宏观军令执行前；它读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格、技能和防区压力复核军令，塑形 `ZoneDirective.tactic` 并写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
+- `ZoneCommanderAgentConfig.CommandStyle.displayName` 是武将统军风格共享展示入口；`GeneralAssignment.commandStyleDisplayName` 会在快照 raw 值缺失或损坏时按忠诚/满意推断进取、持重或谨慎，和 `GeneralAgent` 实际执行口径一致。武将军令面板、武将档案、军队详情和军机面板不再各自维护风格显示 switch；`TheaterCommanderPool` 和模拟元帅进入军机面板的防区/方面指令摘要与 fallback diagnostics 也已中文化，不改变 directive schema 或执行规则。
 - `CommandValidationError` 保留英文 rawValue 作为 Codable / 测试兼容身份，同时提供中文 `displayName`；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 使用中文展示值写入 `CommandResult`、事件日志、`WarDirectiveRecord.diagnostics` 和 AI 面板命令结果；`CommandPanelView.statusText` 按 `DiplomacyState` 区分敌军和非敌对军队，但下令权限仍只给玩家当前回合的己方未行动军队。
 - 官渡默认剧本当前是 40 hex / 8 region 的迁移预览，不是完整 80-160 hex 首发大战役；旧阿登 JSON 仍保留作 fallback 和历史回归参考。
 
