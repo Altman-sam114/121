@@ -5443,6 +5443,55 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮只改玩家可见交互日志，不迁移 `Command` / `ZoneDirective` / `WarCommandExecutor` / `RuleEngine` 行为，不改记录 raw id、Codable 字段或 JSON schema。
 - `Command.displayName` 仍可能包含兼容 id；本轮只处理交互日志框架文案和防区提交展示名。
+- 并发 UI 审计子 Agent 发现 `NEW GAME`、`[ INFO ]`、`AI 决策`、macOS 菜单 `End Turn`、单位兵牌 `R/H` 和检查器 raw id 等玩家可见残留；建议后续拆成 UI 显示小切片处理。
+
+## v2.4 - SupplyRules 撤退、围城与粮草日志三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 清理 `SupplyRules` 中仍直接写入英文的补给、撤退、围城和包围损耗事件日志，让玩家在战报中用三国语义理解粮道、围城、撤退和整补结果。
+
+完成内容：
+
+- 整补成功日志改为“完成整补：兵力 +N”。
+- 围城恢复阻断日志改为“被围于城池或关隘，当前粮草状态下无法恢复兵力”。
+- 非围城但无法恢复日志改为中文。
+- 撤退成功日志改为从原坐标后撤至目标坐标。
+- 撤退失败日志改为额外损失兵力。
+- 粮道断绝的 siege attrition 改为“粮道断绝，遭受围城损耗”。
+- encirclement attrition 改为“遭受包围损耗”。
+- 撤退恢复完成日志改为“完成撤退整顿”。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_supply_retreat_siege_log_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/SupplyRules.swift` 通过。
+- 目标英文残留扫描无命中：`reinforced in`、`is besieged at`、`could not recover`、`retreated from`、`failed to retreat`、`suffered siege attrition`、`suffered encirclement attrition`、`completed retreat recovery`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只改 `GameState.appendEvent(...)` 的玩家可见文案，不迁移补给路径、围城判定、撤退目的地、损耗数值、事件类别或规则行为。
+- `EconomyRules` 中仍有战略补给库存耗尽、自动补员和部署事件英文日志，建议后续另拆经济/生产日志中文化切片。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 

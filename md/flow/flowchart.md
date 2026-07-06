@@ -102,7 +102,7 @@ flowchart TD
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作、战术和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
-    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路机动、交战审计、余兵和攻防修正摘要"]:::ui
+    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路机动、粮草撤退、围城损耗、交战审计、余兵和攻防修正摘要"]:::ui
 
     ME --> JSON --> DL --> GS
     GS --> HEX

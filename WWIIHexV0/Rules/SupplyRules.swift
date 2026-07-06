@@ -41,15 +41,15 @@ struct SupplyRules {
 
         if hpRecovered > 0 {
             state.appendEvent(
-                "\(after.name) reinforced in \(after.supplyState.displayName): +\(hpRecovered) strength."
+                "\(after.name) 完成整补（\(after.supplyState.displayName)）：兵力 +\(hpRecovered)。"
             )
         } else if isBesieged(after, in: state) {
             state.appendEvent(
-                "\(after.name) is besieged at a city or pass; recovery is blocked while \(after.supplyState.displayName).",
+                "\(after.name) 被围于城池或关隘，\(after.supplyState.displayName) 状态下无法恢复兵力。",
                 category: .encircle
             )
         } else {
-            state.appendEvent("\(after.name) could not recover while \(after.supplyState.displayName).")
+            state.appendEvent("\(after.name) 处于 \(after.supplyState.displayName)，本次未能恢复兵力。")
         }
     }
 
@@ -67,12 +67,12 @@ struct SupplyRules {
             }
             state.divisions[index].beginRetreat(to: destination)
             state.appendEvent(
-                "\(division.name) retreated from \(origin.q),\(origin.r) to \(destination.q),\(destination.r)."
+                "\(division.name) 撤退：从 \(origin.q),\(origin.r) 后撤至 \(destination.q),\(destination.r)。"
             )
         } else {
             state.divisions[index].hp = max(1, state.divisions[index].hp - failedRetreatHPLoss)
             state.appendEvent(
-                "\(division.name) failed to retreat and lost \(failedRetreatHPLoss) strength."
+                "\(division.name) 撤退失败，额外损失 \(failedRetreatHPLoss) 点兵力。"
             )
         }
     }
@@ -97,9 +97,9 @@ struct SupplyRules {
             if hpLost > 0 {
                 let message: String
                 if isBesieged(state.divisions[index], in: state) {
-                    message = "\(state.divisions[index].name) suffered siege attrition after its grain route was cut: -\(hpLost) strength."
+                    message = "\(state.divisions[index].name) 粮道断绝，遭受围城损耗：兵力 -\(hpLost)。"
                 } else {
-                    message = "\(state.divisions[index].name) suffered encirclement attrition: -\(hpLost) strength."
+                    message = "\(state.divisions[index].name) 遭受包围损耗：兵力 -\(hpLost)。"
                 }
                 state.appendEvent(message, category: .encircle)
             }
@@ -317,7 +317,7 @@ struct SupplyRules {
         let wasRetreating = state.divisions[index].isRetreating
         state.divisions[index].advanceRetreatTurn()
         if wasRetreating && !state.divisions[index].isRetreating {
-            state.appendEvent("\(state.divisions[index].name) completed retreat recovery.")
+            state.appendEvent("\(state.divisions[index].name) 完成撤退整顿。")
         }
 
         return true
