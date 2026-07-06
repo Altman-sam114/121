@@ -128,6 +128,7 @@ WWIIHexV0/
 - **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
 - **v2.4 SupplyRules 撤退、围城与粮草日志三国化**：`SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件日志已改为中文；补给路径、围城判定、撤退目的地、损耗数值、事件类别和规则执行不变。
 - **v2.4 SupplyRules 控制格 hostile gate 外交化**：`SupplyRules.isSafeRetreatTile` 和粮道 `canSupplyPass` 的 capturable 控制格阻断改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧 `Faction.isHostile(to:)` 阵营关系阻断粮道或撤退安全格。单位阻断、ZOC、补给源归属、堆叠限制、占领和共享补给制度边界不变。
+- **v2.4 WarCommandExecutor 落点 hostile controller 外交化**：`WarCommandExecutor` 目标郡县候选和接近候选的“敌控格优先”排序改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧二元阵营关系被宏观军令当成敌控优先落点。真实移动、攻击、占领、动态战区推进和借道边界仍由既有规则链路决定。
 - **v2.4 命令结果中文化**：`CommandValidationError` 保留 rawValue / Codable 兼容，同时提供中文展示文案；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 会把玩家/AI 可见的成功、拒绝和校验原因写成中文，AI 面板不再直接展示常见校验枚举名；`CommandPanelView` 的不能下令状态按 `DiplomacyState` 区分敌军和非敌对军队。
 
 | 文件 | 职责 | 关键类型/协议 |

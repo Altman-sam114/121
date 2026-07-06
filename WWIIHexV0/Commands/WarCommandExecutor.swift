@@ -988,8 +988,8 @@ struct WarCommandExecutor {
                 if lhsIsCurrent != rhsIsCurrent {
                     return !lhsIsCurrent
                 }
-                let lhsEnemyControlled = state.map.tile(at: $0)?.controller?.isHostile(to: division.faction) ?? false
-                let rhsEnemyControlled = state.map.tile(at: $1)?.controller?.isHostile(to: division.faction) ?? false
+                let lhsEnemyControlled = isHostileControlled($0, for: division.faction, in: state)
+                let rhsEnemyControlled = isHostileControlled($1, for: division.faction, in: state)
                 if lhsEnemyControlled != rhsEnemyControlled {
                     return lhsEnemyControlled
                 }
@@ -1031,8 +1031,8 @@ struct WarCommandExecutor {
                 let lhsDistance = nearestDistance(from: $0, to: targets)
                 let rhsDistance = nearestDistance(from: $1, to: targets)
                 if lhsDistance == rhsDistance {
-                    let lhsEnemyControlled = state.map.tile(at: $0)?.controller?.isHostile(to: division.faction) ?? false
-                    let rhsEnemyControlled = state.map.tile(at: $1)?.controller?.isHostile(to: division.faction) ?? false
+                    let lhsEnemyControlled = isHostileControlled($0, for: division.faction, in: state)
+                    let rhsEnemyControlled = isHostileControlled($1, for: division.faction, in: state)
                     if lhsEnemyControlled != rhsEnemyControlled {
                         return lhsEnemyControlled
                     }
@@ -1048,6 +1048,13 @@ struct WarCommandExecutor {
 
     private func nearestDistance(from coord: HexCoord, to targets: [HexCoord]) -> Int {
         targets.map { coord.distance(to: $0) }.min() ?? Int.max
+    }
+
+    private func isHostileControlled(_ coord: HexCoord, for faction: Faction, in state: GameState) -> Bool {
+        guard let controller = state.map.tile(at: coord)?.controller else {
+            return false
+        }
+        return state.diplomacyState.isHostile(between: controller, and: faction)
     }
 
     private func lightestFrontRegion(in zone: FrontZone, loads: [RegionId: Int]) -> RegionId? {

@@ -5646,6 +5646,52 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮会改变外交非敌对控制格上的粮道/撤退行为；复杂多势力战局中的实际影响仍需云端 CI、后续 Agent C artifact 复判或人工授权专项验证。
 - 本轮不实现完整借道、同盟通行、共同作战堆叠、共享补给源或多势力 turn order。
 
+## v2.4 - WarCommandExecutor 目标落点 hostile controller 外交化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路和交战迁移，把 `WarCommandExecutor` 宏观军令目标郡县候选和接近候选的“敌控格优先”排序，从旧二元 `Faction.isHostile(to:)` 改为 `DiplomacyState` hostile / atWar 口径。
+
+完成内容：
+
+- `WarCommandExecutor` 新增私有 `isHostileControlled(_:for:in:)` helper。
+- `tacticalDestination(in:for:state:)` 的目标郡县候选 hex 排序改用外交 hostile controller。
+- `approachDestination(toward:for:state:)` 的接近候选 hex 排序改用同一 helper。
+- 非敌对控制格不再仅因旧阵营二元关系被宏观军令当成敌控优先落点。
+- 保持真实移动、攻击、占领、动态战区推进、借道、堆叠、补给和伤害规则不变。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_war_executor_destination_hostile_control.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 旧落点排序口径扫描无命中：`rg -n "controller\\?\\.isHostile\\(to: division\\.faction\\)" WWIIHexV0/Commands/WarCommandExecutor.swift`。
+- 新 helper 扫描确认命中：`isHostileControlled` 在目标郡县排序、接近候选排序和 helper 定义处命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮会改变外交非敌对控制格在 AI / 玩家武将宏观军令落点排序中的优先级；复杂多势力战局中的实际影响仍需云端 CI、后续 Agent C artifact 复判或人工授权专项验证。
+- 本轮不实现完整借道、同盟通行、共同作战堆叠、共享补给源或多势力 turn order。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
