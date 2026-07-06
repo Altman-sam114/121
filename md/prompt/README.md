@@ -161,3 +161,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_supply_control_hostile_gate.md`
 - `md/prompt/v2.0-三国迁移/v2.4_war_executor_destination_hostile_control.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_supply_hostile_control.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_rank_display_localization.md`

@@ -5739,6 +5739,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不实现完整借道、同盟通行、共同作战堆叠、共享补给源或多势力 turn order。
 - 只读 UI 子 Agent 发现 `UnitInspectorView`、`RegionInspectorView`、`GeneralCommandPanelView`、`MapDisplayAdapter`、`UnitNode` 仍有 raw id、英文 fallback 或旧 NATO/R-H 标记候选，建议后续另拆 UI 可见残留切片处理。
 
+## v2.4 - 武将军衔与头像占位显示中文化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将 UI 迁移，避免旧 fallback 武将数据中的 `Field Marshal`、`Generaloberst`、`Brigadier General` 等英文/二战军衔出现在玩家可见的武将军令面板和武将档案中。
+
+完成内容：
+
+- `GeneralData` 新增只读 `rankDisplayName`，把旧英文 rank 映射为三国语义显示名。
+- `GeneralCommandPanelView` 和 `GeneralProfileView` 改用 `rankDisplayName`，不再直接显示 raw `general.rank`。
+- 武将面板和武将档案头像占位的 accessibility label 改为中文“头像”。
+- 保留 `GeneralData.rank` Codable 字段、`generals.json` / `sanguo_generals.json` raw 数据、武将分配、战术塑形和规则行为不变。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Agents/GeneralRegistry.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/GeneralProfileView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_rank_display_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/GeneralRegistry.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/GeneralProfileView.swift` 通过。
+- 直接读取 raw rank / 旧头像占位扫描无命中：`rg -n "general\\.rank([^A-Za-z_]|$)|portrait placeholder|头像占位" WWIIHexV0/UI WWIIHexV0/Agents`。
+- UI / Agents 旧英文军衔扫描无命中：`rg -n "Field Marshal|Generaloberst|Brigadier General" WWIIHexV0/UI WWIIHexV0/Agents`。
+- 新展示属性扫描命中三处：`rankDisplayName` 位于 `GeneralData`、武将军令面板和武将档案。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只处理武将军令面板和武将档案的 rank / 头像辅助文案，不处理武将数据源本身。
+- 只读子 Agent 另确认 `UnitNode` 地图兵牌仍有 NATO APP-6 图形和 `R/H` 姿态标记，建议后续拆地图兵牌三国化切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

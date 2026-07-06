@@ -78,6 +78,23 @@ struct GeneralData: Identifiable, Codable, Equatable {
         skills.map(GeneralSkillDisplay.displayName)
     }
 
+    var rankDisplayName: String {
+        switch rank.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "":
+            return "武将"
+        case "field marshal":
+            return "大将军"
+        case "generaloberst":
+            return "上将军"
+        case "brigadier general":
+            return "偏将军"
+        case "general":
+            return "将军"
+        default:
+            return rank
+        }
+    }
+
     private static func clampPercent(_ value: Int) -> Int {
         max(0, min(100, value))
     }

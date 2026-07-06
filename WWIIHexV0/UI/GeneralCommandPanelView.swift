@@ -46,7 +46,7 @@ struct GeneralCommandPanelView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(general.localizedName)
                                 .font(.subheadline.weight(.semibold))
-                            Text("\(general.rank) / \(styleLabel(general.commandStyle))")
+                            Text("\(general.rankDisplayName) / \(styleLabel(general.commandStyle))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -187,7 +187,7 @@ struct GeneralCommandPanelView: View {
             .frame(width: 40, height: 40)
             .background(PlatformStyles.selectionTint)
             .clipShape(RoundedRectangle(cornerRadius: 8))
-            .accessibilityLabel("\(general.localizedName) portrait placeholder")
+            .accessibilityLabel("\(general.localizedName) 头像")
     }
 
     private func metricBar(title: String, value: Int) -> some View {

@@ -17,6 +17,8 @@
 
 **当前补给/撤退控制格边界：** `SupplyRules` 的粮道控制格通行和撤退安全格控制格阻断、`RegionSupplyRules` 的战略郡县粮道控制区通行和撤退安全郡县已按 `DiplomacyState` hostile / atWar 口径判断；非敌对控制格不会仅因旧二元阵营关系切断粮道或阻止安全撤退，但非同 faction 堆叠、补给源共享和完整借道制度仍未实现。
 
+**当前武将显示边界：** `GeneralData.rank` raw 字段和旧 `generals.json` fallback 数据保留兼容；武将军令面板和武将档案使用 `rankDisplayName` 把旧英文军衔映射为三国语义显示名，头像占位的辅助功能文案显示为中文“头像”。
+
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、外交官、太守、军师、武将等 Agent。
 - Agent 根据视野、战况摘要、性格和历史背景输出结构化 JSON / Codable directive。

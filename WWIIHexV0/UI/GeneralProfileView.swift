@@ -45,11 +45,11 @@ struct GeneralProfileView: View {
                 .frame(width: 112, height: 144)
                 .background(PlatformStyles.selectionTint)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .accessibilityLabel("\(general.localizedName) 头像占位")
+                .accessibilityLabel("\(general.localizedName) 头像")
 
             Text(general.localizedName)
                 .font(.title3.weight(.semibold))
-            Text(general.rank)
+            Text(general.rankDisplayName)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text(general.faction.displayName)

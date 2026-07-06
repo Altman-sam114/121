@@ -2131,7 +2131,7 @@ Data/generals.json
 
 核心算法：
 
-- 将军数据：`GeneralData` 从 `generals.json` 读取，包含阵营、军衔、倾向、技能、头像占位、履历、偏好 theater/region、忠诚和满意度基线。
+- 武将数据：`GeneralData` 优先从三国武将数据读取，旧 `generals.json` 保留作 fallback；raw `rank` 保持 Codable / 数据兼容，玩家可见的武将军令面板和档案通过 `rankDisplayName` 将旧英文军衔映射为三国语义显示名，头像辅助功能文案显示为中文“头像”。
 - 初始分配：`RegionNodeDefinition.assignedGeneralId` 可由地图 JSON / MapEditor 写入。`DataLoader` 在生成 `WarDeploymentState` 后收集 region 种子，调用 `GeneralDispatcher.assignGenerals`。
 - 指派规则：
   1. 如果 FrontZone 已有合法同阵营 `generalAssignment`，保留该将军，只刷新 `assignedDivisionIds`。
