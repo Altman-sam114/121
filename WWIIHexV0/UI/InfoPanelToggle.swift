@@ -11,7 +11,7 @@ struct InfoPanelToggle<Summary: View, Content: View>: View {
                 Button {
                     isExpanded.toggle()
                 } label: {
-                    Text("[ INFO ]")
+                    Text("军情")
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                 }

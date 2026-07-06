@@ -59,7 +59,7 @@ struct RootGameView: View {
                 Button {
                     isInfoExpanded.toggle()
                 } label: {
-                    Text("[ INFO ]")
+                    Text("军情")
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                 }
@@ -95,7 +95,7 @@ struct RootGameView: View {
             renderState: BoardSceneAdapter.renderState(from: container),
             onHexTapped: container.handleBoardTap
         )
-        .accessibilityLabel("三国 hex 战场")
+        .accessibilityLabel("三国六角战场")
     }
 
     private func infoOverlay(isLandscape: Bool, size: CGSize) -> some View {
@@ -284,7 +284,7 @@ private enum CompactInfoPanel: String, CaseIterable, Identifiable {
     case log = "战报"
     case economy = "钱粮"
     case diplomacy = "外交"
-    case agent = "AI"
+    case agent = "军机"
 
     var id: String {
         rawValue

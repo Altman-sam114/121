@@ -75,7 +75,7 @@ final class AppContainer: ObservableObject {
         let turnManager = TurnManager(
             agent: guderian,
             provider: MockAIClient(),
-            providerName: "MockAI",
+            providerName: "模拟军机",
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: bootstrappedState, registry: generalRegistry),
             marshalAgent: Self.buildMarshalAgent(faction: .germany, state: bootstrappedState),
@@ -139,8 +139,8 @@ final class AppContainer: ObservableObject {
                 self.lastAgentDecisionRecord = outcome.record
                 self.lastWarDirectiveRecords = outcome.directiveRecords
                 self.lastCommandMessage = outcome.record.errors.isEmpty
-                    ? "AI 回合已完成。"
-                    : "AI 回合完成，存在 \(outcome.record.errors.count) 项问题。"
+                    ? "军机回合已完成。"
+                    : "军机回合完成，存在 \(outcome.record.errors.count) 项问题。"
                 self.appendInteractionEvent("\(outcome.record.providerDisplayName) 完成 \(outcome.record.commandResults.count) 条命令结果。")
                 self.isRunningAI = false
                 self.refreshSelectionAfterStateChange()
@@ -2257,8 +2257,8 @@ final class AppContainer: ObservableObject {
                 id: "agent_noop_turn_\(currentState.turn)",
                 turn: currentState.turn,
                 agentId: "system",
-                provider: "System",
-                contextSummary: "No AI faction was active.",
+                provider: "系统",
+                contextSummary: "当前没有可执行的军机势力。",
                 rawJSON: nil,
                 parsedIntent: nil,
                 commandResults: [],
@@ -2293,7 +2293,7 @@ final class AppContainer: ObservableObject {
                 .map(\.id)
             agent = GameAgent.sample(
                 id: "allied_mock_commander",
-                name: "\(Faction.allies.shortDisplayName)兼容指挥官",
+                name: "\(Faction.allies.shortDisplayName)军机将领",
                 faction: .allies,
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
@@ -2304,7 +2304,7 @@ final class AppContainer: ObservableObject {
                 .map(\.id)
             agent = GameAgent.sample(
                 id: "\(faction.rawValue)_observer",
-                name: "\(faction.displayName)观察指挥官",
+                name: "\(faction.displayName)观察军机",
                 faction: faction,
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
@@ -2314,7 +2314,7 @@ final class AppContainer: ObservableObject {
         return TurnManager(
             agent: agent,
             provider: MockAIClient(),
-            providerName: "MockAI",
+            providerName: "模拟军机",
             commandHandler: commandHandler,
             commanderPool: Self.buildCommanderPool(state: state, registry: generalRegistry),
             marshalAgent: Self.buildMarshalAgent(faction: faction, state: state),
@@ -2338,7 +2338,7 @@ final class AppContainer: ObservableObject {
                 let style: ZoneCommanderAgentConfig.CommandStyle = zone.faction == .germany ? .aggressive : .balanced
                 let config = ZoneCommanderAgentConfig(
                     id: "auto_\(zone.id.rawValue)",
-                    name: "\(zone.faction.shortDisplayName)防区指挥官（\(zone.id.rawValue)）",
+                    name: "\(zone.faction.shortDisplayName)防区军机",
                     faction: zone.faction,
                     assignedZoneId: zone.id,
                     skills: [],
@@ -2356,13 +2356,13 @@ final class AppContainer: ObservableObject {
     private func handleDivisionTap(_ division: Division) {
         if observerModeEnabled {
             selectDivision(division)
-            appendInteractionEvent("查看军队：\(division.name)。")
+            appendInteractionEvent("查看军队：\(division.thematicDisplayName)。")
             return
         }
 
         if division.faction == playerFaction {
             selectDivision(division)
-            appendInteractionEvent("已选择军队：\(division.name)。")
+            appendInteractionEvent("已选择军队：\(division.thematicDisplayName)。")
             return
         }
 
@@ -2372,7 +2372,7 @@ final class AppContainer: ObservableObject {
         } else {
             selectDivision(division)
             let relation = isDiplomaticallyHostile(division.faction, to: playerFaction) ? "敌军" : "非敌对军队"
-            appendInteractionEvent("选择\(relation)：\(division.name)。")
+            appendInteractionEvent("选择\(relation)：\(division.thematicDisplayName)。")
         }
     }
 
@@ -2429,7 +2429,7 @@ final class AppContainer: ObservableObject {
               let region = gameState.map.region(id: selectedRegionId) else {
             return "已选择地格：\(coord.q),\(coord.r)。"
         }
-        return "已选择郡县：\(region.name)（\(selectedRegionId.rawValue)）。"
+        return "已选择郡县：\(region.name)。"
     }
 
     private func appendInteractionEvent(_ message: String) {

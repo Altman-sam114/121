@@ -5493,6 +5493,67 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只改 `GameState.appendEvent(...)` 的玩家可见文案，不迁移补给路径、围城判定、撤退目的地、损耗数值、事件类别或规则行为。
 - `EconomyRules` 中仍有战略补给库存耗尽、自动补员和部署事件英文日志，建议后续另拆经济/生产日志中文化切片。
 
+## v2.4 - HUD、菜单与军机面板显示三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 清理主 HUD、macOS 菜单、信息面板、军机审计面板、AI 回合交互日志和兼容 fallback 来源中的残留英文或旧 `AI` 外显词，让玩家围绕战局、军情、军机谋议和军令理解操作入口与 AI 审计。
+
+完成内容：
+
+- 新局按钮从 `NEW GAME` 改为“新开战局”。
+- macOS 菜单从 `Game` / `End Turn` / `New Game` 改为“战局”“结束回合”“新开战局”。
+- 信息面板开关从 `[ INFO ]` 改为“军情”。
+- 紧凑面板 tab 从 `AI` 改为“军机”。
+- `AgentPanelView` 标题和主字段从 `AI 决策` / `Agent` 改为“军机谋议”“执行者”，命令 fallback 从 `Order` 改为“军令”。
+- AI 回合消息改为“军机回合已完成 / 军机回合完成，存在 N 项问题”。
+- `MockAI` / `System` 来源和 no-op 摘要改为“模拟军机”“系统”和中文军机提示。
+- 兼容 fallback 指挥者名称改为军机将领、观察军机和防区军机，不再把 raw zone id 放进玩家可见名称。
+- 地图 accessibility label 从“三国 hex 战场”改为“三国六角战场”。
+- 军队点击日志改用 `Division.thematicDisplayName`，避免旧英文单位名 fallback 泄漏到交互日志。
+- 郡县选择日志不再直接裸露 `RegionId.rawValue`。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/UI/NewGameButton.swift`
+- `WWIIHexV0/App/WWIIHexV0MacApp.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0/UI/InfoPanelToggle.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_ui_chrome_agent_label_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/NewGameButton.swift` 通过。
+- `swiftc -parse WWIIHexV0/App/WWIIHexV0MacApp.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RootGameView.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/InfoPanelToggle.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/AgentPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 目标残留扫描无命中：`NEW GAME`、`[ INFO ]`、`AI 决策`、`LabeledContent("Agent")`、`"Order"`、`AI 回合`、`End Turn`、`New Game`、`CommandMenu("Game")`、`三国 hex 战场`、`providerName: "MockAI"`、`provider: "System"`、`No AI faction was active`、`兼容指挥官`、`观察指挥官`、`防区指挥官`、`division.name`、`selectedRegionId.rawValue`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只改 UI chrome、审计面板标题、交互日志展示名和阶段文档，不迁移 `Command` / `ZoneDirective` / `WarCommandExecutor` / `RuleEngine` 行为，不改记录 raw id、Codable 字段、调试 JSON 或 JSON schema。
+- `DiplomacyPanelView` 的 `Agent` 字段、单位兵牌 `R/H`、检查器 raw id 和经济/生产英文事件日志仍建议后续另拆小切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

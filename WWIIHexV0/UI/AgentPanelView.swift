@@ -38,10 +38,10 @@ struct AgentPanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("AI 决策")
+            Text("军机谋议")
                 .font(.headline)
 
-            LabeledContent("Agent") {
+            LabeledContent("执行者") {
                 Text(record?.agentDisplayName ?? "兼容武将")
             }
 
@@ -182,7 +182,7 @@ struct AgentPanelView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(record.commandResults) { result in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(result.commandDisplayName ?? result.orderType?.rawValue ?? "Order")
+                            Text(result.commandDisplayName ?? result.orderType?.rawValue ?? "军令")
                                 .font(.caption)
                                 .bold()
                             Text(resultLine(result))
@@ -340,8 +340,8 @@ struct AgentPanelView: View {
     private var rawJSONPlaceholder: String {
         """
         {
-          "agentDisplayName": "兼容武将",
-          "status": "placeholder",
+          "agentDisplayName": "军机武将",
+          "status": "暂无记录",
           "orders": []
         }
         """
