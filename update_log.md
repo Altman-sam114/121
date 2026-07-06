@@ -4810,7 +4810,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `WWIIHexV0/Rules/MovementRules.swift` 的 `isEnemyZoneOfControl` 改用 `state.diplomacyState.isHostile(between:and:)`，让外交非敌对单位不再形成道路/移动 ZOC。
 - `WWIIHexV0/Rules/SupplyRules.swift` 的粮道路径单位阻断和围城邻接 hostile 单位判断改用 `DiplomacyState`。
 - `WWIIHexV0/Rules/EconomyRules.swift` 的安全补员相邻敌军判断改用 `DiplomacyState`。
-- 保留 `SupplyRules` 的 capturable tile controller 判断、`MovementRules` 的非同 faction 堆叠/路径阻挡、部署层敌军存在/相邻敌对防区接触和占领/控制权语义，避免把本轮扩大成完整借道、同盟通行、共同作战堆叠或共享补给制度。
+- 当时仍保留 `SupplyRules` 的 capturable tile controller 判断，后续已由“SupplyRules 控制格 hostile gate 外交化”切片迁移；`MovementRules` 的非同 faction 堆叠/路径阻挡、部署层敌军存在/相邻敌对防区接触和占领/控制权语义仍不扩大成完整借道、同盟通行、共同作战堆叠或共享补给制度。
 
 关键文件：
 
@@ -5599,7 +5599,52 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮会改变宏观 `ZoneDirective` 生成 `.move` 的候选落点和攻击单位排序；真实合法性仍由 `CommandValidator -> RuleEngine` 校验。
 - 本轮不改 `MovementRules`、`GeneralInfluence`、道路机动数值、战斗伤害、撤退、补给、动态战区推进或外交 hostile 规则。
-- 并发 SupplyRules 审计发现粮道/撤退安全格仍有两处 `tile.controller?.isHostile(to:)` 控制格判断，建议后续另拆“SupplyRules 控制格 hostile gate 外交化”切片处理。
+- 并发 SupplyRules 审计发现的两处 `tile.controller?.isHostile(to:)` 控制格判断，已由后续“SupplyRules 控制格 hostile gate 外交化”切片关闭。
+
+## v2.4 - SupplyRules 控制格 hostile gate 外交化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路、粮道和交战边界迁移，把 `SupplyRules` 中控制格对粮道通行和撤退安全格的阻断判断从旧二元 `Faction.isHostile(to:)` 改为 `DiplomacyState` hostile / atWar 口径。
+
+完成内容：
+
+- `SupplyRules.isSafeRetreatTile` 的 capturable tile controller 判断改用 `state.diplomacyState.isHostile(between: controller, and: faction)`。
+- `SupplyRules.canSupplyPass` 的 capturable tile controller 判断改用同一外交 hostile gate。
+- 非敌对控制格不再仅因旧阵营二元关系阻断粮道或撤退安全格。
+- 保留 hostile 单位阻断、敌控区、补给源归属、非同 faction 堆叠阻挡、占领规则、撤退损耗、围城数值和共享补给制度边界。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_supply_control_hostile_gate.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/SupplyRules.swift` 通过。
+- 旧控制格口径扫描无命中：`rg -n "controller\\?\\.isHostile\\(to: faction\\)" WWIIHexV0/Rules/SupplyRules.swift`。
+- 新外交 gate 扫描命中两处：`diplomacyState.isHostile(between: controller, and: faction)`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮会改变外交非敌对控制格上的粮道/撤退行为；复杂多势力战局中的实际影响仍需云端 CI、后续 Agent C artifact 复判或人工授权专项验证。
+- 本轮不实现完整借道、同盟通行、共同作战堆叠、共享补给源或多势力 turn order。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 

@@ -1,6 +1,6 @@
-# 三国棋策 Agent Mermaid 核心流程图（v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路和交战兼容层）
+# 三国棋策 Agent Mermaid 核心流程图（v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道和交战兼容层）
 
-> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路与交战兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
+> 本图参照 `md/flow/flow.md`。项目正从 `WWIIHexV0` 二战原型迁移到三国题材；v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战兼容层，图中仍保留 `Division`、`Faction`、`Theater`、`FrontZone` 等代码名，中文解释已按三国迁移口径理解为军队、势力、方面、防区。
 
 ## 0. 读图总纲
 
@@ -12,7 +12,7 @@
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
-  -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路与交战
+  -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行/拒绝原因中文化后再同步刷新战略层和 UI
 ```
@@ -27,7 +27,7 @@ v2.4 命名边界：
 - null / 缺省的 `RegionDataSet` owner/controller 会映射到 `.neutral`，不会再 fallback 给 `.allies`。
 - Theater / FrontLine / WarDeployment / Region visibility 派生层会识别 `Faction.scenarioCases` 中的三国势力，不再只看旧二元回合列表。
 - `DiplomacyState.initial` 能生成三国基础 country / bloc profile，默认曹袁为 `atWar`，其他新势力默认中立关系。
-- 规则、AI 摘要、MockAI 威胁估算和 `WarCommandExecutor` 单位目标筛选中的敌对判断不在新代码里继续依赖二元 `opponent`；攻击合法性、玩家点击/高亮、道路 ZOC、粮道单位阻断、围城邻接、安全补员邻接、部署层敌军存在、相邻敌对防区接触、动态前线敌对接触、ZoneCommanderAgent / MarshalBattlefieldSummarizer / RulerStrategicSnapshot / StrategistBattlefieldSnapshot 单位级 AI hostile 摘要、执行器单位目标筛选和区域交战压力优先使用 `DiplomacyState` 的 hostile / atWar 口径，缺外交建档时 fallback 到 `Faction.isHostile(to:)`。
+- 规则、AI 摘要、MockAI 威胁估算和 `WarCommandExecutor` 单位目标筛选中的敌对判断不在新代码里继续依赖二元 `opponent`；攻击合法性、玩家点击/高亮、道路 ZOC、粮道单位阻断、粮道控制格通行、撤退安全格控制格、围城邻接、安全补员邻接、部署层敌军存在、相邻敌对防区接触、动态前线敌对接触、ZoneCommanderAgent / MarshalBattlefieldSummarizer / RulerStrategicSnapshot / StrategistBattlefieldSnapshot 单位级 AI hostile 摘要、执行器单位目标筛选和区域交战压力优先使用 `DiplomacyState` 的 hostile / atWar 口径，缺外交建档时 fallback 到 `Faction.isHostile(to:)`。
 - `Division` 仍是源码单位类型；UI 当前显示为军队、步卒营、骑兵军、器械营、弓弩营、亲卫营、舟师营。
 - `ComponentType` 保留旧 `tank/motorizedInfantry/infantry/artillery` rawValue，并新增 `cavalry/archer/siegeEngine/naval/guard` 给三国模板使用。
 - `TacticName` 保留旧 rawValue 作为指令 schema，但 UI / `WarDirectiveRecord` 显示使用正攻、疾袭、突击、破阵、合围、箭雨/器械压制、佯攻、奇袭/袭扰、固守、诱敌/退守、层层设防、死守。
@@ -37,7 +37,7 @@ v2.4 命名边界：
 - `AgentPanelView` 的主审计字段、君主/外交官/太守/军师/武将记录和防区指令摘要优先使用展示名；标题、执行者和命令 fallback 已显示为军机谋议、执行者和军令，外交对象来自 `CountryProfile.name`，郡县来自 `RegionNode.name`，防区来自 `FrontZone.name` 或 `曹军防区：官渡、许昌` 这类只读 fallback，调试 JSON 和 Codable raw id 保持原样。
 - `RootGameView` / HUD / macOS 菜单 / `InfoPanelToggle` / `AppContainer.interactionLog` 的玩家可见文本也已中文优先：新开战局、结束回合、军情、军机回合、本地 mock / no-op 来源、兼容 fallback 指挥者名称、基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县都显示为三国语义；军队点击日志使用 `Division.thematicDisplayName`，底层命令、记录 id、Codable 和 rawValue 不变。
 - Legacy `LocalLLMDecisionProvider` 默认不启用，但 `AgentPromptBuilder` 的提示词已改为三国棋策、武将、官道、粮草和可见交战语义；JSON schema、字段名、命令 rawValue、parser / mapper 和命令执行链保持兼容。
-- `MovementRules.isEnemyZoneOfControl`、`SupplyRules` 粮道单位阻断和围城邻接、`EconomyRules` 安全补员邻接、`WarDeploymentManager` 单位级敌军存在和相邻敌对防区接触、`FrontLineManager` 动态相邻 theater 是否形成敌对前线、Legacy `AgentContextBuilder` 敌军摘要、`MockAICommander.visibleEnemyStrength`、`ZoneCommanderAgent` / `MarshalBattlefieldSummarizer` / `RulerStrategicSnapshot` / `StrategistBattlefieldSnapshot` 单位级 AI hostile 摘要、`CommandValidator` / `RegionCommandValidator` 攻击目标校验、`CommandExecutor.executeAttack` 防绕过 guard、玩家地图点击攻击、可见攻击高亮、武将宏观目标选择、`WarCommandExecutor` 单位敌军强度/存在/目标筛选、`RegionCombatRules.pressure`、郡县检查器的可见敌军/非敌对军队分组、官道受压计数和最近来源，`AppContainer` 的军队接战预判、武将麾下/目标/计划军令近敌与受压摘要、移动预览可见敌控过滤和点击日志敌对措辞，以及 `BoardScene` 计划军令地图短标签、部署图层角色 fallback、`CommandPanelView` 状态文案、`GeneralCommandPanelView` 目标预览显示 gate，优先使用 `DiplomacyState` 的 `DiplomaticRelation.status`，缺建档时 fallback 到 `Faction.isHostile(to:)`；objective 和 region controller 来源仍保持 controller / occupation 事实，只在 hostile 分类时使用外交关系；`OccupationRules.canOccupy` 只允许无控制者或外交 hostile / atWar 控制格被自动占领，`WarCommandExecutor` 只把执行前真实可占领的移动作为动态方面突破来源；`SupplyRules` 的 capturable tile controller、`MovementRules` 的非同 faction 堆叠阻挡、部署控制权、`FrontLineManager` 的 pressure / supplyImpact / encirclementCandidate 和 `WarDeploymentManager` encirclement 拓扑仍保留原语义；只读预判和高亮还会按玩家视角可见性过滤；中立不会只因不是当前阵营就阻断道路、生成敌对部署接触、生成敌对前线、进入 AI 敌军摘要、影响 MockAI 威胁、被自动占领或成为合法攻击目标。
+- `MovementRules.isEnemyZoneOfControl`、`SupplyRules` 粮道单位阻断、粮道控制格通行、撤退安全格控制格和围城邻接、`EconomyRules` 安全补员邻接、`WarDeploymentManager` 单位级敌军存在和相邻敌对防区接触、`FrontLineManager` 动态相邻 theater 是否形成敌对前线、Legacy `AgentContextBuilder` 敌军摘要、`MockAICommander.visibleEnemyStrength`、`ZoneCommanderAgent` / `MarshalBattlefieldSummarizer` / `RulerStrategicSnapshot` / `StrategistBattlefieldSnapshot` 单位级 AI hostile 摘要、`CommandValidator` / `RegionCommandValidator` 攻击目标校验、`CommandExecutor.executeAttack` 防绕过 guard、玩家地图点击攻击、可见攻击高亮、武将宏观目标选择、`WarCommandExecutor` 单位敌军强度/存在/目标筛选、`RegionCombatRules.pressure`、郡县检查器的可见敌军/非敌对军队分组、官道受压计数和最近来源，`AppContainer` 的军队接战预判、武将麾下/目标/计划军令近敌与受压摘要、移动预览可见敌控过滤和点击日志敌对措辞，以及 `BoardScene` 计划军令地图短标签、部署图层角色 fallback、`CommandPanelView` 状态文案、`GeneralCommandPanelView` 目标预览显示 gate，优先使用 `DiplomacyState` 的 `DiplomaticRelation.status`，缺建档时 fallback 到 `Faction.isHostile(to:)`；objective 和 region controller 来源仍保持 controller / occupation 事实，只在 hostile 分类时使用外交关系；`OccupationRules.canOccupy` 只允许无控制者或外交 hostile / atWar 控制格被自动占领，`WarCommandExecutor` 只把执行前真实可占领的移动作为动态方面突破来源；`MovementRules` 的非同 faction 堆叠阻挡、部署控制权、`FrontLineManager` 的 pressure / supplyImpact / encirclementCandidate 和 `WarDeploymentManager` encirclement 拓扑仍保留原语义；只读预判和高亮还会按玩家视角可见性过滤；中立不会只因不是当前阵营就阻断道路、阻断粮道控制格、阻止撤退安全格、生成敌对部署接触、生成敌对前线、进入 AI 敌军摘要、影响 MockAI 威胁、被自动占领或成为合法攻击目标。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术。玩家武将面板宏观命令也会先经 `GeneralAgent.plan` 塑形 tactic，再进入 `WarCommandExecutor -> RuleEngine`，但不会自动结束玩家回合。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。

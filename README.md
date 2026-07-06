@@ -15,6 +15,8 @@
 - Theater / FrontZone 显示为方面、战线、防区，服务 AI 调度，不替代 hex 权威。
 - 当前阶段已完成官渡小地图默认入口、兼容显示层、多势力数据表达、初始外交 profile、三国兵种模板兼容层、战术审计显示三国化、围城/粮草和兵种克制最小规则，并开始把君主、外交官、太守、军师和武将层接入 AI 回合的 directive 编排；外交官提案可经 `Command.proposeDiplomacy -> RuleEngine` 最小更新外交状态和紧张度，太守建议的生产项可经 `Command.queueProduction -> RuleEngine` 进入生产队列，太守修路焦点可经 `Command.improveRoad -> RuleEngine` 连通优先修缮战术道路和郡县基础设施，AI 军令和玩家武将面板宏观军令都会经 `GeneralAgent` 按性格/技能把 `ZoneDirective.tactic` 塑形为合法攻守战术，武将分配也已能影响道路机动与交战攻防修正，攻击/反击日志、地图计划军令标识、武将军令面板、军队详情和郡县面板都会输出所属武将、道路机动、官道受益军队/无加成原因、玩家视角可见可达官道、最近可达/可见安全官道距离、官道覆盖/受压/最近敌军来源、本郡武将、麾下军队兵力/粮草/军令/行动/官道/接敌状态、可见敌军距离/射程/兵力/敌将、可见非敌对军队的势力/关系/紧张度、可见当前接敌配对、可见接战目标态势、可见接战结算风险预判、可见多目标交战对比、无可见敌对空状态或交战影响摘要；玩家宏观军令在地图上显示为带武将/战术/官道、可见受压与最近可见敌军短标签的进攻箭头或固守标记，并在武将军令面板用同一源/目标代表 hex 摘要显示武将、最终战术、源→目标、官道状态、源目可见受压和最近可见敌军对象/距离；尚未提交“进攻郡县”时，武将军令面板也会按当前可见 hostile 口径预览源/目标代表 hex 的官道据守/受压和最近可见敌军距离；选中武将防区的道路与交战摘要会显示当前可见接敌配对、最近可见敌军、距离和对应麾下军队，固守/进攻按钮灰态时也会显示观察模式、阶段、防区或目标条件不足的只读原因。武将技能在档案、军令面板、军队详情和复核理由中已中文化显示，其中档案、军令面板和军队详情还会追加官道机动、骑兵突击、攻城修正、地形/渡河防御等只读短提示；核心移动、交战、姿态、回合、动态方面事件日志以及命令结果/拒绝原因已开始中文化；道路敌控区、粮道单位阻断、围城邻接、安全补员邻接、部署层敌军存在、相邻敌对防区接触、动态前线敌对接触、Legacy `AgentContext.enemyDivisions` / enemy supply 摘要、`MockAICommander` 威胁估算、`MarshalBattlefieldSummarizer`、`ZoneCommanderAgent`、`RulerStrategicSnapshot`、`StrategistBattlefieldSnapshot` 的单位级敌军摘要、玩家地图点击攻击、攻击高亮、武将宏观目标选择、`CommandValidator` / `RegionCommandValidator` 攻击校验、`WarCommandExecutor` 单位目标筛选、区域交战压力、郡县检查器、`AppContainer` 军队/武将/计划军令只读预览、`BoardScene` 计划军令地图短标签、`CommandPanelView` 状态文案和 `GeneralCommandPanelView` 目标预览显示 gate 会优先按 `DiplomaticRelation.status` 区分敌军与非敌对军队，缺外交建档时回退到 `Faction.isHostile(to:)`；领土 controller、objective / region controller 来源、非同 faction 堆叠阻挡、非己方控制 hex/region 的部署压力分类、前线压力/补给/包围拓扑和 encirclement 拓扑仍保留原控制权/阵营语义，其中攻击高亮、道路受压和只读预判只使用玩家视角可见 hostile。完整多势力 turn order、完整官渡大地图、借道/贡赋/称臣/屯田治安等完整制度和发布级 UI 将按 v2.4+ 分阶段推进。
 
+**当前补给/撤退控制格边界：** `SupplyRules` 的粮道控制格通行和撤退安全格控制格阻断已按 `DiplomacyState` hostile / atWar 口径判断；非敌对控制格不会仅因旧二元阵营关系切断粮道或阻止安全撤退，但非同 faction 堆叠、补给源共享和完整借道制度仍未实现。
+
 **核心创新：本地部署 LLM 驱动游戏 AI**
 - 当前已有将军/元帅式指令链；三国迁移后将逐步改造为君主、外交官、太守、军师、武将等 Agent。
 - Agent 根据视野、战况摘要、性格和历史背景输出结构化 JSON / Codable directive。
@@ -125,6 +127,7 @@ WWIIHexV0/
 - **v2.4 Local LLM 提示词三国语义**：Legacy `LocalLLMDecisionProvider` 仍默认不启用，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`schemaVersion`、JSON keys、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
 - **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
 - **v2.4 SupplyRules 撤退、围城与粮草日志三国化**：`SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件日志已改为中文；补给路径、围城判定、撤退目的地、损耗数值、事件类别和规则执行不变。
+- **v2.4 SupplyRules 控制格 hostile gate 外交化**：`SupplyRules.isSafeRetreatTile` 和粮道 `canSupplyPass` 的 capturable 控制格阻断改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧 `Faction.isHostile(to:)` 阵营关系阻断粮道或撤退安全格。单位阻断、ZOC、补给源归属、堆叠限制、占领和共享补给制度边界不变。
 - **v2.4 命令结果中文化**：`CommandValidationError` 保留 rawValue / Codable 兼容，同时提供中文展示文案；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 会把玩家/AI 可见的成功、拒绝和校验原因写成中文，AI 面板不再直接展示常见校验枚举名；`CommandPanelView` 的不能下令状态按 `DiplomacyState` 区分敌军和非敌对军队。
 
 | 文件 | 职责 | 关键类型/协议 |
