@@ -5003,6 +5003,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实前线行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
+## v2.4 外交敌对 AI 上游摘要兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 关闭上一轮遗留的 `ZoneCommanderAgent`、`StrategistAgent` 和 `RulerAgent` 单位级 hostile 派生待迁移风险，让 AI 上游摘要继续围绕武将、道路和交战使用 `DiplomacyState` hostile / atWar 口径。
+
+完成内容：
+
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift` 的 `visibleEnemyStrengthByRegion` 和 `hasEnemyPresence` 改用 `state.diplomacyState.isHostile(between:and:)`，避免外交非敌对单位进入 fallback 防区战术判断。
+- `MarshalBattlefieldSummarizer` 的敌军强度、敌军存在、敌对 objective 名称分类改用 `DiplomacyState` hostile 口径；objective controller 来源仍来自 tile controller，只在 hostile 分类时读取外交关系。
+- `WWIIHexV0/Agents/RulerAgent.swift` 的 `RulerStrategicSnapshot.enemyStrength(adjacentTo:)` 改用 `DiplomacyState` hostile 口径；`hostileCountryCount` 继续来自 `DiplomacyState.hostileCountryIds`。
+- `WWIIHexV0/Agents/StrategistAgent.swift` 的 `StrategistBattlefieldSnapshot.enemyNeighborRegions` 单位敌对存在判断改用 `DiplomacyState` hostile 口径。
+- 保留 `region.controller != faction`、`tile.controller == faction`、dynamic zone topology、directive schema、marshal summary schema 和 `Command / ZoneDirective -> WarCommandExecutor -> RuleEngine` 执行链不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `WWIIHexV0/Agents/RulerAgent.swift`
+- `WWIIHexV0/Agents/StrategistAgent.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_ai_upper_layers.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/ZoneCommanderAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/RulerAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/StrategistAgent.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `rg -n "\\.isHostile\\(to:|opponent" WWIIHexV0/Agents/ZoneCommanderAgent.swift WWIIHexV0/Agents/RulerAgent.swift WWIIHexV0/Agents/StrategistAgent.swift` 无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
+- AI 上游摘要的运行时行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测；本轮只做轻量语法、文本和冲突检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

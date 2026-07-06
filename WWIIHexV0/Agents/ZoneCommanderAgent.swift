@@ -592,7 +592,8 @@ struct ZoneCommanderAgent: ZoneCommanderProviding {
         let visibleEnemyRegions = Set(visibleEnemyRegionIds(zone: zone, state: state))
         var strengthByRegion: [RegionId: Int] = [:]
 
-        for division in state.divisions where division.faction.isHostile(to: zone.faction) && !division.isDestroyed {
+        for division in state.divisions
+            where state.diplomacyState.isHostile(between: division.faction, and: zone.faction) && !division.isDestroyed {
             guard let regionId = division.location(in: state.map),
                   visibleEnemyRegions.contains(regionId) else {
                 continue
@@ -707,7 +708,7 @@ struct ZoneCommanderAgent: ZoneCommanderProviding {
         state: GameState
     ) -> Bool {
         state.divisions.contains { division in
-            guard division.faction.isHostile(to: zone.faction),
+            guard state.diplomacyState.isHostile(between: division.faction, and: zone.faction),
                   !division.isDestroyed else {
                 return false
             }
@@ -1110,7 +1111,7 @@ struct MarshalBattlefieldSummarizer {
         let enemyStrength = enemyRegionIds.reduce(0) { total, regionId in
             total + state.divisions
                 .filter {
-                    $0.faction.isHostile(to: faction)
+                    state.diplomacyState.isHostile(between: $0.faction, and: faction)
                         && !$0.isDestroyed
                         && $0.location(in: state.map) == regionId
                 }
@@ -1220,7 +1221,7 @@ struct MarshalBattlefieldSummarizer {
 
     private func hasEnemyPresence(in regionId: RegionId, zone: FrontZone, state: GameState) -> Bool {
         state.divisions.contains { division in
-            division.faction.isHostile(to: zone.faction)
+            state.diplomacyState.isHostile(between: division.faction, and: zone.faction)
                 && !division.isDestroyed
                 && division.location(in: state.map) == regionId
         }
@@ -1235,7 +1236,12 @@ struct MarshalBattlefieldSummarizer {
 
     private func objectiveNamesHostile(to faction: Faction, state: GameState) -> [String] {
         state.map.objectives
-            .filter { state.map.tile(at: $0.coord)?.controller?.isHostile(to: faction) ?? false }
+            .filter {
+                guard let controller = state.map.tile(at: $0.coord)?.controller else {
+                    return false
+                }
+                return state.diplomacyState.isHostile(between: controller, and: faction)
+            }
             .map(\.name)
             .sorted()
     }
@@ -1266,7 +1272,8 @@ struct MarshalBattlefieldSummarizer {
         let regionSet = Set(regionIds)
         return state.map.objectives
             .filter { objective in
-                guard state.map.tile(at: objective.coord)?.controller?.isHostile(to: faction) == true,
+                guard let controller = state.map.tile(at: objective.coord)?.controller,
+                      state.diplomacyState.isHostile(between: controller, and: faction),
                       let regionId = state.map.region(for: objective.coord) else {
                     return false
                 }

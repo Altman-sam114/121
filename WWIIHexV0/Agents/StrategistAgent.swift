@@ -364,7 +364,7 @@ private struct StrategistBattlefieldSnapshot {
                 }
                 if state.map.regions[regionId]?.controller != zone.faction ||
                     state.divisions.contains(where: {
-                        $0.faction.isHostile(to: zone.faction) &&
+                        state.diplomacyState.isHostile(between: $0.faction, and: zone.faction) &&
                             !$0.isDestroyed &&
                             $0.location(in: state.map) == regionId
                     }) {
