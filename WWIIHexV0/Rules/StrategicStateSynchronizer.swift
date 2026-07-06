@@ -63,7 +63,7 @@ struct StrategicStateSynchronizer {
             for regionId in changedRegionIds {
                 guard let region = state.map.region(id: regionId) else { continue }
                 state.appendEvent(
-                    "Region \(regionId.rawValue) controller changed to \(region.controller.displayName).",
+                    "\(regionDisplayName(regionId, in: state.map)) 控制权转为 \(region.controller.displayName)。",
                     category: .regionOwnerChange,
                     relatedRecordId: relatedRecordId
                 )
@@ -87,5 +87,14 @@ struct StrategicStateSynchronizer {
             result.append(value)
         }
         return result.sorted { $0.rawValue < $1.rawValue }
+    }
+
+    private func regionDisplayName(_ regionId: RegionId, in map: MapState) -> String {
+        guard let region = map.region(id: regionId) else {
+            return "未命名郡县"
+        }
+
+        let name = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == regionId.rawValue ? "未命名郡县" : name
     }
 }

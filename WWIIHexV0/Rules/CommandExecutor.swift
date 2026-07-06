@@ -390,7 +390,7 @@ struct CommandExecutor {
         }
 
         state.appendEvent(
-            "格 \(hex.q),\(hex.r) 转入动态方面 \(advancingTheaterId.rawValue)。",
+            "格 \(hex.q),\(hex.r) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
             category: .theaterChange,
             relatedRecordId: nil
         )
@@ -414,6 +414,26 @@ struct CommandExecutor {
         }
 
         return false
+    }
+
+    private func theaterDisplayName(_ theaterId: TheaterId, in state: GameState) -> String {
+        if let theater = state.theaterState.theaters[theaterId] {
+            let name = theater.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty && name != theaterId.rawValue {
+                return name
+            }
+        }
+
+        let zoneId = FrontZoneId(theaterId.rawValue)
+        if let zone = state.warDeploymentState.frontZones[zoneId] {
+            let name = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty && name != zoneId.rawValue {
+                return name
+            }
+            return "\(zone.faction.shortDisplayName)方面"
+        }
+
+        return "动态方面"
     }
 
     private func combatLog(

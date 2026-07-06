@@ -1095,7 +1095,7 @@ struct WarCommandExecutor {
 
         if !result.succeeded {
             state.appendEvent(
-                "防区指令被拒绝：\(command.displayName)，原因：\(result.validation.displayMessage)。",
+                "防区指令被拒绝：\(commandLogName(command))，原因：\(result.validation.displayMessage)。",
                 category: .frontChange,
                 relatedRecordId: relatedRecordId
             )
@@ -1141,7 +1141,7 @@ struct WarCommandExecutor {
                 continue
             }
             state.appendEvent(
-                "Region \(regionId.rawValue) controller changed to \(region.controller.displayName) via \(command.displayName).",
+                "\(regionDisplayName(regionId, in: state.map)) 控制权转为 \(region.controller.displayName)，来源：\(commandLogName(command))。",
                 category: .regionOwnerChange,
                 relatedRecordId: relatedRecordId
             )
@@ -1237,12 +1237,12 @@ struct WarCommandExecutor {
             )
         }
         state.appendEvent(
-            "格 \(hex.q),\(hex.r) 转入动态方面 \(advancingTheaterId.rawValue)。",
+            "格 \(hex.q),\(hex.r) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
             category: .theaterChange,
             relatedRecordId: relatedRecordId
         )
         state.appendEvent(
-            "郡县 \(regionId.rawValue) 周边前线发生变化。",
+            "\(regionDisplayName(regionId, in: state.map)) 周边前线发生变化。",
             category: .frontChange,
             relatedRecordId: relatedRecordId
         )
@@ -1334,6 +1334,58 @@ struct WarCommandExecutor {
         map.regions.compactMap { regionId, region in
             beforeControllers[regionId] == region.controller ? nil : regionId
         }
+    }
+
+    private func commandLogName(_ command: Command) -> String {
+        switch command {
+        case .move:
+            return "进军命令"
+        case .attack:
+            return "交战命令"
+        case .hold:
+            return "固守命令"
+        case .allowRetreat:
+            return "机动撤退命令"
+        case .resupply:
+            return "补给休整命令"
+        case .queueProduction:
+            return "征发生产命令"
+        case .improveRoad:
+            return "修缮道路命令"
+        case .proposeDiplomacy:
+            return "外交命令"
+        case .endTurn:
+            return "结束回合命令"
+        }
+    }
+
+    private func regionDisplayName(_ regionId: RegionId, in map: MapState) -> String {
+        guard let region = map.region(id: regionId) else {
+            return "未命名郡县"
+        }
+
+        let name = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == regionId.rawValue ? "未命名郡县" : name
+    }
+
+    private func theaterDisplayName(_ theaterId: TheaterId, in state: GameState) -> String {
+        if let theater = state.theaterState.theaters[theaterId] {
+            let name = theater.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty && name != theaterId.rawValue {
+                return name
+            }
+        }
+
+        let zoneId = FrontZoneId(theaterId.rawValue)
+        if let zone = state.warDeploymentState.frontZones[zoneId] {
+            let name = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty && name != zoneId.rawValue {
+                return name
+            }
+            return "\(zone.faction.shortDisplayName)方面"
+        }
+
+        return "动态方面"
     }
 
     private func stableUnique(_ values: [RegionId]) -> [RegionId] {

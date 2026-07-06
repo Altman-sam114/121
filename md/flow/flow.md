@@ -68,6 +68,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `MapDisplayAdapter` 现在为军队详情和郡县详情生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，`UnitInspectorView` / `RegionInspectorView` 消费这些展示字段，不再直接把 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId` 的 rawValue 或 `None/controlled` 英文 fallback 显示给玩家；typed id、Codable rawValue、动态方面/防区/战线派生和规则行为保持不变，武将显示名缺失时使用中文占位，不把 `generalId` 直接作为军队详情文案。
 - `SupplyRules` 的玩家可见事件日志当前已覆盖整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿中文化；这只改变 `GameState.appendEvent(...)` 文案，不改变补给路径、围城判定、撤退目的地、损耗数值或事件类别。
 - `EconomyRules` 的玩家可见事件日志当前已覆盖经济账本启动、排产成功/失败、回合府库结算、战略粮草耗尽、自动补员、粮草辎重入库、生产军队后方部署和无安全后方部署格中文化；资源摘要统一为人口、军械、粮草，生产部署优先显示军队展示名和郡县后方安全格；这只改变 `GameState.appendEvent(...)` 文案，不改变收入、维护费、补员、生产部署、安全后方筛选或事件类别。
+- `StrategicStateSynchronizer`、`WarCommandExecutor`、`CommandExecutor` 和 `StrategicStateBootstrapper` 的玩家可见事件日志当前已覆盖占领同步后的郡县控制权变化、动态方面推进、周边前线变化、外交档案补建、方面态势补建、前线补建和防区部署补建中文化；日志优先显示 `RegionNode.name`、`TheaterNode.name` 或 `FrontZone.name`，缺展示名时使用中文占位，不把 raw id 当玩家文案 fallback；这只改变 `GameState.appendEvent(...)` 文案，不改变 `hexToTheater`、`hexToFrontZone`、region controller 聚合、前线、部署或事件类别。
 - 道路敌控区、粮道上的敌对单位阻断、粮道控制格通行、撤退安全格控制格、战略郡县粮道控制区通行、撤退安全郡县、宏观军令落点敌控优先级、围城邻接、安全补员邻接、部署层敌军存在、相邻敌对防区接触、动态前线敌对接触、Legacy AgentContext 敌军摘要、MockAICommander 威胁估算、ZoneCommanderAgent / MarshalBattlefieldSummarizer / RulerStrategicSnapshot / StrategistBattlefieldSnapshot 单位级 AI hostile 摘要、玩家地图点击攻击、攻击高亮、武将宏观目标选择、攻击合法性、执行器单位目标筛选、区域交战压力和郡县可见敌军展示优先使用 `DiplomacyState` 的 `DiplomaticRelation.status`，缺外交建档时 fallback 到 `Faction.isHostile(to:)`，避免中立、停战、同盟或共同作战势力被误判为可攻击、切粮、阻断战略郡县粮道、阻止战略撤退安全郡县、围城、阻止撤退安全格、阻止补员、生成敌对部署接触、生成敌对前线或进入 AI 敌军摘要的敌军；objective / region controller 来源、非同 faction 堆叠阻挡、非己方控制 hex / region 的部署压力分类、前线压力/补给/包围拓扑和 encirclement 拓扑仍保留原控制权/阵营语义；移动后自动占领的 hex controller 改写单独由 `OccupationRules.canOccupy` 按外交 hostile / atWar gate 收束。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
@@ -1216,7 +1217,7 @@ oldZoneId = warDeploymentState.zoneId(for: destination)
 如果 oldZoneId != sourceZoneId:
   WarDeploymentManager.advanceHex(destination, from: oldZoneId, to: sourceZoneId)
 
-appendEvent("格 q,r 转入动态方面 ...")
+appendEvent("格 q,r 转入{方面/防区展示名}")
 ```
 
 `shouldAdvanceDynamicTheater` 当前判断：
@@ -1689,7 +1690,7 @@ attackingUnitIds =
   - 尝试 `applyDirectiveOccupation`（通常普通 `CommandExecutor` 已处理过）。
   - 尝试 `applyStrategicAdvance`（确保 directive move 也推进 dynamic theater）。
   - `StrategicStateSynchronizer.synchronizeAfterOccupationChange`。
-  - 记录 region owner change / front change event。
+  - 用郡县、方面或防区展示名记录控制权变化、动态方面推进和周边前线变化事件；展示名缺失时使用中文占位，不把 raw id 当玩家日志 fallback。
 
 TurnManager 外层会为每条 directive 生成 `WarDirectiveRecord`：
 

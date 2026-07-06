@@ -6330,6 +6330,53 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和任务面板仍待后续阶段。
 - 胜负触发的真实行为仍需等待云端 CI 和后续 Agent C artifact 复判；本地未做运行时 UI 烟测。
 
+## v2.4 - 战略同步日志三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移中武将、道路和交战相关的可见审计闭环，把占领、动态方面推进、前线变化和战略状态补建事件日志从英文 / raw id 文案改为中文三国语义。
+
+完成内容：
+
+- `StrategicStateSynchronizer` 的郡县控制权变化事件改为中文，优先显示 `RegionNode.name`。
+- `WarCommandExecutor` 的防区指令拒绝、郡县控制权变化、动态方面推进和周边前线变化事件改为中文；命令摘要使用“进军命令 / 交战命令 / 修缮道路命令”等粗粒度中文名，避免继续把 raw id 拼进玩家日志。
+- `CommandExecutor` 普通命令路径的动态方面推进事件优先显示 `TheaterNode.name` 或 `FrontZone.name`。
+- `StrategicStateBootstrapper` 的外交、方面、前线和防区补建事件改为中文三国语义。
+- 本轮只改事件文案和本地展示 helper，不改变 `hexToTheater`、`hexToFrontZone`、region controller 聚合、前线、部署、命令执行、Codable/rawValue 或 UI 布局。
+
+关键文件：
+
+- `WWIIHexV0/Rules/StrategicStateSynchronizer.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Core/StrategicStateBootstrapper.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_strategic_sync_log_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/StrategicStateSynchronizer.swift WWIIHexV0/Commands/WarCommandExecutor.swift WWIIHexV0/Rules/CommandExecutor.swift WWIIHexV0/Core/StrategicStateBootstrapper.swift` 通过。
+- 战略同步旧英文 / raw id 事件扫描无玩家可见残留；仅命中 `Theater.swift` 中 `dynamic theater` 注释。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `Command.displayName`、`CommandIntentAdapter` 和 `WarDirective` 解码/诊断文本仍有 raw id 或英文语义残留，需后续切片继续收敛。
+- 本轮不做运行时 UI 烟测；事件日志实际面板呈现仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+
 ## v2.4 - 经济与生产日志三国化
 
 完成日期：2026-07-06
