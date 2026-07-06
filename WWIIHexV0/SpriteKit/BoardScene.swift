@@ -694,7 +694,7 @@ final class BoardScene: SKScene {
         displayAdapter: MapDisplayAdapter
     ) -> Bool {
         state.divisions.contains { division in
-            division.faction.isHostile(to: faction) &&
+            isDiplomaticallyHostile(division.faction, to: faction, in: state) &&
                 !division.isDestroyed &&
                 displayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
                 division.coord.distance(to: coord) <= 1
@@ -742,7 +742,7 @@ final class BoardScene: SKScene {
     ) -> (name: String, distance: Int, id: String)? {
         state.divisions
             .filter {
-                $0.faction.isHostile(to: faction) &&
+                isDiplomaticallyHostile($0.faction, to: faction, in: state) &&
                     !$0.isDestroyed &&
                     displayAdapter.isDivisionVisible($0, viewerFaction: faction)
             }
@@ -762,6 +762,10 @@ final class BoardScene: SKScene {
                 }
                 return $0.id < $1.id
             }
+    }
+
+    private func isDiplomaticallyHostile(_ faction: Faction, to viewerFaction: Faction, in state: GameState) -> Bool {
+        state.diplomacyState.isHostile(between: faction, and: viewerFaction)
     }
 
     private func shortOperationEnemyName(_ name: String) -> String {

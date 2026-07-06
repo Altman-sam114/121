@@ -534,7 +534,7 @@ final class AppContainer: ObservableObject {
         guard let zone = selectedGeneralCommandZone,
               let targetRegion = selectedGeneralTargetRegion,
               let targetZone = selectedGeneralTargetZone,
-              isDiplomaticallyHostile(targetZone.faction, to: zone.faction) else {
+              selectedGeneralTargetUsesDiplomaticHostility else {
             return []
         }
 
@@ -557,6 +557,14 @@ final class AppContainer: ObservableObject {
             notes.append(enemyNote)
         }
         return notes
+    }
+
+    var selectedGeneralTargetUsesDiplomaticHostility: Bool {
+        guard let zone = selectedGeneralCommandZone,
+              let targetZone = selectedGeneralTargetZone else {
+            return false
+        }
+        return isDiplomaticallyHostile(targetZone.faction, to: zone.faction)
     }
 
     var selectedGeneralInfluenceNotes: [String] {

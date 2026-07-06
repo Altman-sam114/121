@@ -5,6 +5,7 @@ struct CommandPanelView: View {
     let activeFaction: Faction
     let phase: GamePhase
     let playerFaction: Faction
+    let diplomacyState: DiplomacyState
     let observerModeEnabled: Bool
     let lastCommandMessage: String?
     let onHold: () -> Void
@@ -91,7 +92,7 @@ struct CommandPanelView: View {
         }
 
         guard selectedDivision.faction == playerFaction else {
-            if selectedDivision.faction.isHostile(to: playerFaction) {
+            if diplomacyState.isHostile(between: selectedDivision.faction, and: playerFaction) {
                 return "已选择敌军，不能下令。"
             }
             return "已选择非敌对军队，只能查看。"

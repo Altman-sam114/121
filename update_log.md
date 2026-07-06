@@ -4692,6 +4692,57 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只覆盖 `AppContainer` 的只读预览和日志；`BoardScene` 计划军令地图短标签、`CommandPanelView` 状态文本和 `GeneralCommandPanelView` 面板显示 gate 仍可在后续小切片继续接入外交敌对口径。
 - 完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
 
+## v2.4 地图与面板外交敌对显示兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 补齐上一轮遗留的 `BoardScene` 计划军令地图短标签、`CommandPanelView` 状态文本和 `GeneralCommandPanelView` 目标预览显示 gate，让这些只读显示与 `DiplomacyState` 的 hostile / atWar 口径一致。
+
+完成内容：
+
+- `WWIIHexV0/SpriteKit/BoardScene.swift` 的计划军令官道“受压”和最近可见敌军短标签改用 `state.diplomacyState.isHostile(between:and:)`，保留玩家视角可见性过滤。
+- `WWIIHexV0/UI/CommandPanelView.swift` 新增 `DiplomacyState` 入参，只影响非己方军队状态文案中的“敌军/非敌对军队”判断，按钮权限不变。
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift` 不再自行读取 `targetZone.faction.isHostile(to:)`，改由 `AppContainer.selectedGeneralTargetUsesDiplomaticHostility` 派生显示 gate。
+- `WWIIHexV0/UI/RootGameView.swift` 同步传入外交状态和目标预览显示布尔值。
+- `WWIIHexV0/App/AppContainer.swift` 暴露目标预览显示派生，让目标预览区块和目标预览 notes 使用同一外交敌对口径。
+
+关键文件：
+
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `WWIIHexV0/UI/CommandPanelView.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_display_diplomacy_hostile_preview.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- `swiftc -parse WWIIHexV0/SpriteKit/BoardScene.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/CommandPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/GeneralCommandPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RootGameView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮仍未修改实际命令入口：地图点击自动攻击、攻击高亮、武将“进攻郡县”按钮可用性、`selectedAttackTarget` 和相邻己方防区反推仍使用 `Faction.isHostile(to:)`，需要后续单独切片决定是否把玩家 UI 命令 affordance 接到外交 hostile。
+- 完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

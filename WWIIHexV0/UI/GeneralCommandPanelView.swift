@@ -7,7 +7,7 @@ struct GeneralCommandPanelView: View {
     let assignedDivisionRows: [GeneralAssignedDivisionRow]
     let influenceNotes: [String]
     let targetRegion: RegionNode?
-    let targetZone: FrontZone?
+    let shouldShowTargetPreview: Bool
     let targetPreviewNotes: [String]
     let hqUnderAttack: Bool
     let plannedOperationRows: [(id: String, iconName: String, summary: String)]
@@ -124,8 +124,7 @@ struct GeneralCommandPanelView: View {
             }
 
             if let targetRegion,
-               let sourceFaction = zone?.faction,
-               targetZone?.faction.isHostile(to: sourceFaction) == true {
+               shouldShowTargetPreview {
                 LabeledContent("目标") {
                     Text(targetRegion.name)
                 }
