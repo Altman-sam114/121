@@ -373,7 +373,8 @@ final class AppContainer: ObservableObject {
             .compactMap { target in
                 guard target.id != division.id,
                       !target.isDestroyed,
-                      target.faction.isHostile(to: division.faction) else {
+                      target.faction.isHostile(to: division.faction),
+                      mapDisplayAdapter.isDivisionVisible(target, viewerFaction: playerFaction) else {
                     return nil
                 }
                 return (
@@ -2368,6 +2369,7 @@ final class AppContainer: ObservableObject {
             gameState.divisions
                 .filter {
                     $0.faction.isHostile(to: division.faction) &&
+                        mapDisplayAdapter.isDivisionVisible($0, viewerFaction: playerFaction) &&
                         division.coord.distance(to: $0.coord) <= division.range
                 }
                 .map(\.coord)
