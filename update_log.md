@@ -4902,9 +4902,54 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- `FrontLineManager` 的动态前线接触、`AgentContexts` / MockAI 的敌军摘要仍存在后续外交 hostile 迁移空间，且涉及更大接口和 AI context 口径，需单独切片。
+- `FrontLineManager` 的动态前线接触以及 `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 的剩余 hostile 派生仍存在后续外交 hostile 迁移空间，且涉及更大接口和战略/前线口径，需单独切片。
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
+
+## v2.4 外交敌对 AI 摘要兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路和交战迁移，把 Legacy Agent context 与 MockAI 威胁估算的单位敌军摘要从静态 `Faction.isHostile(to:)` 迁移到 `DiplomacyState` 的 hostile / atWar 口径。
+
+完成内容：
+
+- `WWIIHexV0/Agents/AgentContexts.swift` 的 `enemyDivisions` 来源改用 `state.diplomacyState.isHostile(between:and:)`。
+- `AgentContextBuilder.supplySummary` 的 enemy supplied / lowSupply / encircled 统计来源改用 `DiplomacyState` hostile 口径。
+- `WWIIHexV0/Agents/MockAICommander.swift` 的 `visibleEnemyStrength` 改用 `DiplomacyState` hostile 口径，避免把外交非敌对单位计入兼容 MockAI 威胁强度。
+- 保留 `AgentContext`、`DivisionSummary`、`SupplySummary` Codable schema，以及 `MockAIClient`、`AgentPromptBuilder`、`TurnManager` 的消费逻辑；本轮不迁移 `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 或 `FrontLineManager` 的剩余 hostile 派生。
+
+关键文件：
+
+- `WWIIHexV0/Agents/AgentContexts.swift`
+- `WWIIHexV0/Agents/MockAICommander.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_agent_context_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/AgentContexts.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/MockAICommander.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 和 `FrontLineManager` 的剩余 hostile 派生仍待后续切片。
+- 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
+- 复杂多势力关系下的真实 AI 行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
