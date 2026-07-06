@@ -152,3 +152,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_agent_fallback_sanguo_identity.md`
 - `md/prompt/v2.0-三国迁移/v2.4_agent_record_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.4_mockai_visible_text_localization.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_panel_anchor_display_names.md`

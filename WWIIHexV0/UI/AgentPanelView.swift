@@ -8,6 +8,9 @@ struct AgentPanelView: View {
     let strategistRecord: StrategistDecisionRecord?
     let generalRecords: [GeneralDecisionRecord]
     let directiveRecords: [WarDirectiveRecord]
+    let regionDisplayNames: [RegionId: String]
+    let frontZoneDisplayNames: [FrontZoneId: String]
+    let countryDisplayNames: [CountryId: String]
 
     init(
         record: AgentDecisionRecord?,
@@ -16,7 +19,10 @@ struct AgentPanelView: View {
         governorRecord: GovernorDecisionRecord? = nil,
         strategistRecord: StrategistDecisionRecord? = nil,
         generalRecords: [GeneralDecisionRecord] = [],
-        directiveRecords: [WarDirectiveRecord] = []
+        directiveRecords: [WarDirectiveRecord] = [],
+        regionDisplayNames: [RegionId: String] = [:],
+        frontZoneDisplayNames: [FrontZoneId: String] = [:],
+        countryDisplayNames: [CountryId: String] = [:]
     ) {
         self.record = record
         self.rulerRecord = rulerRecord
@@ -25,6 +31,9 @@ struct AgentPanelView: View {
         self.strategistRecord = strategistRecord
         self.generalRecords = generalRecords
         self.directiveRecords = directiveRecords
+        self.regionDisplayNames = regionDisplayNames
+        self.frontZoneDisplayNames = frontZoneDisplayNames
+        self.countryDisplayNames = countryDisplayNames
     }
 
     var body: some View {
@@ -62,7 +71,7 @@ struct AgentPanelView: View {
                 }
                 if let zoneId = rulerRecord.preferredFrontZoneId {
                     LabeledContent("重点") {
-                        Text(zoneId.rawValue)
+                        Text(frontZoneDisplayName(for: zoneId))
                     }
                 }
             }
@@ -77,12 +86,12 @@ struct AgentPanelView: View {
                 }
                 if let target = diplomatRecord.targetCountryId {
                     LabeledContent("对象") {
-                        Text(target.rawValue)
+                        Text(countryDisplayName(for: target))
                     }
                 }
                 if !diplomatRecord.objectiveRegionIds.isEmpty {
                     LabeledContent("目标郡县") {
-                        Text(diplomatRecord.objectiveRegionIds.map(\.rawValue).joined(separator: ", "))
+                        Text(regionDisplayList(diplomatRecord.objectiveRegionIds))
                             .multilineTextAlignment(.trailing)
                     }
                 }
@@ -106,7 +115,7 @@ struct AgentPanelView: View {
                 }
                 if !governorRecord.focusRegionIds.isEmpty {
                     LabeledContent("郡县") {
-                        Text(governorRecord.focusRegionIds.map(\.rawValue).joined(separator: ", "))
+                        Text(regionDisplayList(governorRecord.focusRegionIds))
                             .multilineTextAlignment(.trailing)
                     }
                 }
@@ -122,12 +131,12 @@ struct AgentPanelView: View {
                 }
                 if let zoneId = strategistRecord.selectedFrontZoneId {
                     LabeledContent("主防区") {
-                        Text(zoneId.rawValue)
+                        Text(frontZoneDisplayName(for: zoneId))
                     }
                 }
                 if !strategistRecord.focusRegionIds.isEmpty {
                     LabeledContent("目标") {
-                        Text(strategistRecord.focusRegionIds.map(\.rawValue).joined(separator: ", "))
+                        Text(regionDisplayList(strategistRecord.focusRegionIds))
                             .multilineTextAlignment(.trailing)
                     }
                 }
@@ -194,7 +203,7 @@ struct AgentPanelView: View {
                     ForEach(directiveRecords) { directive in
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 6) {
-                                Text(directive.zoneId?.rawValue ?? "global")
+                                Text(frontZoneDisplayName(for: directive.zoneId))
                                     .font(.caption.bold())
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -259,7 +268,7 @@ struct AgentPanelView: View {
         let tactic = directive.tactic?.displayName ?? directive.category?.displayName ?? "无"
         let executed = directive.commandResults.filter(\.executed).count
         let rejected = directive.commandResults.count - executed
-        let targets = directive.targetRegionIds.map(\.rawValue).joined(separator: ", ")
+        let targets = regionDisplayList(directive.targetRegionIds)
         let targetText = targets.isEmpty ? "无目标" : targets
         return "\(type) / \(tactic) / \(executed) 成功, \(rejected) 拒绝 / \(targetText)"
     }
@@ -267,9 +276,35 @@ struct AgentPanelView: View {
     private func generalRecordSummary(_ record: GeneralDecisionRecord) -> String {
         let tactic = record.tactic?.displayName ?? "未定战术"
         let style = commandStyleDisplayName(record.commandStyle)
-        let targets = record.targetRegionIds.map(\.rawValue).joined(separator: ", ")
+        let targets = regionDisplayList(record.targetRegionIds)
         let targetText = targets.isEmpty ? "无目标" : targets
-        return "\(record.zoneId.rawValue) / \(record.directiveType.displayName) / \(tactic) / \(style) / \(targetText)"
+        return "\(frontZoneDisplayName(for: record.zoneId)) / \(record.directiveType.displayName) / \(tactic) / \(style) / \(targetText)"
+    }
+
+    private func regionDisplayList(_ regionIds: [RegionId]) -> String {
+        regionIds.map(regionDisplayName).joined(separator: ", ")
+    }
+
+    private func regionDisplayName(for regionId: RegionId) -> String {
+        let displayName = regionDisplayNames[regionId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return displayName.isEmpty ? regionId.rawValue : displayName
+    }
+
+    private func frontZoneDisplayName(for zoneId: FrontZoneId?) -> String {
+        guard let zoneId else {
+            return "全局"
+        }
+        return frontZoneDisplayName(for: zoneId)
+    }
+
+    private func frontZoneDisplayName(for zoneId: FrontZoneId) -> String {
+        let displayName = frontZoneDisplayNames[zoneId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return displayName.isEmpty ? zoneId.rawValue : displayName
+    }
+
+    private func countryDisplayName(for countryId: CountryId) -> String {
+        let displayName = countryDisplayNames[countryId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return displayName.isEmpty ? countryId.rawValue : displayName
     }
 
     private func commandStyleDisplayName(_ style: ZoneCommanderAgentConfig.CommandStyle?) -> String {

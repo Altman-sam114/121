@@ -223,13 +223,57 @@ struct RootGameView: View {
                         governorRecord: container.gameState.latestGovernorRecord,
                         strategistRecord: container.gameState.latestStrategistRecord,
                         generalRecords: container.gameState.latestGeneralRecords,
-                        directiveRecords: container.lastWarDirectiveRecords
+                        directiveRecords: container.lastWarDirectiveRecords,
+                        regionDisplayNames: agentPanelRegionDisplayNames,
+                        frontZoneDisplayNames: agentPanelFrontZoneDisplayNames,
+                        countryDisplayNames: agentPanelCountryDisplayNames
                     )
                 }
             }
             .padding(.horizontal, 8)
             .padding(.bottom, 10)
         }
+    }
+
+    private var agentPanelRegionDisplayNames: [RegionId: String] {
+        container.gameState.map.regions.mapValues { region in
+            region.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? region.id.rawValue
+                : region.name
+        }
+    }
+
+    private var agentPanelFrontZoneDisplayNames: [FrontZoneId: String] {
+        Dictionary(uniqueKeysWithValues: container.gameState.warDeploymentState.frontZones.map { zoneId, zone in
+            (zoneId, agentPanelFrontZoneDisplayName(for: zone))
+        })
+    }
+
+    private func agentPanelFrontZoneDisplayName(for zone: FrontZone) -> String {
+        let trimmedName = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty && trimmedName != zone.id.rawValue {
+            return trimmedName
+        }
+
+        let regionNames = zone.regionIds
+            .prefix(2)
+            .map(agentPanelRegionDisplayName)
+            .filter { !$0.isEmpty }
+            .joined(separator: "、")
+        let regionSuffix = regionNames.isEmpty ? "" : "：\(regionNames)"
+        return "\(zone.faction.shortDisplayName)防区\(regionSuffix)"
+    }
+
+    private var agentPanelCountryDisplayNames: [CountryId: String] {
+        Dictionary(uniqueKeysWithValues: container.gameState.diplomacyState.countries.map { country in
+            let displayName = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (country.id, displayName.isEmpty ? country.id.rawValue : displayName)
+        })
+    }
+
+    private func agentPanelRegionDisplayName(for regionId: RegionId) -> String {
+        let displayName = container.gameState.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return displayName.isEmpty ? regionId.rawValue : displayName
     }
 }
 

@@ -595,7 +595,7 @@ AppContainer.bootstrap()
 
 `GameAgent.guderian(...)` 是 Legacy Agent D 的兼容入口：方法名、agent id、`.germany` rawValue 和旧单位分配校验保持不变；默认 `general_agents.json` 和 fallback 显示名已改为张辽，personality 文案使用骑军突击、官道机动、快速合围和攻城支援语义。MockAI 启发式仍按旧回归路径另行迁移，不在这里改变决策算法。
 
-`AgentDecisionRecord` 继续存储 raw `agentId`、`provider` 和 `rawJSON` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和 `debugJSONDisplay` 映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。
+`AgentDecisionRecord` 继续存储 raw `agentId`、`provider` 和 `rawJSON` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和 `debugJSONDisplay` 映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要从 `RootGameView` 接收只读展示名映射：国家优先使用 `CountryProfile.name`，郡县优先使用 `RegionNode.name`，防区优先使用 `FrontZone.name`，防区名缺失或仍等于 raw id 时用势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类 fallback；记录、schema 和调试 JSON 原始字段不变。
 
 `MockAIClient` 仍是 Legacy Agent D 兼容 provider；本轮只把 intent / reason 文案改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分保持旧兼容算法，不在可见文本切片里迁移行为。
 
@@ -2052,7 +2052,7 @@ v1.0 分支名：`v1.0-ui-ai-playtest`。
 GameState / WarDirectiveRecord / EventLog
   -> RootGameView
   -> HUD + Info tabs
-  -> AgentPanelView 展示 raw JSON / command results / zone directives
+  -> AgentPanelView 展示调试 JSON / 命令结果 / 防区指令展示名
   -> EventLogView 展示最近 60 条分类日志
 
 BoardScene
@@ -2069,7 +2069,7 @@ Marshal / ZoneDirective
 
 算法变化：
 
-- AI 面板从只展示 `AgentDecisionRecord` 扩展为同时展示 `WarDirectiveRecord`，每条 directive 可看到 zone、attack/defend、tactic、命令成功/拒绝数量和目标 region。
+- AI 面板从只展示 `AgentDecisionRecord` 扩展为同时展示 `WarDirectiveRecord`，每条 directive 可看到防区展示名、attack/defend、tactic、命令成功/拒绝数量和目标郡县展示名；底层记录仍保留 raw zone / region id。
 - 日志面板用 `LogDisplayEntry` 保存 entry + category，避免 body 内对同一条日志重复分类。
 - 单位绘制先缓存 `unitDisplayHex` 再排序，避免 comparator 重复计算。
 - `AttackIntensity.infiltration` 在无显式 `maxCommittedUnits` 时默认只投入约半数前线/纵深候选单位，避免渗透/袭扰全线压上。

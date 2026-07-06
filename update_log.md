@@ -5312,6 +5312,50 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不实现完整借道、同盟通行、共同堆叠、补给共享、完整骑兵重写或外交宣战制度。
 - 真实运行时 UI 和云端 Xcode build 仍待 `origin/main` 的 GitHub Actions `ci-results` 与后续 Agent C artifact 复判。
 
+## v2.4 - Agent 面板战略锚点展示名兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 减少 AI 面板中君主、外交官、太守、军师、武将和防区指令审计继续直接展示 raw country / region / zone id，让本轮迁移继续围绕武将、道路和交战的可读复判推进。
+
+完成内容：
+
+- `AgentPanelView` 新增 `countryDisplayNames`、`regionDisplayNames` 和 `frontZoneDisplayNames` 只读映射，主审计行优先显示国家、郡县名和防区名。
+- 外交对象、君主重点防区、外交目标郡县、太守重点郡县、军师主防区/目标、武将摘要、防区指令 badge 和 directive summary 改用展示 helper。
+- `RootGameView` 从当前 `GameState.diplomacyState.countries`、`GameState.map.regions` 和 `GameState.warDeploymentState.frontZones` 构造展示名映射；防区名为空或仍等于 raw id 时，按势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类 fallback。
+- 保留 `CountryId`、`RegionId`、`FrontZoneId`、各类记录 Codable、AI schema、调试 JSON、命令管线、道路、交战和部署规则不变。
+
+关键文件：
+
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_panel_anchor_display_names.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/AgentPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/RootGameView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- AI 面板 raw country / region / zone 展示点扫描确认：`target.rawValue`、`targetRegionIds.map(\.rawValue)`、`focusRegionIds.map(\.rawValue)`、`zoneId?.rawValue`、`zoneId.rawValue` 已不再作为主审计展示路径；剩余 rawValue 为命令类型 fallback 和展示名缺失 fallback。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮是 UI 显示切片，不迁移 `CountryProfile.name` / `FrontZone.name` 的数据源，也不改变调试 JSON 中的 raw id。
+- AI 面板实际换行和运行时视觉仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
