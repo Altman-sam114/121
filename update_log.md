@@ -4651,6 +4651,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做本机运行时前线/部署烟测；中立或非 hostile 防区不再生成敌对接触后，动态部署层在复杂多势力接壤下的实际 front/depth/garrison 分配仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - RegionCommandValidator 只是旧 region 命令校验兼容层；默认执行链仍会经 `CommandIntentAdapter -> CommandValidator -> RuleEngine` 兜底。
 
+## v2.4 AppContainer 外交敌对预览兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路、交战和多势力外交口径做小步迁移，把 `AppContainer` 的只读敌军/近敌/受压/接战预览接到 `DiplomacyState` 的敌对关系 helper。
+
+完成内容：
+
+- `WWIIHexV0/App/AppContainer.swift` 新增本地 `isDiplomaticallyHostile(_:to:)` helper，复用 `DiplomacyState.isHostile(between:and:)` 的 `DiplomaticRelation.status` 判定和缺建档 fallback。
+- 军队接战预判、武将麾下军队摘要、武将目标预览、武将影响摘要、计划军令近敌/受压摘要、移动预览可见敌控过滤和非己方军队点击日志改用外交敌对口径。
+- 保留地图点击自动攻击、攻击高亮、武将宏观目标可用性、真实攻击/移动/道路/粮道/部署/补给/伤害/撤退规则的 `Faction.isHostile(to:)` 口径，避免 UI 预览切片扩大成执行规则变更。
+
+关键文件：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_appcontainer_diplomacy_hostile_preview.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只覆盖 `AppContainer` 的只读预览和日志；`BoardScene` 计划军令地图短标签、`CommandPanelView` 状态文本和 `GeneralCommandPanelView` 面板显示 gate 仍可在后续小切片继续接入外交敌对口径。
+- 完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

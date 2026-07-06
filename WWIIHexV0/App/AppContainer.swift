@@ -373,7 +373,7 @@ final class AppContainer: ObservableObject {
             .compactMap { target in
                 guard target.id != division.id,
                       !target.isDestroyed,
-                      target.faction.isHostile(to: division.faction),
+                      isDiplomaticallyHostile(target.faction, to: division.faction),
                       mapDisplayAdapter.isDivisionVisible(target, viewerFaction: playerFaction) else {
                     return nil
                 }
@@ -518,7 +518,7 @@ final class AppContainer: ObservableObject {
 
     var selectedGeneralAssignedDivisionRows: [GeneralAssignedDivisionRow] {
         let visibleHostiles = gameState.divisions.filter { division in
-            division.faction.isHostile(to: playerFaction) &&
+            isDiplomaticallyHostile(division.faction, to: playerFaction) &&
                 !division.isDestroyed &&
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction)
         }
@@ -534,7 +534,7 @@ final class AppContainer: ObservableObject {
         guard let zone = selectedGeneralCommandZone,
               let targetRegion = selectedGeneralTargetRegion,
               let targetZone = selectedGeneralTargetZone,
-              targetZone.faction.isHostile(to: zone.faction) else {
+              isDiplomaticallyHostile(targetZone.faction, to: zone.faction) else {
             return []
         }
 
@@ -609,7 +609,7 @@ final class AppContainer: ObservableObject {
 
         let enemyDivisions = gameState.divisions
             .filter {
-                $0.faction.isHostile(to: zone.faction) &&
+                isDiplomaticallyHostile($0.faction, to: zone.faction) &&
                     !$0.isDestroyed &&
                     mapDisplayAdapter.isDivisionVisible($0, viewerFaction: playerFaction)
             }
@@ -958,7 +958,7 @@ final class AppContainer: ObservableObject {
 
     private func generalTargetHexIsVisiblyPressured(_ coord: HexCoord, faction: Faction) -> Bool {
         gameState.divisions.contains { division in
-            division.faction.isHostile(to: faction) &&
+            isDiplomaticallyHostile(division.faction, to: faction) &&
                 !division.isDestroyed &&
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
                 division.coord.distance(to: coord) <= 1
@@ -995,7 +995,7 @@ final class AppContainer: ObservableObject {
     ) -> (name: String, distance: Int)? {
         let nearest = gameState.divisions
             .filter {
-                $0.faction.isHostile(to: faction) &&
+                isDiplomaticallyHostile($0.faction, to: faction) &&
                     !$0.isDestroyed &&
                     mapDisplayAdapter.isDivisionVisible($0, viewerFaction: faction)
             }
@@ -1156,6 +1156,10 @@ final class AppContainer: ObservableObject {
 
     private var mapDisplayAdapter: MapDisplayAdapter {
         MapDisplayAdapter(state: gameState, revealAll: observerModeEnabled)
+    }
+
+    private func isDiplomaticallyHostile(_ faction: Faction, to viewerFaction: Faction) -> Bool {
+        gameState.diplomacyState.isHostile(between: faction, and: viewerFaction)
     }
 
     private func refreshedRuntimeState(_ state: GameState) -> GameState {
@@ -1382,7 +1386,7 @@ final class AppContainer: ObservableObject {
     ) -> (name: String, distance: Int)? {
         let nearest = gameState.divisions
             .filter {
-                $0.faction.isHostile(to: faction) &&
+                isDiplomaticallyHostile($0.faction, to: faction) &&
                     !$0.isDestroyed &&
                     mapDisplayAdapter.isDivisionVisible($0, viewerFaction: faction)
             }
@@ -1469,7 +1473,7 @@ final class AppContainer: ObservableObject {
 
     private func plannedOperationHexIsPressured(_ coord: HexCoord, faction: Faction) -> Bool {
         gameState.divisions.contains { division in
-            division.faction.isHostile(to: faction) &&
+            isDiplomaticallyHostile(division.faction, to: faction) &&
                 !division.isDestroyed &&
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: faction) &&
                 division.coord.distance(to: coord) <= 1
@@ -1478,7 +1482,7 @@ final class AppContainer: ObservableObject {
 
     private func isVisibleHostileZoneOfControl(_ coord: HexCoord, for faction: Faction) -> Bool {
         gameState.divisions.contains { division in
-            division.faction.isHostile(to: faction) &&
+            isDiplomaticallyHostile(division.faction, to: faction) &&
                 !division.isDestroyed &&
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction) &&
                 division.coord.distance(to: coord) == 1
@@ -1488,7 +1492,7 @@ final class AppContainer: ObservableObject {
     private func visibilityFilteredPreviewState(for faction: Faction) -> GameState {
         var previewState = gameState
         previewState.divisions = gameState.divisions.filter { division in
-            !division.faction.isHostile(to: faction) ||
+            !isDiplomaticallyHostile(division.faction, to: faction) ||
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction)
         }
         return previewState
@@ -2342,7 +2346,7 @@ final class AppContainer: ObservableObject {
             submit(.attack(attackerId: attacker.id, targetId: division.id))
         } else {
             selectDivision(division)
-            let relation = division.faction.isHostile(to: playerFaction) ? "敌军" : "非敌对军队"
+            let relation = isDiplomaticallyHostile(division.faction, to: playerFaction) ? "敌军" : "非敌对军队"
             appendInteractionEvent("选择\(relation)：\(division.name)。")
         }
     }
