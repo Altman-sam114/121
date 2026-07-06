@@ -341,7 +341,7 @@ extension RulerAgent {
         case .germany:
             config = RulerAgentConfig(
                 id: country?.rulerAgentId ?? "ruler_germany",
-                name: "German Ruler",
+                name: "\(faction.displayName)君主",
                 faction: faction,
                 countryId: country?.id,
                 aggression: 82,
@@ -351,7 +351,7 @@ extension RulerAgent {
         case .allies:
             config = RulerAgentConfig(
                 id: country?.rulerAgentId ?? "ruler_allies",
-                name: "Allied Supreme Council",
+                name: "\(faction.displayName)军议",
                 faction: faction,
                 countryId: country?.id,
                 aggression: 58,

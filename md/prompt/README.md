@@ -148,3 +148,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_frontline_contact.md`
 - `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_ai_upper_layers.md`
 - `md/prompt/v2.0-三国迁移/v2.4_borrow_passage_no_auto_occupation.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_fallback_display_names.md`

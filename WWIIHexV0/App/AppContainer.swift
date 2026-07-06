@@ -2277,7 +2277,7 @@ final class AppContainer: ObservableObject {
                 .map(\.id)
             agent = GameAgent.sample(
                 id: "allied_mock_commander",
-                name: "Allied Mock Commander",
+                name: "\(Faction.allies.shortDisplayName)兼容指挥官",
                 faction: .allies,
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
@@ -2288,7 +2288,7 @@ final class AppContainer: ObservableObject {
                 .map(\.id)
             agent = GameAgent.sample(
                 id: "\(faction.rawValue)_observer",
-                name: "\(faction.displayName) Observer",
+                name: "\(faction.displayName)观察指挥官",
                 faction: faction,
                 role: .armyCommander,
                 assignedDivisionIds: assignedIds
@@ -2320,10 +2320,9 @@ final class AppContainer: ObservableObject {
             .sorted { $0.id.rawValue < $1.id.rawValue }
             .map { zone in
                 let style: ZoneCommanderAgentConfig.CommandStyle = zone.faction == .germany ? .aggressive : .balanced
-                let factionName = zone.faction == .germany ? "German" : "Allied"
                 let config = ZoneCommanderAgentConfig(
                     id: "auto_\(zone.id.rawValue)",
-                    name: "\(factionName) Commander (\(zone.id.rawValue))",
+                    name: "\(zone.faction.shortDisplayName)防区指挥官（\(zone.id.rawValue)）",
                     faction: zone.faction,
                     assignedZoneId: zone.id,
                     skills: [],

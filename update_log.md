@@ -5003,6 +5003,51 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实前线行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
+## v2.4 - 上游 Agent fallback 显示名三国化兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 减少 AI 面板、审计记录和兼容 fallback 路径中的二战英文指挥者残留，让君主、军师、武将/防区指挥者的默认显示名使用当前三国势力语义。
+
+完成内容：
+
+- `WWIIHexV0/Agents/RulerAgent.swift` 的 `.germany/.allies` 兼容 fallback 名称改为基于 `Faction.displayName` 的君主/军议显示名。
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift` 的自动防区指挥者名称改为 `Faction.shortDisplayName + 防区指挥官`；`.germany/.allies` 的 `MarshalAgentConfig.automatic` fallback 改为曹军/袁军军师，并把 personality 文案改成中文道路、战线和预备队语义。
+- `WWIIHexV0/App/AppContainer.swift` 的缺 registry commander pool 和兼容 mock / observer agent 显示名改为三国/中文口径。
+- `WWIIHexV0/Agents/GameAgent.swift` 的 `AgentRole.displayName` 改为君主、军师、武将。
+- 保持 agent id、Codable rawValue、JSON schema、AI 决策、道路、交战、占领和命令执行链不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/RulerAgent.swift`
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `WWIIHexV0/Agents/GameAgent.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_fallback_display_names.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/RulerAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/ZoneCommanderAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/GameAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 改动文件尾随空白扫描、冲突标记扫描、旧 fallback 英文显示名扫描均无命中。
+- prompt 索引 Ruby 检查无缺项；`git diff --check` 通过。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `general_agents.json`、`GameAgent.guderianFallback` 和 `MockAIClient` 仍保留旧兼容 MockAI / 阿登回归参考语义；后续可按 `v2.4_general_agent_fallback_sanguo_identity.md` 或 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+
 ## v2.4 外交敌对 AI 上游摘要兼容层
 
 完成日期：2026-07-06

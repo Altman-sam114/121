@@ -11,11 +11,11 @@ enum AgentRole: String, Codable, Equatable, CaseIterable {
     var displayName: String {
         switch self {
         case .ruler:
-            return "Ruler"
+            return "君主"
         case .fieldMarshal:
-            return "Field Marshal"
+            return "军师"
         case .armyCommander:
-            return "Army Commander"
+            return "武将"
         }
     }
 }

@@ -844,10 +844,9 @@ struct TheaterCommanderPool {
 
     static func defaultConfig(for zone: FrontZone) -> ZoneCommanderAgentConfig {
         let style: ZoneCommanderAgentConfig.CommandStyle = zone.faction == .germany ? .aggressive : .balanced
-        let factionName = zone.faction == .germany ? "German" : "Allied"
         return ZoneCommanderAgentConfig(
             id: "auto_\(zone.id.rawValue)",
-            name: "\(factionName) Commander (\(zone.id.rawValue))",
+            name: "\(zone.faction.shortDisplayName)防区指挥官（\(zone.id.rawValue)）",
             faction: zone.faction,
             assignedZoneId: zone.id,
             skills: [],
@@ -898,18 +897,18 @@ struct MarshalAgentConfig: Codable, Equatable, Identifiable {
         case .germany:
             return MarshalAgentConfig(
                 id: "marshal_rundstedt",
-                name: "Gerd von Rundstedt",
+                name: "\(faction.shortDisplayName)军师",
                 faction: .germany,
-                personality: "Steady operational commander; favors concentration of force, reserves, and controlled breakthroughs.",
+                personality: "稳健军师；重视兵力集中、预备队、官道机动与受控突破。",
                 strategicBias: .offensive,
                 theaterGroupZoneIds: zoneIds
             )
         case .allies:
             return MarshalAgentConfig(
                 id: "marshal_eisenhower",
-                name: "Dwight Eisenhower",
+                name: "\(faction.shortDisplayName)军师",
                 faction: .allies,
-                personality: "Coalition commander; favors stable fronts, reserves, and coordinated limited counterattacks.",
+                personality: "稳阵军师；重视稳定战线、预备队和协同有限反击。",
                 strategicBias: .balanced,
                 theaterGroupZoneIds: zoneIds
             )

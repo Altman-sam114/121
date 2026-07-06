@@ -71,13 +71,13 @@ flowchart TD
     AI["AI 元帅系统<br/>MarshalAgent + TheaterDirective JSON<br/>先做大战役级规划"]:::input
     DEC["元帅 JSON 解码<br/>TheaterDirectiveDecoder<br/>提取 fenced JSON、校验 id 与 schema"]:::command
     COMP["元帅意图编译<br/>TheaterDirectiveCompiler<br/>把 TheaterDirective 降级成 ZoneDirective"]:::command
-    RULER["君主姿态塑形<br/>RulerAgent.adjust<br/>调整 DirectiveEnvelope，写 RulerDecisionRecord"]:::command
+    RULER["君主姿态塑形<br/>RulerAgent.adjust<br/>显示名按三国势力 fallback，写 RulerDecisionRecord"]:::command
     DIPLO["外交提案<br/>DiplomatAgent.plan<br/>同盟/停战/借道/称臣/讨伐檄文"]:::command
     DCMD["外交命令<br/>Command.proposeDiplomacy<br/>经规则层更新关系/紧张度"]:::command
     GOV["太守内政建议<br/>GovernorAgent.plan<br/>征兵/修路/屯田/治安/补给审计"]:::command
     ROAD["太守修路命令<br/>Command.improveRoad<br/>经规则层连通优先修缮道路和基础设施"]:::command
     GCMD["太守生产命令<br/>Command.queueProduction<br/>经规则层校验资源并排产"]:::command
-    STRAT["军师目标编排<br/>StrategistAgent.plan<br/>重排目标 region，写 StrategistDecisionRecord"]:::command
+    STRAT["军师目标编排<br/>StrategistAgent.plan<br/>军师/防区指挥 fallback 显示名三国化"]:::command
     GENA["武将军令复核与战术塑形<br/>GeneralAgent.plan<br/>按武将分配复核投入和 tactic，写 GeneralDecisionRecord"]:::command
     GSKILL["武将技能显示<br/>GeneralSkillDisplay<br/>raw skill id -> 中文标签 + 短效果提示"]:::ui
     GINF["武将战场影响<br/>GeneralInfluence<br/>姓名快照 + 官道/骑战机动 + 攻防修正"]:::rules

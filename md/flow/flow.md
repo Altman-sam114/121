@@ -424,6 +424,7 @@ MarshalAgent / TheaterCommanderPool
 
 - 根据 `GameState` 派生 `RulerStrategicSnapshot`，选择进取、守成、合盟或稳固姿态。
 - 敌对国家数来自 `DiplomacyState.hostileCountryIds`；相邻防区敌军强度只统计 `DiplomacyState` hostile / atWar 单位。
+- 自动 fallback 配置的显示名使用 `Faction.displayName`，兼容 `.germany/.allies` rawValue 时也显示为曹操势力/袁绍势力的君主或军议，不再展示 German Ruler / Allied Supreme Council。
 - 只调整 `ZoneDirective` 的姿态参数，例如进攻强度、防守预备队和优先 region 排序。
 - 生成 `RulerDecisionRecord`，写入 `DiplomacyState.rulerRecords`，并追加 diplomacy 日志。
 - 把姿态摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
@@ -452,6 +453,7 @@ MarshalAgent / TheaterCommanderPool
 - 承接 `RulerDecisionRecord` 的姿态和优先防区，选择本轮主防区。
 - 根据 front zone、敌邻 region、据点价值和压力重排攻击目标 region。
 - `StrategistBattlefieldSnapshot` 的邻近敌对单位存在判断使用 `DiplomacyState` hostile / atWar 口径；region controller 争夺和动态防区拓扑语义不变。
+- 元帅/军师和自动防区指挥者 fallback 显示名使用 `Faction.shortDisplayName` 生成曹军/袁军军师或防区指挥官；id、schema 和战术选择保持兼容。
 - 补齐或收束 `focusRegionId`、`supportRegionIds`、`convergenceRegionId` 和部分强度倾向。
 - 生成 `StrategistDecisionRecord`，写入 `GameState.strategistRecords`，并追加事件日志。
 - 把军师意图追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
