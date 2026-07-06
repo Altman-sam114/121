@@ -228,9 +228,9 @@ struct TurnManager {
             let governorJSON = try Self.canonicalGovernorJSON(governorAdjustment.record)
             let generalJSON = try Self.canonicalDirectiveJSON(generalAdjustment.envelope)
             let rawJSON = [
-                "Diplomat proposal JSON:\n\(diplomatJSON)",
-                "Governor advice JSON:\n\(governorJSON)",
-                "General-adjusted ZoneDirective JSON:\n\(generalJSON)"
+                "外交提案 JSON:\n\(diplomatJSON)",
+                "太守建议 JSON:\n\(governorJSON)",
+                "武将塑形防区指令 JSON:\n\(generalJSON)"
             ].joined(separator: "\n\n")
             return executeDirectiveEnvelope(
                 generalAdjustment.envelope,
@@ -238,7 +238,7 @@ struct TurnManager {
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: "ruler-diplomat-governor-strategist-general-shaped zone directives",
+                parsedIntent: "君主、外交、太守、军师与武将已塑形的防区军令",
                 providerSuffix: "RulerDiplomatGovernorStrategistGeneralDirective",
                 additionalDiagnostics: diagnostics
                     + rulerAdjustment.diagnostics
@@ -310,12 +310,12 @@ struct TurnManager {
             let generalJSON = try Self.canonicalDirectiveJSON(generalAdjustment.envelope)
             let rawJSON = [
                 resolution.rawTheaterJSON,
-                "Compiled ZoneDirective JSON:\n\(compiledJSON)",
-                "Ruler-adjusted ZoneDirective JSON:\n\(rulerJSON)",
-                "Diplomat proposal JSON:\n\(diplomatJSON)",
-                "Governor advice JSON:\n\(governorJSON)",
-                "Strategist-adjusted ZoneDirective JSON:\n\(strategistJSON)",
-                "General-adjusted ZoneDirective JSON:\n\(generalJSON)"
+                "编译后的防区指令 JSON:\n\(compiledJSON)",
+                "君主塑形防区指令 JSON:\n\(rulerJSON)",
+                "外交提案 JSON:\n\(diplomatJSON)",
+                "太守建议 JSON:\n\(governorJSON)",
+                "军师塑形防区指令 JSON:\n\(strategistJSON)",
+                "武将塑形防区指令 JSON:\n\(generalJSON)"
             ]
             .compactMap { $0 }
             .joined(separator: "\n\n")
@@ -326,7 +326,7 @@ struct TurnManager {
                 faction: faction,
                 contextSummary: contextSummary,
                 rawJSON: rawJSON,
-                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "ruler-diplomat-governor-strategist-general-shaped marshal directives",
+                parsedIntent: resolution.theaterEnvelope?.strategicIntent ?? "君主、外交、太守、军师与武将已塑形的元帅军令",
                 providerSuffix: "RulerDiplomatGovernorStrategistGeneralMarshalDirective",
                 additionalDiagnostics: diagnostics
                     + resolution.diagnostics
@@ -379,7 +379,7 @@ struct TurnManager {
             "\(rulerName) 为 \(faction.displayName) 采取\(adjustment.record.posture.displayName)姿态。",
             category: .diplomacy
         )
-        let targetSummary = adjustment.record.preferredFrontZoneId?.rawValue ?? "无"
+        let targetSummary = frontZoneDisplayName(adjustment.record.preferredFrontZoneId, in: state)
         return (
             state: nextState,
             envelope: adjustment.envelope,
@@ -406,7 +406,9 @@ struct TurnManager {
             category: .event,
             relatedRecordId: adjustment.record.id
         )
-        let targetSummary = adjustment.record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        let targetSummary = adjustment.record.focusRegionIds
+            .map { regionDisplayName($0, in: state) }
+            .joined(separator: ", ")
         return (
             state: nextState,
             envelope: adjustment.envelope,
@@ -439,7 +441,7 @@ struct TurnManager {
             category: .diplomacy,
             relatedRecordId: adjustment.record.id
         )
-        let target = adjustment.record.targetCountryId?.rawValue ?? "无对象"
+        let target = countryDisplayName(adjustment.record.targetCountryId, in: state)
         var commandResults: [CommandResultSummary] = []
         var diagnostics = [
             "外交官 \(diplomatName) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
@@ -495,14 +497,16 @@ struct TurnManager {
         let adjustment = governor.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
         nextState.appendGovernorRecord(adjustment.record)
-        let recommendation = governorRecommendationSummary(adjustment.record)
+        let recommendation = governorRecommendationSummary(adjustment.record, in: state)
         let governorName = AgentDecisionRecord.displayName(forAgentId: adjustment.record.governorAgentId)
         nextState.appendEvent(
             "\(governorName) 建议 \(faction.displayName) \(adjustment.record.focus.displayName)：\(recommendation)",
             category: .supply,
             relatedRecordId: adjustment.record.id
         )
-        let regions = adjustment.record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        let regions = adjustment.record.focusRegionIds
+            .map { regionDisplayName($0, in: state) }
+            .joined(separator: ", ")
         var commandResults: [CommandResultSummary] = []
         var diagnostics = [
             "太守 \(governorName) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
@@ -548,13 +552,13 @@ struct TurnManager {
         return commands
     }
 
-    private func governorRecommendationSummary(_ record: GovernorDecisionRecord) -> String {
+    private func governorRecommendationSummary(_ record: GovernorDecisionRecord, in state: GameState) -> String {
         let production = record.recommendedProductionKind?.displayName ?? "不新增队列"
         guard record.focus == .roadRepair,
               let regionId = record.focusRegionIds.first else {
             return production
         }
-        return "修缮 \(regionId.rawValue)，辅以 \(production)"
+        return "修缮 \(regionDisplayName(regionId, in: state))，辅以 \(production)"
     }
 
     private func applyGeneralPlanning(
@@ -568,7 +572,7 @@ struct TurnManager {
         if !adjustment.records.isEmpty {
             let summary = adjustment.records
                 .prefix(3)
-                .map { "\($0.generalName ?? $0.generalId ?? "未分配") \($0.action)" }
+                .map { "\(generalRecordDisplayName($0)) \($0.action)" }
                 .joined(separator: "；")
             nextState.appendEvent(
                 "武将层复核 \(adjustment.records.count) 条军令：\(summary)",
@@ -580,7 +584,7 @@ struct TurnManager {
             envelope: adjustment.envelope,
             records: adjustment.records,
             diagnostics: adjustment.records.map {
-                "武将 \($0.generalName ?? $0.generalId ?? "未分配") 在 \($0.zoneId.rawValue) \($0.action)。"
+                "武将 \(generalRecordDisplayName($0)) 在 \(frontZoneDisplayName($0.zoneId, in: nextState)) \($0.action)。"
             }
         )
     }
@@ -712,12 +716,58 @@ struct TurnManager {
         for division in state.divisions where division.faction == faction && !division.isDestroyed {
             guard let regionId = division.location(in: state.map),
                   state.warDeploymentState.regionToFrontZone[regionId] != nil else {
-                diagnostics.append("军队 \(division.id) 未分配到任何防区；未为该军队生成指令。")
+                diagnostics.append("军队 \(division.thematicDisplayName) 未分配到任何防区；未为该军队生成指令。")
                 continue
             }
         }
 
         return diagnostics
+    }
+
+    private func generalRecordDisplayName(_ record: GeneralDecisionRecord) -> String {
+        let name = record.generalName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !name.isEmpty {
+            return name
+        }
+        let id = record.generalId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return id.isEmpty ? "未分配" : "未命名武将"
+    }
+
+    private func frontZoneDisplayName(_ zoneId: FrontZoneId?, in state: GameState) -> String {
+        guard let zoneId else {
+            return "无"
+        }
+        return frontZoneDisplayName(zoneId, in: state)
+    }
+
+    private func frontZoneDisplayName(_ zoneId: FrontZoneId, in state: GameState) -> String {
+        guard let zone = state.warDeploymentState.frontZones[zoneId] else {
+            return "未知防区"
+        }
+        let name = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty {
+            return name
+        }
+        let regions = zone.regionIds
+            .prefix(2)
+            .map { regionDisplayName($0, in: state) }
+            .joined(separator: "、")
+        return regions.isEmpty ? "未知防区" : "\(zone.faction.shortDisplayName)防区：\(regions)"
+    }
+
+    private func regionDisplayName(_ regionId: RegionId, in state: GameState) -> String {
+        let name = state.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "未知郡县" : name
+    }
+
+    private func countryDisplayName(_ countryId: CountryId?, in state: GameState) -> String {
+        guard let countryId else {
+            return "无对象"
+        }
+        let name = state.diplomacyState.countries.first { $0.id == countryId }?
+            .name
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "未知外交对象" : name
     }
 
     private func failureRecord(

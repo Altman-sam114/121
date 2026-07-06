@@ -238,7 +238,7 @@ struct RootGameView: View {
     private var agentPanelRegionDisplayNames: [RegionId: String] {
         container.gameState.map.regions.mapValues { region in
             region.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? region.id.rawValue
+                ? "未知郡县"
                 : region.name
         }
     }
@@ -267,13 +267,13 @@ struct RootGameView: View {
     private var agentPanelCountryDisplayNames: [CountryId: String] {
         Dictionary(uniqueKeysWithValues: container.gameState.diplomacyState.countries.map { country in
             let displayName = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return (country.id, displayName.isEmpty ? country.id.rawValue : displayName)
+            return (country.id, displayName.isEmpty ? "未知外交对象" : displayName)
         })
     }
 
     private func agentPanelRegionDisplayName(for regionId: RegionId) -> String {
         let displayName = container.gameState.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return displayName.isEmpty ? regionId.rawValue : displayName
+        return displayName.isEmpty ? "未知郡县" : displayName
     }
 }
 

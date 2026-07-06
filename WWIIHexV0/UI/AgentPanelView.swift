@@ -155,7 +155,7 @@ struct AgentPanelView: View {
                     ForEach(Array(generalRecords.prefix(4))) { generalRecord in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 6) {
-                                Text(generalRecord.generalName ?? generalRecord.generalId ?? "未分配")
+                                Text(generalRecordDisplayName(generalRecord))
                                     .font(.caption.bold())
                                 Text(generalRecord.action)
                                     .font(.caption)
@@ -182,7 +182,7 @@ struct AgentPanelView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(record.commandResults) { result in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(result.commandDisplayName ?? result.orderType?.rawValue ?? "军令")
+                            Text(result.commandDisplayName ?? result.orderType?.displayName ?? "军令")
                                 .font(.caption)
                                 .bold()
                             Text(resultLine(result))
@@ -281,13 +281,22 @@ struct AgentPanelView: View {
         return "\(frontZoneDisplayName(for: record.zoneId)) / \(record.directiveType.displayName) / \(tactic) / \(style) / \(targetText)"
     }
 
+    private func generalRecordDisplayName(_ record: GeneralDecisionRecord) -> String {
+        let name = record.generalName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !name.isEmpty {
+            return name
+        }
+        let id = record.generalId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return id.isEmpty ? "未分配" : "未命名武将"
+    }
+
     private func regionDisplayList(_ regionIds: [RegionId]) -> String {
         regionIds.map(regionDisplayName).joined(separator: ", ")
     }
 
     private func regionDisplayName(for regionId: RegionId) -> String {
         let displayName = regionDisplayNames[regionId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return displayName.isEmpty ? regionId.rawValue : displayName
+        return displayName.isEmpty ? "未知郡县" : displayName
     }
 
     private func frontZoneDisplayName(for zoneId: FrontZoneId?) -> String {
@@ -299,12 +308,12 @@ struct AgentPanelView: View {
 
     private func frontZoneDisplayName(for zoneId: FrontZoneId) -> String {
         let displayName = frontZoneDisplayNames[zoneId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return displayName.isEmpty ? zoneId.rawValue : displayName
+        return displayName.isEmpty ? "未知防区" : displayName
     }
 
     private func countryDisplayName(for countryId: CountryId) -> String {
         let displayName = countryDisplayNames[countryId]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return displayName.isEmpty ? countryId.rawValue : displayName
+        return displayName.isEmpty ? "未知外交对象" : displayName
     }
 
     private func resultLine(_ result: CommandResultSummary) -> String {

@@ -5932,6 +5932,58 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不处理 `DiplomacyPanelView` 的 country/bloc raw id，也不处理 Legacy Agent D prompt 中面向模型的开发字段。
 - `GeneralAssignment` 仍保留 raw `commandStyleRawValue` 以兼容 Codable 和数据快照。
 
+## v2.4 - 武将可见身份 fallback 收敛
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进武将、道路和交战相关迁移，避免武将影响日志、计划军令摘要、武将层复核事件和军机面板记录在缺少展示名时直接露出 raw `generalId`、`RegionId` 或 `FrontZoneId`。
+
+完成内容：
+
+- `GeneralInfluence` 为道路机动和交战攻防摘要提供展示名兜底；缺少姓名快照但存在内部 id 时显示“未命名武将”，无分配时保持无武将语义，不再输出 `attacker` / `defender` / `general` 英文 fallback。
+- `AppContainer` 的军队机动预览、交战候选/接近预览和玩家计划军令摘要改用武将/郡县/防区中文展示或中文占位，不再把 raw id 当作文案 fallback。
+- `AgentPanelView` 的武将记录标题、目标郡县和防区摘要缺名时显示“未命名武将 / 未知郡县 / 未知防区”。
+- `TurnManager` 的君主重点防区、军师目标郡县、太守修路建议、武将层复核事件和 diagnostics 改用展示名；未分配军队诊断使用军队主题名；调试 JSON 标题和默认 parsed intent 改为中文。
+- `GeneralAgent` 追加武将层 context 时不再回退 raw `generalId`。
+- 本轮不改变底层 id、Codable、记录 id、JSON schema、道路/交战数值、命令执行或规则系统；调试 JSON 原始字段仍保留供审计。
+- 使用两个并发只读子 Agent 审计 `TurnManager` 与 `GeneralInfluence` / `AppContainer` / `AgentPanelView` 残留，主线程完成整合改动和冲突口径检查。
+
+关键文件：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/Agents/GeneralAgent.swift`
+- `WWIIHexV0/Agents/AgentDecision.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_visible_identity_fallback.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/GeneralInfluence.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/Turn/TurnManager.swift WWIIHexV0/Agents/GeneralAgent.swift WWIIHexV0/Agents/AgentDecision.swift` 通过。
+- 玩家可见 raw fallback 扫描仅命中记录 id 生成、内部排序和“名称等于 raw id 时不用作展示名”的过滤比较：`GeneralAgent` record id、`AppContainer` 计划军令 id、`regionId.rawValue` 排序和 `zoneId.rawValue` 过滤比较；未命中本轮范围内的 `generalName ?? generalId`、交战/道路英文 fallback、旧英文 JSON 标题、默认 intent 文案、外交对象 raw fallback 或 legacy order type raw fallback。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不隐藏完整调试 JSON，因此调试区域仍可能显示 schema 内部字段名；后续可单独决定开发态隐藏或本地化策略。
+- 本轮不做 UI 截图/模拟器验收；中文占位的实际换行和宽度仍需后续人工或授权运行环境确认。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

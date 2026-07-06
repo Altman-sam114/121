@@ -42,4 +42,17 @@ enum AgentOrderType: String, Codable, Equatable, CaseIterable {
     case attack
     case hold
     case resupply
+
+    var displayName: String {
+        switch self {
+        case .move:
+            return "行军"
+        case .attack:
+            return "攻击"
+        case .hold:
+            return "固守"
+        case .resupply:
+            return "整补"
+        }
+    }
 }

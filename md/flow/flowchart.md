@@ -35,7 +35,7 @@ v2.4 命名边界：
 - `CombatRules.effectiveAttack` 和 `MovementRules` 已表达骑兵平原优势、困难地形限制、弓弩/器械远程和器械攻城加成；`CombatRules.combatAuditSummary` 会把地形、河流、攻城、围城、死守和侧击等交战因素写成只读审计摘要；`GeneralAgent` 会按武将风格/技能塑形 `ZoneDirective.tactic`，`GeneralSkillDisplay` 会把技能 raw id 中文化展示并提供只读道路/交战效果短提示，`GeneralInfluence` 让武将分配影响道路机动和交战攻防，其中骑兵突击与粮道调度、疾行、甲骑专精共用借郡县官道网络的道路机动触发口径。
 - `WarCommandExecutor` 的宏观军令选兵排序和目标郡县候选 hex 可达判断已读取 `MovementRules.effectiveMovementLimit` / `shortestPath`，目标郡县候选和接近候选的敌控格优先级也按 `DiplomacyState` hostile / atWar 判断，让武将官道机动、道路、外交敌对控制格、敌控区、地形和占位影响 AI / 玩家武将宏观军令落点；`CommandExecutor` 会把中文武将姓名、道路机动、交战审计、攻防修正摘要和结算后剩余兵力写入移动、攻击和反击日志；`BoardScene` 会只读 `PlayerCommandState.plannedOperations`，把玩家宏观军令画成源点、目标点、进攻箭头或固守圆环，并显示武将/攻守/短战术、源目锚点官道状态、可见敌军压迫和最近可见敌军短标签；`GeneralCommandPanelView` 会只读显示当前防区道路机动、官道受益军队或无加成原因、可见接敌攻防、当前可见接敌配对、最近可见敌军对象和麾下军队兵力/粮草/军令/行动/官道/接敌状态摘要，也会通过 `AppContainer.selectedGeneralPlannedOperationRows` 在计划军令列表显示武将、最终战术、源→目标、官道状态、源目可见受压和最近可见敌军对象/距离，并通过 `AppContainer.selectedGeneralTargetPreviewNotes` 在提交进攻前显示目标郡县源/目标代表 hex 的官道据守/受压和最近可见敌军距离；武将面板固守/进攻按钮不可用时，`AppContainer` 生成只读原因，`GeneralCommandPanelView` 只展示原因，不改变真实军令执行；`UnitInspectorView` 会通过 `UnitInspectorStrategicState.generalAssignment` 显示选中军队所属武将、风格、忠诚/满意和带短效果提示的中文技能摘要，通过 `AppContainer.selectedUnitMobilityPreviewNotes` 对选中军队显示基础/有效机动、武将官道加成、玩家视角可见可达格数、当前位置官道可见受压或郡县官道状态、本回合可达官道、最近可达/可见安全官道距离、可见安全官道和受可见敌控区压迫的官道格数，通过 `selectedUnitCombatPreviewNotes` 显示最多三名玩家视角可见射程内敌军的首选理由、可见接战官道压制位、首选交战武将、候选敌将、候选武将修正、候选交战审计、预计伤害、结算后敌我剩余兵力、撤退/死守/断粮额外损失/歼灭风险、反击风险、目标地形/城关/官道/粮道/撤退姿态和距离排序；无可见射程内敌军但存在可见敌对军队时显示最近可见敌军、接近候选、候选可达距/可见安全官道/入敌射风险、接近武将、非零接近参考修正、接近态势、接近威胁、需接近格数、可达更近官道位和抵达官道后是否入射程；无可见 hostile 敌军时显示当前无可预判敌对军队空状态；首选目标继续显示武将影响详情，前三个候选目标行各自显示交战审计；`RegionInspectorView` 会显示当前郡县官道覆盖、可见敌军造成的官道受压和最近来源、本郡武将、可见敌军距离/射程/兵力/敌将、当前地格官道状态、可见敌对军队、可见非敌对军队及势力/外交关系/紧张度；这些 UI 只读复用移动/交战/地图派生计算，不执行命令；核心移动、攻击、反击、姿态、回合推进、动态方面事件日志和命令结果/拒绝原因已开始中文化，便于审计“武将做了什么、命令为什么失败”。
 - `GeneralData.rank` raw 字段保留数据兼容；`GeneralCommandPanelView` 和 `GeneralProfileView` 使用 `rankDisplayName` 将旧英文 fallback 军衔显示为三国语义军衔，头像辅助功能文案使用中文“头像”。
-- 武将统军风格通过 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 共享展示；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 实际执行口径一致。军机面板可见的防区/方面指令摘要和 fallback diagnostics 使用中文文案，directive schema 和执行规则不变。
+- 武将统军风格通过 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 共享展示；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 实际执行口径一致。军机面板可见的防区/方面指令摘要和 fallback diagnostics 使用中文文案；武将道路/交战日志、计划军令摘要、武将层复核事件和军机面板记录缺少展示名时使用“未命名武将 / 未知郡县 / 未知防区”等中文占位，不把 raw `generalId`、`RegionId` 或 `FrontZoneId` 当作玩家文案 fallback；directive schema、记录 id 和执行规则不变。
 - `UnitNode` 地图兵牌使用三国兵种 glyph 和 `退/守` 姿态短标记；`Division` / `ComponentType` / `RetreatMode` rawValue 与规则行为不变。
 - 军队详情和郡县详情的郡县、动态方面、防区、战线和要地状态由 `MapDisplayAdapter` 生成玩家可见展示名，不再直接显示战略 raw id 或 `None/controlled` 英文 fallback；typed id、Codable rawValue、动态方面/防区/战线规则行为不变。
 - `AgentPanelView` 的主审计字段、君主/外交官/太守/军师/武将记录和防区指令摘要优先使用展示名；标题、执行者和命令 fallback 已显示为军机谋议、执行者和军令，外交对象来自 `CountryProfile.name`，郡县来自 `RegionNode.name`，防区来自 `FrontZone.name` 或 `曹军防区：官渡、许昌` 这类只读 fallback，调试 JSON 和 Codable raw id 保持原样。
@@ -88,7 +88,7 @@ flowchart TD
     STRAT["军师目标编排<br/>StrategistAgent.plan<br/>军师/防区指挥 fallback 显示名三国化"]:::command
     GENA["武将军令复核与战术塑形<br/>GeneralAgent.plan<br/>按武将分配复核投入和 tactic，写 GeneralDecisionRecord"]:::command
     GSKILL["武将技能显示<br/>GeneralSkillDisplay<br/>raw skill id -> 中文标签 + 短效果提示"]:::ui
-    GINF["武将战场影响<br/>GeneralInfluence<br/>姓名快照 + 官道/骑战机动 + 攻防修正"]:::rules
+    GINF["武将战场影响<br/>GeneralInfluence<br/>姓名展示兜底 + 官道/骑战机动 + 攻防修正"]:::rules
     GIP["武将影响面板摘要<br/>GeneralCommandPanelView<br/>道路机动 + 官道受益/无加成原因 + 可见接敌攻防 + 可见接敌配对 + 可见近敌对象 + 目标预览 + 麾下备战 + 灰态原因"]:::ui
     UGA["军队所属武将摘要<br/>UnitInspectorStrategicState.generalAssignment<br/>姓名 + 风格 + 忠诚满意 + 技能短效果"]:::ui
     UMP["军队道路机动预判<br/>AppContainer.selectedUnitMobilityPreviewNotes<br/>基础/有效机动 + 可见可达格 + 当前官道可见受压 + 最近可达/可见安全官道"]:::ui
@@ -107,7 +107,7 @@ flowchart TD
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作、战术和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
-    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路机动、粮草撤退、围城损耗、交战审计、余兵和攻防修正摘要"]:::ui
+    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路机动、粮草撤退、围城损耗、交战审计、余兵、攻防修正和中文展示兜底"]:::ui
 
     ME --> JSON --> DL --> GS
     GS --> HEX

@@ -11,10 +11,10 @@ struct GeneralCombatInfluenceSummary: Equatable {
     var logFragment: String? {
         var parts: [String] = []
         if attackBonus != 0 {
-            parts.append("\(attackerName) 攻击 \(signed(attackBonus))")
+            parts.append("\(attackerDisplayName ?? "未命名武将") 攻击 \(signed(attackBonus))")
         }
         if defenseBonus != 0 {
-            parts.append("\(defenderName) 防御 \(signed(defenseBonus))")
+            parts.append("\(defenderDisplayName ?? "未命名武将") 防御 \(signed(defenseBonus))")
         }
         guard !parts.isEmpty else {
             return nil
@@ -22,12 +22,21 @@ struct GeneralCombatInfluenceSummary: Equatable {
         return "武将影响：\(parts.joined(separator: "，"))"
     }
 
-    private var attackerName: String {
-        attackerGeneralName ?? attackerGeneralId ?? "attacker"
+    var attackerDisplayName: String? {
+        displayName(name: attackerGeneralName, id: attackerGeneralId)
     }
 
-    private var defenderName: String {
-        defenderGeneralName ?? defenderGeneralId ?? "defender"
+    var defenderDisplayName: String? {
+        displayName(name: defenderGeneralName, id: defenderGeneralId)
+    }
+
+    private func displayName(name: String?, id: String?) -> String? {
+        let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmedName.isEmpty {
+            return trimmedName
+        }
+        let trimmedId = id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedId.isEmpty ? nil : "未命名武将"
     }
 
     private func signed(_ value: Int) -> String {
@@ -46,11 +55,16 @@ struct GeneralMovementInfluenceSummary: Equatable {
         guard roadBonus != 0 else {
             return nil
         }
-        return "武将道路：\(displayName) 机动 \(signed(roadBonus)) (上限 \(baseMovement)->\(effectiveMovement))"
+        return "武将道路：\(assignedGeneralDisplayName ?? "未命名武将") 机动 \(signed(roadBonus)) (上限 \(baseMovement)->\(effectiveMovement))"
     }
 
-    private var displayName: String {
-        generalName ?? generalId ?? "general"
+    var assignedGeneralDisplayName: String? {
+        let trimmedName = generalName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmedName.isEmpty {
+            return trimmedName
+        }
+        let trimmedId = generalId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedId.isEmpty ? nil : "未命名武将"
     }
 
     private func signed(_ value: Int) -> String {

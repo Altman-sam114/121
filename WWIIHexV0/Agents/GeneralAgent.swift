@@ -432,7 +432,7 @@ struct GeneralAgent {
         }
         let summary = records
             .prefix(3)
-            .map { "\($0.generalName ?? $0.generalId ?? "未分配"):\($0.action)" }
+            .map { "\(generalRecordDisplayName($0)):\($0.action)" }
             .joined(separator: "；")
         let generalContext = "武将层：\(summary)"
         guard let context, !context.isEmpty else {
@@ -443,6 +443,15 @@ struct GeneralAgent {
 
     private func skillSet(assignment: GeneralAssignment, general: GeneralData?) -> Set<String> {
         Set(assignment.skills).union(general?.skills ?? [])
+    }
+
+    private func generalRecordDisplayName(_ record: GeneralDecisionRecord) -> String {
+        let name = record.generalName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !name.isEmpty {
+            return name
+        }
+        let id = record.generalId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return id.isEmpty ? "未分配" : "未命名武将"
     }
 
     private func hasAnySkill(_ candidates: [String], in skills: Set<String>) -> Bool {

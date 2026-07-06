@@ -340,7 +340,7 @@ final class AppContainer: ObservableObject {
 
         if let roadInfluence = summary.logFragment {
             notes.append(roadInfluence)
-        } else if let generalName = summary.generalName ?? summary.generalId {
+        } else if let generalName = summary.assignedGeneralDisplayName {
             notes.append("道路：\(generalName) 当前未触发官道机动加成")
         } else {
             notes.append("道路：未分配武将，按基础机动行军")
@@ -1333,11 +1333,12 @@ final class AppContainer: ObservableObject {
            !displayName.isEmpty {
             return displayName
         }
-        guard let generalId = operation.createdByGeneralId,
+        guard let generalId = operation.createdByGeneralId?.trimmingCharacters(in: .whitespacesAndNewlines),
               !generalId.isEmpty else {
             return nil
         }
-        return generalRegistry.general(id: generalId)?.localizedName ?? generalId
+        let registryName = generalRegistry.general(id: generalId)?.localizedName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return registryName.isEmpty ? "未命名武将" : registryName
     }
 
     private func plannedOperationRouteName(for operation: PlayerPlannedOperation) -> String {
@@ -1353,14 +1354,30 @@ final class AppContainer: ObservableObject {
         if let sourceName {
             return sourceName
         }
-        return gameState.warDeploymentState.frontZones[operation.zoneId]?.name ?? operation.zoneId.rawValue
+        return plannedOperationFrontZoneName(operation.zoneId)
     }
 
     private func plannedOperationRegionName(_ regionId: RegionId?) -> String? {
         guard let regionId else {
             return nil
         }
-        return gameState.map.region(id: regionId)?.name ?? regionId.rawValue
+        let name = gameState.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "未知郡县" : name
+    }
+
+    private func plannedOperationFrontZoneName(_ zoneId: FrontZoneId) -> String {
+        guard let zone = gameState.warDeploymentState.frontZones[zoneId] else {
+            return "未知防区"
+        }
+        let name = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty && name != zoneId.rawValue {
+            return name
+        }
+        let regions = zone.regionIds
+            .prefix(2)
+            .compactMap { plannedOperationRegionName($0) }
+            .joined(separator: "、")
+        return regions.isEmpty ? "未知防区" : "\(zone.faction.shortDisplayName)防区：\(regions)"
     }
 
     private func plannedOperationEnemyDistanceText(for operation: PlayerPlannedOperation) -> String? {
@@ -1733,7 +1750,7 @@ final class AppContainer: ObservableObject {
                 currentDistance: candidate.distance,
                 reachableCoords: reachableCoords
             ))
-            if let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId {
+            if let defenderName = influence.defenderDisplayName {
                 details.append("敌将 \(defenderName)")
             }
             return "\(candidate.target.thematicDisplayName) \(details.joined(separator: "/"))"
@@ -1870,8 +1887,8 @@ final class AppContainer: ObservableObject {
     }
 
     private func combatGeneralMatchupText(_ influence: GeneralCombatInfluenceSummary) -> String? {
-        let attackerName = influence.attackerGeneralName ?? influence.attackerGeneralId
-        let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId
+        let attackerName = influence.attackerDisplayName
+        let defenderName = influence.defenderDisplayName
 
         guard attackerName != nil || defenderName != nil else {
             return nil
@@ -1883,8 +1900,8 @@ final class AppContainer: ObservableObject {
     }
 
     private func combatApproachGeneralText(_ influence: GeneralCombatInfluenceSummary) -> String? {
-        let attackerName = influence.attackerGeneralName ?? influence.attackerGeneralId
-        let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId
+        let attackerName = influence.attackerDisplayName
+        let defenderName = influence.defenderDisplayName
 
         guard attackerName != nil || defenderName != nil else {
             return nil
@@ -1896,7 +1913,7 @@ final class AppContainer: ObservableObject {
     }
 
     private func combatTargetDefenderGeneralText(_ influence: GeneralCombatInfluenceSummary) -> String? {
-        guard let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId else {
+        guard let defenderName = influence.defenderDisplayName else {
             return nil
         }
         return "敌将 \(defenderName)"
