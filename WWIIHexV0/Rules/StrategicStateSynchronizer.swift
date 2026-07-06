@@ -45,7 +45,8 @@ struct StrategicStateSynchronizer {
             theaterState: state.theaterState,
             divisions: state.divisions,
             turn: syncTurn,
-            events: frontEvents
+            events: frontEvents,
+            diplomacyState: state.diplomacyState
         )
 
         let deploymentEvents = affected.map(WarDeploymentEvent.regionControllerChanged)

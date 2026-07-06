@@ -4902,7 +4902,7 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- `FrontLineManager` 的动态前线接触以及 `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 的剩余 hostile 派生仍存在后续外交 hostile 迁移空间，且涉及更大接口和战略/前线口径，需单独切片。
+- `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 的剩余 hostile 派生仍存在后续外交 hostile 迁移空间，且涉及更大接口和战略口径，需单独切片。
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
@@ -4919,7 +4919,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `WWIIHexV0/Agents/AgentContexts.swift` 的 `enemyDivisions` 来源改用 `state.diplomacyState.isHostile(between:and:)`。
 - `AgentContextBuilder.supplySummary` 的 enemy supplied / lowSupply / encircled 统计来源改用 `DiplomacyState` hostile 口径。
 - `WWIIHexV0/Agents/MockAICommander.swift` 的 `visibleEnemyStrength` 改用 `DiplomacyState` hostile 口径，避免把外交非敌对单位计入兼容 MockAI 威胁强度。
-- 保留 `AgentContext`、`DivisionSummary`、`SupplySummary` Codable schema，以及 `MockAIClient`、`AgentPromptBuilder`、`TurnManager` 的消费逻辑；本轮不迁移 `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 或 `FrontLineManager` 的剩余 hostile 派生。
+- 保留 `AgentContext`、`DivisionSummary`、`SupplySummary` Codable schema，以及 `MockAIClient`、`AgentPromptBuilder`、`TurnManager` 的消费逻辑；本轮不迁移 `ZoneCommanderAgent`、`StrategistAgent` 或 `RulerAgent` 的剩余 hostile 派生；`FrontLineManager` 动态前线接触已由后续切片补齐。
 
 关键文件：
 
@@ -4947,9 +4947,61 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- `ZoneCommanderAgent`、`StrategistAgent`、`RulerAgent` 和 `FrontLineManager` 的剩余 hostile 派生仍待后续切片。
+- `ZoneCommanderAgent`、`StrategistAgent` 和 `RulerAgent` 的剩余 hostile 派生仍待后续切片。
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实 AI 行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
+
+## v2.4 外交敌对动态前线接触兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路、部署和交战迁移，把 `FrontLineManager` 的动态前线接触和前线对手标签从静态阵营差异迁移到 `DiplomacyState` 的 hostile / atWar 口径。
+
+完成内容：
+
+- `WWIIHexV0/Rules/FrontLineManager.swift` 为 `makeInitialState`、`tick`、`update` 和内部 rebuild/helper 增加可选 `DiplomacyState` 参数，默认 nil 时继续 fallback 到 `Faction.isHostile(to:)`，兼容历史测试和 Probe。
+- 动态 hex 邻接扫描继续以 `dynamicTheaterId` 为权威，但相邻 theater 的 source faction 必须与 friendly faction 外交 hostile 才生成敌对前线接触。
+- `FrontLine.factionB` 标签选择优先使用外交 hostile 的 region controller，再 fallback 到 hostile opposing theater faction 和 hostile scenario faction。
+- `DataLoader`、`StrategicStateBootstrapper`、`StrategicStateSynchronizer` 和 `WarCommandExecutor` 的真实运行时前线初始化、刷新和占领同步路径显式传入 `state.diplomacyState`。
+- 保留 `FrontLine` / `FrontSegment` / `FrontLineState` schema；保留 `HexTile.controller`、`RegionNode.controller`、`hexToTheater`、`hexToFrontZone`、前线 pressure / supplyImpact / encirclementCandidate、部署压力和 encirclement 拓扑的控制权/邻接语义。
+
+关键文件：
+
+- `WWIIHexV0/Rules/FrontLineManager.swift`
+- `WWIIHexV0/Data/DataLoader.swift`
+- `WWIIHexV0/Core/StrategicStateBootstrapper.swift`
+- `WWIIHexV0/Rules/StrategicStateSynchronizer.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_frontline_contact.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/FrontLineManager.swift` 通过。
+- `swiftc -parse WWIIHexV0/Data/DataLoader.swift` 通过。
+- `swiftc -parse WWIIHexV0/Core/StrategicStateBootstrapper.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/StrategicStateSynchronizer.swift` 通过。
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `ZoneCommanderAgent`、`StrategistAgent` 和 `RulerAgent` 的剩余 hostile 派生仍待后续切片。
+- 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
+- 复杂多势力关系下的真实前线行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 

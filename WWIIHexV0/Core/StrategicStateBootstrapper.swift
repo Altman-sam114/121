@@ -34,7 +34,8 @@ struct StrategicStateBootstrapper {
                 map: next.map,
                 theaterState: next.theaterState,
                 divisions: next.divisions,
-                turn: next.turn
+                turn: next.turn,
+                diplomacyState: next.diplomacyState
             )
             next.appendEvent(
                 "Front line state bootstrapped from theater data.",
@@ -82,7 +83,8 @@ struct StrategicStateBootstrapper {
             map: next.map,
             theaterState: next.theaterState,
             divisions: next.divisions,
-            turn: next.turn
+            turn: next.turn,
+            diplomacyState: next.diplomacyState
         )
         let rebuiltDeployment = WarDeploymentState.bootstrapFrontZones(
             from: next.theaterState,

@@ -5,14 +5,16 @@ struct FrontLineManager {
         map: MapState,
         theaterState: TheaterState,
         divisions: [Division],
-        turn: Int? = nil
+        turn: Int? = nil,
+        diplomacyState: DiplomacyState? = nil
     ) -> FrontLineState {
         rebuildAll(
             map: map,
             theaterState: theaterState,
             divisions: divisions,
             turn: turn,
-            mode: .turnRebuild
+            mode: .turnRebuild,
+            diplomacyState: diplomacyState
         )
     }
 
@@ -23,7 +25,8 @@ struct FrontLineManager {
         divisions: [Division],
         turn: Int,
         mode: FrontLineUpdateMode = .turnRebuild,
-        events: [FrontLineEvent] = []
+        events: [FrontLineEvent] = [],
+        diplomacyState: DiplomacyState? = nil
     ) -> FrontLineState {
         if mode == .eventDriven || !events.isEmpty {
             return update(
@@ -32,7 +35,8 @@ struct FrontLineManager {
                 theaterState: theaterState,
                 divisions: divisions,
                 turn: turn,
-                events: events
+                events: events,
+                diplomacyState: diplomacyState
             )
         }
 
@@ -45,7 +49,8 @@ struct FrontLineManager {
             theaterState: theaterState,
             divisions: divisions,
             turn: turn,
-            mode: .turnRebuild
+            mode: .turnRebuild,
+            diplomacyState: diplomacyState
         )
     }
 
@@ -55,7 +60,8 @@ struct FrontLineManager {
         theaterState: TheaterState,
         divisions: [Division],
         turn: Int,
-        events: [FrontLineEvent]
+        events: [FrontLineEvent],
+        diplomacyState: DiplomacyState? = nil
     ) -> FrontLineState {
         let dirtyRegions = dirtyRegions(from: events, map: map, theaterState: theaterState)
         guard !dirtyRegions.isEmpty else {
@@ -70,7 +76,8 @@ struct FrontLineManager {
             map: map,
             theaterState: theaterState,
             divisions: divisions,
-            turn: turn
+            turn: turn,
+            diplomacyState: diplomacyState
         )
     }
 
@@ -102,7 +109,8 @@ struct FrontLineManager {
         theaterState: TheaterState,
         divisions: [Division],
         turn: Int?,
-        mode: FrontLineUpdateMode
+        mode: FrontLineUpdateMode,
+        diplomacyState: DiplomacyState?
     ) -> FrontLineState {
         var cache: [RegionId: [RegionId]] = [:]
         var scannedRegionIds: Set<RegionId> = []
@@ -117,6 +125,7 @@ struct FrontLineManager {
                 map: map,
                 theaterState: theaterState,
                 strengths: strengths,
+                diplomacyState: diplomacyState,
                 cache: &cache,
                 scannedRegionIds: &scannedRegionIds,
                 scannedNeighborLinkCount: &scannedNeighborLinkCount
@@ -124,7 +133,12 @@ struct FrontLineManager {
             segmentsByTheater[theater.id, default: []].append(contentsOf: segments)
         }
 
-        let frontLines = makeFrontLines(from: segmentsByTheater, map: map, theaterState: theaterState)
+        let frontLines = makeFrontLines(
+            from: segmentsByTheater,
+            map: map,
+            theaterState: theaterState,
+            diplomacyState: diplomacyState
+        )
         let regionStates = makeRegionStates(
             frontLines: frontLines,
             includedEmptyRegionIds: scannedRegionIds,
@@ -154,7 +168,8 @@ struct FrontLineManager {
         map: MapState,
         theaterState: TheaterState,
         divisions: [Division],
-        turn: Int
+        turn: Int,
+        diplomacyState: DiplomacyState?
     ) -> FrontLineState {
         let touchedRegions = touchedRegions(from: dirtyRegions, map: map)
         let strengths = divisionStrengthsByRegion(divisions: divisions, map: map)
@@ -188,6 +203,7 @@ struct FrontLineManager {
                 map: map,
                 theaterState: theaterState,
                 strengths: strengths,
+                diplomacyState: diplomacyState,
                 cache: &cache,
                 scannedRegionIds: &scannedRegionIds,
                 scannedNeighborLinkCount: &scannedNeighborLinkCount
@@ -195,7 +211,12 @@ struct FrontLineManager {
             segmentsByTheater[theaterId, default: []].append(contentsOf: segments)
         }
 
-        let frontLines = makeFrontLines(from: segmentsByTheater, map: map, theaterState: theaterState)
+        let frontLines = makeFrontLines(
+            from: segmentsByTheater,
+            map: map,
+            theaterState: theaterState,
+            diplomacyState: diplomacyState
+        )
         let regionStates = makeRegionStates(
             frontLines: frontLines,
             includedEmptyRegionIds: touchedRegions,
@@ -225,6 +246,7 @@ struct FrontLineManager {
         map: MapState,
         theaterState: TheaterState,
         strengths: [RegionId: [Faction: Int]],
+        diplomacyState: DiplomacyState?,
         cache: inout [RegionId: [RegionId]],
         scannedRegionIds: inout Set<RegionId>,
         scannedNeighborLinkCount: inout Int
@@ -247,7 +269,8 @@ struct FrontLineManager {
                 sourceTheaterId: theaterId,
                 sourceFaction: sourceFaction,
                 map: map,
-                theaterState: theaterState
+                theaterState: theaterState,
+                diplomacyState: diplomacyState
             )
             scannedNeighborLinkCount += neighbors.count
             let enemyNeighbors = neighbors
@@ -308,7 +331,8 @@ struct FrontLineManager {
         sourceTheaterId: TheaterId,
         sourceFaction friendlyFaction: Faction,
         map: MapState,
-        theaterState: TheaterState
+        theaterState: TheaterState,
+        diplomacyState: DiplomacyState?
     ) -> [RegionId] {
         guard let region = map.region(id: regionId) else {
             return []
@@ -323,7 +347,8 @@ struct FrontLineManager {
                       neighborTheaterId != sourceTheaterId,
                       let neighborTheater = theaterState.theaters[neighborTheaterId],
                       neighborTheater.status != .inactive,
-                      sourceFaction(for: neighborTheater, theaterState: theaterState, map: map) != friendlyFaction else {
+                      let neighborFaction = sourceFaction(for: neighborTheater, theaterState: theaterState, map: map),
+                      isHostile(neighborFaction, to: friendlyFaction, diplomacyState: diplomacyState) else {
                     continue
                 }
                 enemyRegions.insert(neighborRegionId)
@@ -382,7 +407,8 @@ struct FrontLineManager {
     private func makeFrontLines(
         from segmentsByTheater: [TheaterId: [FrontSegment]],
         map: MapState,
-        theaterState: TheaterState
+        theaterState: TheaterState,
+        diplomacyState: DiplomacyState?
     ) -> [FrontLine] {
         segmentsByTheater.compactMap { theaterId, segments in
             guard let theater = theaterState.theaters[theaterId],
@@ -413,10 +439,14 @@ struct FrontLineManager {
             }
             let type: FrontLineType = hasEncirclement ? .encirclement : (hasBreakthrough ? .breakthrough : .normal)
             let state = operationalState(maxPressure: maxPressure, hasEncirclement: hasEncirclement)
+            let opposingFactions = opposingTheaterIds
+                .compactMap { theaterState.theaters[$0] }
+                .compactMap { sourceFaction(for: $0, theaterState: theaterState, map: map) }
             let factionB = finalSegments
                 .compactMap { map.regions[$0.regionB]?.controller }
-                .first { $0.isHostile(to: factionA) }
-                ?? Faction.scenarioCases.first { $0.isHostile(to: factionA) }
+                .first { isHostile($0, to: factionA, diplomacyState: diplomacyState) }
+                ?? opposingFactions.first { isHostile($0, to: factionA, diplomacyState: diplomacyState) }
+                ?? Faction.scenarioCases.first { isHostile($0, to: factionA, diplomacyState: diplomacyState) }
                 ?? .neutral
 
             return FrontLine(
@@ -491,6 +521,10 @@ struct FrontLineManager {
             return nil
         }
         return Faction.scenarioCases.max { (counts[$0] ?? 0) < (counts[$1] ?? 0) }
+    }
+
+    private func isHostile(_ lhs: Faction, to rhs: Faction, diplomacyState: DiplomacyState?) -> Bool {
+        diplomacyState?.isHostile(between: lhs, and: rhs) ?? lhs.isHostile(to: rhs)
     }
 
     private func frontLineId(theaterId: TheaterId, factionA: Faction, factionB: Faction) -> FrontLineId {

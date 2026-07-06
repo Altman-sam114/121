@@ -1149,7 +1149,8 @@ struct WarCommandExecutor {
                     changedRegionIds.contains(regionId)
                         ? FrontLineEvent.regionControllerChanged(regionId)
                         : FrontLineEvent.occupationChanged(regionId)
-                }
+                },
+                diplomacyState: state.diplomacyState
             )
             let deploymentEvents = syncResult.affectedRegionIds.map(WarDeploymentEvent.regionControllerChanged)
                 + (sourceZoneId.map { [WarDeploymentEvent.frontZoneChanged($0)] } ?? [])

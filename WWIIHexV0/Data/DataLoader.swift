@@ -56,7 +56,8 @@ struct DataLoader {
                 map: state.map,
                 theaterState: state.theaterState,
                 divisions: state.divisions,
-                turn: state.turn
+                turn: state.turn,
+                diplomacyState: state.diplomacyState
             )
             let deploymentState = WarDeploymentManager().makeInitialState(
                 map: state.map,
@@ -115,13 +116,14 @@ struct DataLoader {
             divisions: divisions,
             turn: turn
         )
+        let diplomacyState = DiplomacyState.initial(from: scenario.factions, turn: turn)
         let frontLineState = FrontLineManager().makeInitialState(
             map: map,
             theaterState: theaterState,
             divisions: divisions,
-            turn: turn
+            turn: turn,
+            diplomacyState: diplomacyState
         )
-        let diplomacyState = DiplomacyState.initial(from: scenario.factions, turn: turn)
         let deploymentState = WarDeploymentManager().makeInitialState(
             map: map,
             theaterState: theaterState,
