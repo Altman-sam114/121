@@ -1237,7 +1237,7 @@ struct WarCommandExecutor {
             )
         }
         state.appendEvent(
-            "格 \(hex.q),\(hex.r) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
+            "\(hexDisplayName(hex, in: state)) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
             category: .theaterChange,
             relatedRecordId: relatedRecordId
         )
@@ -1270,6 +1270,13 @@ struct WarCommandExecutor {
         }
 
         return false
+    }
+
+    private func hexDisplayName(_ hex: HexCoord, in state: GameState) -> String {
+        if let regionId = state.map.region(for: hex) {
+            return "格 \(hex.q),\(hex.r)（\(regionDisplayName(regionId, in: state.map))）"
+        }
+        return "格 \(hex.q),\(hex.r)"
     }
 
     private func actingDivisionId(for command: Command) -> String? {

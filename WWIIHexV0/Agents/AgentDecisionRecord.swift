@@ -125,6 +125,45 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
     }
 }
 
+extension CommandResultSummary {
+    var commandDisplayNameForDisplay: String {
+        guard let commandDisplayName,
+              !commandDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return orderType?.displayName ?? "军令"
+        }
+
+        if commandDisplayName.hasPrefix("进军(") || commandDisplayName.lowercased().hasPrefix("move") {
+            return "进军命令"
+        }
+        if commandDisplayName.hasPrefix("攻击(") || commandDisplayName.lowercased().hasPrefix("attack") {
+            return "交战命令"
+        }
+        if commandDisplayName.hasPrefix("固守(") || commandDisplayName.lowercased().hasPrefix("hold") {
+            return "固守命令"
+        }
+        if commandDisplayName.hasPrefix("准许撤退(") || commandDisplayName.lowercased().hasPrefix("allow") {
+            return "机动撤退命令"
+        }
+        if commandDisplayName.hasPrefix("补给(") || commandDisplayName.lowercased().hasPrefix("resupply") {
+            return "补给休整命令"
+        }
+        if commandDisplayName.hasPrefix("募兵(") {
+            return "征发生产命令"
+        }
+        if commandDisplayName.hasPrefix("修路(") {
+            return "修缮道路命令"
+        }
+        if commandDisplayName.hasPrefix("外交(") {
+            return "外交命令"
+        }
+        if commandDisplayName == Command.endTurn.displayName {
+            return "结束回合命令"
+        }
+
+        return orderType?.displayName ?? "军令"
+    }
+}
+
 struct AgentDecisionRecord: Identifiable, Codable, Equatable {
     let id: String
     let turn: Int

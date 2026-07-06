@@ -77,8 +77,9 @@ struct CommandExecutor {
 
         state.appendEvent(
             movementLog(
-                divisionName: state.divisions[index].name,
+                divisionName: state.divisions[index].thematicDisplayName,
                 destination: destination,
+                state: state,
                 generalInfluence: generalInfluence
             )
         )
@@ -107,8 +108,8 @@ struct CommandExecutor {
         let attackOutcome = resolveCombatResult(for: defender, damage: damage, in: &state)
         state.appendEvent(
             combatLog(
-                prefix: "\(attacker.name) 攻击 \(defender.name)",
-                subjectName: defender.name,
+                prefix: "\(attacker.thematicDisplayName) 攻击 \(defender.thematicDisplayName)",
+                subjectName: defender.thematicDisplayName,
                 damage: damage,
                 outcome: attackOutcome,
                 combatAudit: combatAudit,
@@ -147,8 +148,8 @@ struct CommandExecutor {
             let counterOutcome = resolveCombatResult(for: updatedAttacker, damage: counterDamage, in: &state)
             state.appendEvent(
                 combatLog(
-                    prefix: "\(updatedDefender.name) 反击 \(updatedAttacker.name)",
-                    subjectName: updatedAttacker.name,
+                    prefix: "\(updatedDefender.thematicDisplayName) 反击 \(updatedAttacker.thematicDisplayName)",
+                    subjectName: updatedAttacker.thematicDisplayName,
                     damage: counterDamage,
                     outcome: counterOutcome,
                     combatAudit: counterCombatAudit,
@@ -205,12 +206,8 @@ struct CommandExecutor {
         proposal: DiplomaticProposal,
         in state: inout GameState
     ) {
-        let sourceName = state.diplomacyState.countries
-            .first { $0.id == sourceCountryId }?
-            .name ?? sourceCountryId.rawValue
-        let targetName = state.diplomacyState.countries
-            .first { $0.id == targetCountryId }?
-            .name ?? targetCountryId.rawValue
+        let sourceName = countryDisplayName(sourceCountryId, in: state)
+        let targetName = countryDisplayName(targetCountryId, in: state)
         guard let relation = state.diplomacyState.applyProposal(
             proposal,
             sourceCountryId: sourceCountryId,
@@ -390,7 +387,7 @@ struct CommandExecutor {
         }
 
         state.appendEvent(
-            "格 \(hex.q),\(hex.r) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
+            "\(hexDisplayName(hex, in: state)) 转入\(theaterDisplayName(advancingTheaterId, in: state))。",
             category: .theaterChange,
             relatedRecordId: nil
         )
@@ -414,6 +411,33 @@ struct CommandExecutor {
         }
 
         return false
+    }
+
+    private func hexDisplayName(_ hex: HexCoord, in state: GameState) -> String {
+        if let regionId = state.map.region(for: hex) {
+            return "格 \(hex.q),\(hex.r)（\(regionDisplayName(regionId, in: state.map))）"
+        }
+        return "格 \(hex.q),\(hex.r)"
+    }
+
+    private func regionDisplayName(_ regionId: RegionId, in map: MapState) -> String {
+        guard let region = map.region(id: regionId) else {
+            return "未知郡县"
+        }
+
+        let name = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == regionId.rawValue ? "未知郡县" : name
+    }
+
+    private func countryDisplayName(_ countryId: CountryId, in state: GameState) -> String {
+        guard let country = state.diplomacyState.countries.first(where: { $0.id == countryId }) else {
+            return "未知势力"
+        }
+
+        let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == countryId.rawValue
+            ? country.faction.displayName
+            : name
     }
 
     private func theaterDisplayName(_ theaterId: TheaterId, in state: GameState) -> String {
@@ -476,11 +500,16 @@ struct CommandExecutor {
     private func movementLog(
         divisionName: String,
         destination: HexCoord,
+        state: GameState,
         generalInfluence: GeneralMovementInfluenceSummary
     ) -> String {
         var parts = [
             "\(divisionName) 行军至 \(destination.q),\(destination.r)"
         ]
+
+        if let regionId = state.map.region(for: destination) {
+            parts[0] += "（\(regionDisplayName(regionId, in: state.map))）"
+        }
 
         if let influence = generalInfluence.logFragment {
             parts.append(influence)

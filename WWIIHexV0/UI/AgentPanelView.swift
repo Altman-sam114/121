@@ -182,7 +182,7 @@ struct AgentPanelView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(record.commandResults) { result in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(result.commandDisplayName ?? result.orderType?.displayName ?? "军令")
+                            Text(result.commandDisplayNameForDisplay)
                                 .font(.caption)
                                 .bold()
                             Text(resultLine(result))

@@ -6330,6 +6330,56 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和任务面板仍待后续阶段。
 - 胜负触发的真实行为仍需等待云端 CI 和后续 Agent C artifact 复判；本地未做运行时 UI 烟测。
 
+## v2.4 - 命令结果展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 收敛 `RuleEngine` 命令结果、玩家交互日志、AI 面板命令结果标题和核心移动/交战日志里的 raw id / 旧单位名，继续强化武将、道路、交战相关可见审计。
+
+完成内容：
+
+- `RuleEngine` 成功 `CommandResult.message` 改为 state-aware 中文摘要：移动显示军队展示名、坐标和郡县；交战显示攻守双方军队展示名；修路显示郡县；外交显示国家或势力名。
+- `AppContainer.submit(_:)` 不再把 raw id 版 `Command.displayName` 拼进玩家交互日志。
+- `CommandResultSummary` 新增只读 `commandDisplayNameForDisplay`，`AgentPanelView` 命令结果标题显示“进军命令 / 交战命令 / 修缮道路命令”等类别。
+- `CommandExecutor` 移动、攻击和反击日志改用 `Division.thematicDisplayName`，外交事件 country fallback 改为中文势力占位。
+- `CommandExecutor` 与 `WarCommandExecutor` 的动态方面推进日志保留坐标并追加郡县展示名。
+- 本轮不改 `Command.displayName` 本体、`CommandResultSummary.commandDisplayName` 存储字段、Codable/rawValue、旧 AI 兼容判断或规则行为。
+
+关键文件：
+
+- `WWIIHexV0/Rules/RuleEngine.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_command_result_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/RuleEngine.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/Agents/AgentDecisionRecord.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/Rules/CommandExecutor.swift WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 可见消费面的旧命令结果/raw id 拼接扫描无命中：`命令已执行：\(command.displayName)`、玩家交互日志拼 `command.displayName`、AI 面板直接 `Text(result.commandDisplayName ?? ...)`、移动/交战日志直接 `Division.name`、外交 fallback raw country id。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `Command.displayName` 本体仍保留 raw id 兼容输出，`RegionCommand`、`CommandIntentAdapter`、`WarDirective` 解码诊断、`SupplyRules` 和部分经济/胜负 fallback 仍待后续切片继续收敛。
+- 本轮不做运行时 UI 烟测；命令结果在面板中的最终呈现仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+
 ## v2.4 - 战略同步日志三国化
 
 完成日期：2026-07-07

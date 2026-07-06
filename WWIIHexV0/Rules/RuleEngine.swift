@@ -21,11 +21,75 @@ struct RuleEngine {
             command: command,
             validation: validation,
             state: nextState,
-            message: "命令已执行：\(command.displayName)。"
+            message: "命令已执行：\(commandResultDisplayName(command, in: preparedState))。"
         )
     }
 
     func apply(_ command: Command, to state: GameState) -> GameState {
         execute(command, in: state).state
+    }
+
+    private func commandResultDisplayName(_ command: Command, in state: GameState) -> String {
+        switch command {
+        case .move(let divisionId, let destination):
+            let unitName = divisionDisplayName(divisionId, in: state)
+            let destinationName = destinationDisplayName(destination, in: state)
+            return "\(unitName) 进军至 \(destinationName)"
+        case .attack(let attackerId, let targetId):
+            let attackerName = divisionDisplayName(attackerId, in: state)
+            let targetName = divisionDisplayName(targetId, in: state)
+            return "\(attackerName) 攻击 \(targetName)"
+        case .hold(let divisionId):
+            return "\(divisionDisplayName(divisionId, in: state)) 固守阵地"
+        case .allowRetreat(let divisionId):
+            return "\(divisionDisplayName(divisionId, in: state)) 改为机动撤退"
+        case .resupply(let divisionId):
+            return "\(divisionDisplayName(divisionId, in: state)) 补给休整"
+        case .queueProduction(let kind):
+            return "排产 \(kind.displayName)"
+        case .improveRoad(let regionId):
+            return "修缮 \(regionDisplayName(regionId, in: state.map)) 官道"
+        case .proposeDiplomacy(let sourceCountryId, let targetCountryId, let proposal):
+            let sourceName = countryDisplayName(sourceCountryId, in: state)
+            let targetName = countryDisplayName(targetCountryId, in: state)
+            return "\(sourceName) 向 \(targetName) 提出\(proposal.displayName)"
+        case .endTurn:
+            return "结束本回合"
+        }
+    }
+
+    private func divisionDisplayName(_ divisionId: String, in state: GameState) -> String {
+        guard let division = state.division(id: divisionId) else {
+            return "未知军队"
+        }
+        return division.thematicDisplayName
+    }
+
+    private func destinationDisplayName(_ destination: HexCoord, in state: GameState) -> String {
+        if let regionId = state.map.region(for: destination) {
+            let regionName = regionDisplayName(regionId, in: state.map)
+            return "\(destination.q),\(destination.r)（\(regionName)）"
+        }
+        return "\(destination.q),\(destination.r)"
+    }
+
+    private func regionDisplayName(_ regionId: RegionId, in map: MapState) -> String {
+        guard let region = map.region(id: regionId) else {
+            return "未知郡县"
+        }
+
+        let name = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == regionId.rawValue ? "未知郡县" : name
+    }
+
+    private func countryDisplayName(_ countryId: CountryId, in state: GameState) -> String {
+        guard let country = state.diplomacyState.countries.first(where: { $0.id == countryId }) else {
+            return "未知势力"
+        }
+
+        let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == countryId.rawValue
+            ? country.faction.displayName
+            : name
     }
 }

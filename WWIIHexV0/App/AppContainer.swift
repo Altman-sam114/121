@@ -107,8 +107,7 @@ final class AppContainer: ObservableObject {
         gameState = refreshGeneralAssignments(in: nextState)
         lastCommandMessage = result.message
 
-        let status = result.succeeded ? "命令已执行" : "命令被拒绝"
-        appendInteractionEvent("\(status)：\(command.displayName)。\(result.message)")
+        appendInteractionEvent(result.message)
         refreshSelectionAfterStateChange()
         runAIIfNeeded()
     }
