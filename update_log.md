@@ -4570,6 +4570,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做本机运行时 AI 回合或战斗烟测；AI 威胁、突破排序和执行器目标选择在完整多势力外交关系、非交战、同盟或借道制度下的行为仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 区域非所属/争夺判断仍可把未控制 region 纳入目标候选，这是战略目标选择语义，不代表该 region 内一定存在 hostile 单位。
 
+## v2.4 - 郡县检查器外交敌对分组兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `DiplomacyState` 新增 faction-to-faction 只读 helper，可通过双方 primary country 读取 `DiplomaticRelation.status`，将 `.hostile` / `.atWar` 判为敌对，将 `.neutral` / `.allied` / `.coBelligerent` 判为非敌对；缺国家或关系建档时 fallback 到 `Faction.isHostile(to:)`。
+- `MapDisplayAdapter.inspectorState` 的可见敌军、可见非敌对军队、郡县官道受压计数和官道压力来源改用该外交 helper，避免郡县检查器关系摘要与分组口径不一致。
+- `RegionInspectorView` 继续只读展示可见敌军、可见非敌对军队及其外交关系/紧张度；本轮不改变真实攻击、移动、道路、粮道、补给、部署或 AI 执行规则。
+- `Faction.isHostile(to:)`、`CommandValidator`、`RuleEngine`、`MovementRules`、`SupplyRules`、`WarDeploymentManager` 和 `WarCommandExecutor` 真实规则口径保持不变；完整借道、同盟通行、共同作战堆叠和补给共享仍待后续制度化。
+
+关键系统：
+
+- `WWIIHexV0/Core/DiplomacyState.swift`
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_diplomacy_hostile_grouping.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Core/DiplomacyState.swift` 通过。
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做本机运行时 UI 烟测；郡县检查器外交分组在动态外交状态变化、缺国家建档、观察模式、长军队名和 Dynamic Type 下的实际表现仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 真实攻击合法性、道路敌控区、粮道阻断、补给、安全补员和部署层仍按现有规则口径执行；这次只是郡县检查器只读展示口径与外交关系摘要对齐。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

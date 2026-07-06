@@ -332,6 +332,27 @@ struct DiplomacyState: Codable, Equatable {
         return relations.first { $0.id == key }
     }
 
+    func relationStatus(between lhs: Faction, and rhs: Faction) -> DiplomaticStatus? {
+        guard lhs != rhs,
+              let lhsCountry = primaryCountry(for: lhs),
+              let rhsCountry = primaryCountry(for: rhs),
+              let relation = relation(between: lhsCountry.id, and: rhsCountry.id) else {
+            return lhs == rhs ? .allied : nil
+        }
+        return relation.status
+    }
+
+    func isHostile(
+        between lhs: Faction,
+        and rhs: Faction,
+        fallbackToFactionHostility: Bool = true
+    ) -> Bool {
+        if let status = relationStatus(between: lhs, and: rhs) {
+            return status.isHostile
+        }
+        return fallbackToFactionHostility ? lhs.isHostile(to: rhs) : false
+    }
+
     @discardableResult
     mutating func applyProposal(
         _ proposal: DiplomaticProposal,

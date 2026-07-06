@@ -204,16 +204,16 @@ struct MapDisplayAdapter {
         }
         let friendly = divisions.filter { $0.faction == viewerFaction }
         let visibleEnemy = divisions.filter { division in
-            division.faction.isHostile(to: viewerFaction) &&
+            isDiplomaticallyHostile(division.faction, to: viewerFaction) &&
                 isDivisionVisible(division, viewerFaction: viewerFaction)
         }
         let visibleNonHostile = divisions.filter { division in
             division.faction != viewerFaction &&
-                !division.faction.isHostile(to: viewerFaction) &&
+                !isDiplomaticallyHostile(division.faction, to: viewerFaction) &&
                 isDivisionVisible(division, viewerFaction: viewerFaction)
         }
         let visibleHostileDivisions = state.divisions.filter { division in
-            division.faction.isHostile(to: viewerFaction) &&
+            isDiplomaticallyHostile(division.faction, to: viewerFaction) &&
                 !division.isDestroyed &&
                 isDivisionVisible(division, viewerFaction: viewerFaction)
         }
@@ -431,6 +431,10 @@ struct MapDisplayAdapter {
             return "关系未建档"
         }
         return "\(relation.status.displayName)，紧张 \(relation.tension)"
+    }
+
+    private func isDiplomaticallyHostile(_ faction: Faction, to viewerFaction: Faction) -> Bool {
+        state.diplomacyState.isHostile(between: faction, and: viewerFaction)
     }
 
     private func dominantDynamicFrontZoneId(for regionId: RegionId) -> FrontZoneId? {
