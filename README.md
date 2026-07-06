@@ -27,7 +27,7 @@
 
 **当前经济/生产日志边界：** `EconomyRules` 的经济启动、排产、府库结算、战略粮草短缺、自动补员、粮草辎重完成、生产军队部署和无安全后方部署格事件日志已改为中文三国语义；资源摘要显示人口、军械、粮草，生产部署优先显示军队展示名和郡县后方安全格。底层 `EconomyResources` 字段、`ProductionKind` rawValue、生产队列、收入、维护费、补员、部署筛选和命令管线不变。
 
-**当前剧本胜负条件边界：** `DataLoader` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 和 hex controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，并在 HUD 的“胜负”中显示中文胜利原因。旧 `VictoryReason` rawValue、阿登目标名和歼灭/断粮 fallback 规则保留作历史兼容；本轮不实现多目标计分、限回合条件、歼灭模板条件或完整胜利面板。
+**当前剧本胜负条件边界：** `DataLoader` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 和 hex controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，并在 HUD 的“胜负”中显示中文胜利原因。`RegionVictoryRules` / `RegionRuleSystem` 的只读战略分析也会先按同一剧本条件评估，避免 region 层分析继续只看旧阿登城市名。旧 `VictoryReason` rawValue、阿登目标名和歼灭/断粮 fallback 规则保留作历史兼容；本轮不实现多目标计分、限回合条件、歼灭模板条件或完整胜利面板。
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 

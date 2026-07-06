@@ -49,7 +49,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - 默认 `DataLoader.loadInitialGameState()` 先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到阿登兼容数据。
 - `DataLoader.loadUnitTemplates()` 先尝试 `sanguo_unit_templates.json`，缺文件时再 fallback 到旧 `unit_templates.json`；如果三国模板存在但解析失败，会暴露错误而不是静默退旧数据。
 - `DataLoader.makeDivisions()` 现在使用模板 `maxHP` 作为军队 `maxStrength` 上限，避免官渡高于 10 的初始兵力被旧默认值截断。
-- `DataLoader.loadGameState()` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 对应 hex 的 controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，HUD 显示势力胜利和中文原因；旧阿登目标名、`VictoryReason` rawValue、歼灭和断粮 fallback 规则保留兼容，不在本层恢复成主线胜负制度。
+- `DataLoader.loadGameState()` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 对应 hex 的 controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，HUD 显示势力胜利和中文原因；`RegionVictoryRules` / `RegionRuleSystem` 的只读战略分析也先按同一剧本条件评估，避免 region 层胜负分析继续只看旧阿登城市名；旧阿登目标名、`VictoryReason` rawValue、歼灭和断粮 fallback 规则保留兼容，不在本层恢复成主线胜负制度。
 - MapEditor 默认资源桥也读写 `guandu_200_scenario` + `guandu_200_regions`。
 - `Faction` 还可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`，供后续三国 JSON / MapEditor / 初始外交 profile 使用。
 - `Faction.activeTurnCases` / 兼容 `Faction.allCases` 当前仍只包含 `.germany`、`.allies`；完整多势力 turn order 尚未迁移。

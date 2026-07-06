@@ -6239,6 +6239,49 @@ guerrillaWarfare 额外参考 infrastructure
 - Legacy Agent D 仍保留 `divisionId` 等机器 id 作为错误定位锚点；本轮只中文化错误说明，不新增 id 到展示名的映射层。
 - Legacy Agent D 仍只作回归参考，默认战争 AI 主路径不回退旧管线。
 
+## v2.4 - Region 胜负分析复用官渡剧本条件
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进三国迁移，让 `RegionVictoryRules` / `RegionRuleSystem` 的只读战略胜负分析复用官渡剧本条件，避免运行时 HUD 胜负和 region 分析层口径分叉。
+
+完成内容：
+
+- `RegionVictoryAssessment` 增加可选 `reasonDescription` 和 `displayReason`，保留 winner / reason 兼容字段。
+- `RegionVictoryRules.assessVictory(in:)` 先读取 `VictoryState.scenarioConditions` 中 active 的 `controlObjective` 条件，按 objective id 对应 hex 的 `HexTile.controller` 判断胜负。
+- 未命中剧本条件时继续保留旧阿登 `Bastogne / St. Vith` region 城市名 fallback，保持历史测试语义。
+- `RegionVictoryRules` 仍只返回只读 assessment，不修改 `GameState.victoryState`。
+- 同步 README、`md/flow/flow.md`、`md/flow/flowchart.md`、prompt 索引和本阶段提示词。
+
+关键文件：
+
+- `WWIIHexV0/Rules/RegionVictoryRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_victory_scenario_conditions.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/RegionVictoryRules.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- Region 分析层仍只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和胜利详情 UI 待后续阶段。
+- 本地未运行 region victory XCTest；等待云端 CI build 和后续 Agent C artifact 复判。
+
 ## v2.4 - 官渡剧本胜负条件兼容层
 
 完成日期：2026-07-06

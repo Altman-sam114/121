@@ -22,7 +22,7 @@ v2.4 命名边界：
 
 - `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
 - 默认新局优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json`；旧阿登数据保留作 fallback。
-- `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 会随加载进入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 对应 hex controller 判断官渡剧本目标，HUD 会显示中文胜利原因；旧阿登胜负枚举和 fallback 规则保留兼容。
+- `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 会随加载进入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 对应 hex controller 判断官渡剧本目标，HUD 会显示中文胜利原因；`RegionVictoryRules` / `RegionRuleSystem` 只读分析也复用同一剧本条件，旧阿登胜负枚举和 fallback 规则保留兼容。
 - 单位模板优先加载 `sanguo_unit_templates.json`；缺文件时才 fallback 到旧 `unit_templates.json`。
 - `Faction` 可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`；`Faction.scenarioCases` 给 MapEditor、场景数据和战略派生层控制计算使用。
 - 默认 `Faction.activeTurnCases` / 兼容 `Faction.allCases` 仍只枚举当前可行动双方，新增三国势力不参与旧回合循环。
