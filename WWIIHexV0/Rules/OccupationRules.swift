@@ -12,6 +12,11 @@ struct OccupationRules {
             return false
         }
 
+        if let controller = tile.controller,
+           !state.diplomacyState.isHostile(between: controller, and: division.faction) {
+            return false
+        }
+
         if let occupying = state.division(at: destination),
            occupying.id != division.id {
             return false

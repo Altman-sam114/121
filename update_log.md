@@ -5051,6 +5051,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - AI 上游摘要的运行时行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测；本轮只做轻量语法、文本和冲突检查。
 
+## v2.4 - 非敌对借道不自动占领兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 避免玩家、AI 或武将宏观军令沿道路移动到 allied / coBelligerent / neutral 控制格时自动翻转 controller 或推进动态方面，把非敌对经过误判为占领/突破。
+
+完成内容：
+
+- `WWIIHexV0/Rules/OccupationRules.swift` 的 `canOccupy` 改为仅允许占领无控制者或外交 hostile / atWar 控制格；同 faction、非 capturable、已有其他单位仍不可占领。
+- `WWIIHexV0/Commands/WarCommandExecutor.swift` 在命令执行前记录该移动是否真实可占领，并只用真实可占领/已占领 region 驱动动态方面推进；普通 affected region 仍参与战略同步，但不再单独造成突破推进。
+- 保持 `Command` / `ZoneDirective` schema、移动路径、交战伤害、补给、外交状态和完整借道制度不变。
+
+关键文件：
+
+- `WWIIHexV0/Rules/OccupationRules.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_borrow_passage_no_auto_occupation.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/OccupationRules.swift` 通过。
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不实现完整借道条约、通行权费用、共同堆叠、补给共享、外交惩罚或宣战流程。
+- 非敌对移动是否应被 `MovementRules` 允许、同盟补给如何传播、AI 是否主动规划借道，仍需后续小步设计和云端/人工复判。
+
 ## v2.4 - 武将骑战官道机动规则对齐兼容层
 
 完成日期：2026-07-06

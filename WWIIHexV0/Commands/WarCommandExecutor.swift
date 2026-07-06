@@ -1076,6 +1076,7 @@ struct WarCommandExecutor {
                 .flatMap { $0.location(in: state.map) }
                 .flatMap { state.warDeploymentState.regionToFrontZone[$0] }
         let beforeControllers = state.map.regions.mapValues(\.controller)
+        let preMoveOccupationRegionIds = occupiableMoveRegionIds(for: command, state: state)
         let originalValidation = CommandValidator().validate(command, in: state)
         let result = commandHandler.execute(command, in: state)
         commands.append(command)
@@ -1102,7 +1103,8 @@ struct WarCommandExecutor {
         state = result.state
         let affectedRegionIds = affectedRegionIds(for: command, state: state)
         let occupiedRegionIds = applyDirectiveOccupation(command: command, state: &state)
-        let dynamicAdvancedRegionIds = stableUnique((affectedRegionIds + occupiedRegionIds).compactMap { regionId in
+        let strategicAdvanceRegionIds = stableUnique(occupiedRegionIds + preMoveOccupationRegionIds)
+        let dynamicAdvancedRegionIds = stableUnique(strategicAdvanceRegionIds.compactMap { regionId in
             applyStrategicAdvance(
                 regionId: regionId,
                 hex: moveDestination(for: command),
@@ -1114,7 +1116,9 @@ struct WarCommandExecutor {
         })
         let syncResult = StrategicStateSynchronizer().synchronizeAfterOccupationChange(
             in: &state,
-            affectedRegionIds: stableUnique(affectedRegionIds + occupiedRegionIds + dynamicAdvancedRegionIds),
+            affectedRegionIds: stableUnique(
+                affectedRegionIds + occupiedRegionIds + preMoveOccupationRegionIds + dynamicAdvancedRegionIds
+            ),
             relatedRecordId: relatedRecordId,
             emitRegionOwnerEvents: false
         )
@@ -1301,6 +1305,15 @@ struct WarCommandExecutor {
             return destination
         }
         return nil
+    }
+
+    private func occupiableMoveRegionIds(for command: Command, state: GameState) -> [RegionId] {
+        guard case .move(let divisionId, let destination) = command,
+              let division = state.division(id: divisionId),
+              occupationRules.canOccupy(division: division, destination: destination, in: state) else {
+            return []
+        }
+        return state.map.region(for: destination).map { [$0] } ?? []
     }
 
     private func controllerChanges(
