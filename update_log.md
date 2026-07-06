@@ -5356,6 +5356,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮是 UI 显示切片，不迁移 `CountryProfile.name` / `FrontZone.name` 的数据源，也不改变调试 JSON 中的 raw id。
 - AI 面板实际换行和运行时视觉仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - Local LLM 提示词三国语义兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 清理 Legacy `LocalLLMDecisionProvider` 使用的 `AgentPromptBuilder` 中仍直接写入的 WWII 提示词，让本地 LLM 路径启用时优先围绕三国棋策、武将、道路、粮草和交战生成 intent / reason。
+
+完成内容：
+
+- `AgentPromptBuilder.systemPrompt` 从 “turn-based WWII hex strategy prototype” 改为 `三国棋策 Agent` / Three Kingdoms hex strategy 语义。
+- system prompt 追加约束：兼容 `division` 要理解为武将统领的军队，决策要尊重可见官道、粮草/补给、郡县控制和可达交战机会。
+- user prompt 的任务和 section label 改为军队、敌对军队、粮草/补给等三国语境，并要求 intent / reason 使用武将、郡县、官道、粮道、围城压力和可见交战措辞。
+- JSON schema block 只调整 placeholder 文案；保留 `schemaVersion`、字段名、`move/attack/hold/resupply` rawValue、parser、mapper、MockAI 和命令执行链不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/AgentPromptBuilder.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_local_llm_prompt_sanguo_terms.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/AgentPromptBuilder.swift` 通过。
+- 旧 prompt 文案扫描无命中：`WWII hex strategy`、`turn-based WWII`、`Friendly divisions`、`Known enemy divisions`。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不启用真实 LLM，也不迁移 `MockAIClient` 的 Bastogne fallback 算法。
+- `AgentContext` / `AgentOrder` 仍保留 `divisionId`、`friendlyDivisions`、`enemyDivisions` 等兼容字段名；本轮只在 prompt 解释层迁移语义。
+- 并发子 Agent 发现 `AppContainer` 的玩家/武将交互日志仍有 `General order`、`command(s)`、`Inspecting unit` 等英文展示残留；建议后续单独做“武将军令与军队选择交互日志中文化”切片。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

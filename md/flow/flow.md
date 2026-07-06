@@ -599,6 +599,8 @@ AppContainer.bootstrap()
 
 `MockAIClient` 仍是 Legacy Agent D 兼容 provider；本轮只把 intent / reason 文案改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分保持旧兼容算法，不在可见文本切片里迁移行为。
 
+`LocalLLMDecisionProvider` 仍是默认不启用的 Legacy / 可插拔 LLM 入口，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`AgentDecisionEnvelope` / `AgentOrder` 的 JSON key、`schemaVersion`、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
+
 `DataLoader.loadInitialGameState()` 当前优先走编辑器兼容 JSON：
 
 ```text

@@ -22,13 +22,15 @@ struct AgentPromptBuilder {
 
     private func systemPrompt(context: AgentContext) -> String {
         """
-        You are the local LLM decision layer for a turn-based WWII hex strategy prototype.
+        You are the local LLM decision layer for 三国棋策 Agent, a turn-based Three Kingdoms hex strategy game.
         Agent: \(context.agentId)
         Faction: \(context.faction.rawValue)
         Personality: \(context.personality)
 
         Return only valid JSON matching the schema. Do not include prose, markdown, comments, or extra keys.
         You must not assume invisible information, modify game rules, invent units, or bypass command validation.
+        Treat divisions as armies led by generals. Prefer orders that respect visible roads, grain/supply state,
+        current region control, and reachable combat opportunities.
         """
     }
 
@@ -50,7 +52,9 @@ struct AgentPromptBuilder {
 
         return """
         Current task:
-        Issue operational orders for this agent's assigned divisions on turn \(context.turn), phase \(context.phase.rawValue).
+        Issue operational orders for this agent's assigned armies on turn \(context.turn), phase \(context.phase.rawValue).
+        Frame the intent and reasons in Three Kingdoms terms: generals, armies, commanderies, roads, grain routes,
+        siege pressure, and visible engagements. Keep JSON keys and command type values exactly as listed below.
 
         Available commands:
         - move: requires divisionId and toRegionId
@@ -59,10 +63,10 @@ struct AgentPromptBuilder {
         - resupply: requires divisionId
 
         Battlefield summary:
-        Friendly divisions:
+        Friendly armies:
         \(friendly)
 
-        Known enemy divisions:
+        Known hostile armies:
         \(enemies)
 
         Objectives:
@@ -71,7 +75,7 @@ struct AgentPromptBuilder {
         Visible regions:
         \(regions)
 
-        Supply:
+        Grain and supply:
         friendly supplied \(context.supplySummary.friendlySupplied), low supply \(context.supplySummary.friendlyLowSupply), encircled \(context.supplySummary.friendlyEncircled)
 
         Recent events:
@@ -85,7 +89,7 @@ struct AgentPromptBuilder {
           "schemaVersion": 2,
           "agentId": "\(context.agentId)",
           "turn": \(context.turn),
-          "intent": "short operational intent",
+          "intent": "short Three Kingdoms operational intent",
           "orders": [
             {
               "type": "move|attack|hold|resupply",
@@ -93,7 +97,7 @@ struct AgentPromptBuilder {
               "toRegionId": "existing visible region id",
               "targetDivisionId": null,
               "stance": null,
-              "reason": "short reason"
+              "reason": "short reason mentioning roads, grain, general posture, or visible engagement when relevant"
             }
           ]
         }
