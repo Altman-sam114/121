@@ -107,8 +107,8 @@ final class AppContainer: ObservableObject {
         gameState = refreshGeneralAssignments(in: nextState)
         lastCommandMessage = result.message
 
-        let status = result.succeeded ? "accepted" : "rejected"
-        appendInteractionEvent("Command \(status): \(command.displayName). \(result.message)")
+        let status = result.succeeded ? "命令已执行" : "命令被拒绝"
+        appendInteractionEvent("\(status)：\(command.displayName)。\(result.message)")
         refreshSelectionAfterStateChange()
         runAIIfNeeded()
     }
@@ -181,7 +181,7 @@ final class AppContainer: ObservableObject {
 
     func holdSelected() {
         guard let division = selectedActionDivision else {
-            appendInteractionEvent("Hold rejected: no active allied unit selected.")
+            appendInteractionEvent("固守失败：未选中可行动己方军队。")
             return
         }
 
@@ -190,7 +190,7 @@ final class AppContainer: ObservableObject {
 
     func allowRetreatSelected() {
         guard let division = selectedActionDivision else {
-            appendInteractionEvent("Allow retreat rejected: no active allied unit selected.")
+            appendInteractionEvent("允许撤退失败：未选中可行动己方军队。")
             return
         }
 
@@ -199,7 +199,7 @@ final class AppContainer: ObservableObject {
 
     func resupplySelected() {
         guard let division = selectedActionDivision else {
-            appendInteractionEvent("Resupply rejected: no active allied unit selected.")
+            appendInteractionEvent("补给失败：未选中可行动己方军队。")
             return
         }
 
@@ -208,7 +208,7 @@ final class AppContainer: ObservableObject {
 
     func orderSelectedGeneralHoldLine() {
         guard let zone = selectedGeneralCommandZone else {
-            appendInteractionEvent("General order rejected: no allied front zone selected.")
+            appendInteractionEvent("武将军令失败：未选中己方防区。")
             return
         }
 
@@ -230,11 +230,11 @@ final class AppContainer: ObservableObject {
 
     func orderSelectedGeneralAttackRegion() {
         guard let target = selectedAttackTarget else {
-            appendInteractionEvent("General order rejected: select an enemy front region to attack.")
+            appendInteractionEvent("武将军令失败：请选择可进攻的敌对前线郡县。")
             return
         }
         guard let zone = selectedGeneralCommandZone else {
-            appendInteractionEvent("General order rejected: no allied source front zone available.")
+            appendInteractionEvent("武将军令失败：没有可用己方来源防区。")
             return
         }
 
@@ -260,7 +260,7 @@ final class AppContainer: ObservableObject {
 
     func queueProduction(_ kind: ProductionKind) {
         guard !observerModeEnabled else {
-            appendInteractionEvent("Production rejected: observer mode is read-only.")
+            appendInteractionEvent("募兵失败：观察模式只读。")
             return
         }
 
@@ -2087,18 +2087,18 @@ final class AppContainer: ObservableObject {
         targetRegionId: RegionId?
     ) {
         guard canIssuePlayerDirective else {
-            appendInteractionEvent("General order rejected: not in the player command phase.")
+            appendInteractionEvent("武将军令失败：当前不是玩家下令阶段。")
             return
         }
         guard gameState.warDeploymentState.frontZones[directive.zoneId]?.faction == playerFaction else {
-            appendInteractionEvent("General order rejected: source zone is not controlled by the player.")
+            appendInteractionEvent("武将军令失败：来源防区不受玩家控制。")
             return
         }
 
         let startState = refreshedRuntimeState(gameState)
         guard let refreshedZone = startState.warDeploymentState.frontZones[directive.zoneId],
               refreshedZone.faction == playerFaction else {
-            appendInteractionEvent("General order rejected: source zone changed during refresh.")
+            appendInteractionEvent("武将军令失败：刷新后来源防区已变化。")
             return
         }
         let generalAdjustment = GeneralAgent(registry: generalRegistry).plan(
@@ -2132,14 +2132,14 @@ final class AppContainer: ObservableObject {
         }
         var diagnostics: [String] = []
         if execution.generatedCommands.isEmpty {
-            diagnostics.append("Player directive generated no executable commands.")
+            diagnostics.append("玩家军令未生成可执行命令。")
         }
         let rejected = commandSummaries.filter { !$0.executed }
         if !rejected.isEmpty {
-            diagnostics.append("\(rejected.count) command(s) were rejected by rules.")
+            diagnostics.append("\(rejected.count) 条命令被规则拒绝。")
         }
         if !lockedIds.isEmpty {
-            diagnostics.append("\(lockedIds.count) micromanaged division(s) excluded.")
+            diagnostics.append("\(lockedIds.count) 支已手动指挥军队被排除。")
         }
 
         let record = WarDirectiveRecord(
@@ -2176,7 +2176,9 @@ final class AppContainer: ObservableObject {
         gameState = nextState
         lastWarDirectiveRecords = Array((lastWarDirectiveRecords + [record]).suffix(12))
         lastCommandMessage = playerDirectiveMessage(for: execution, diagnostics: diagnostics)
-        appendInteractionEvent("General order submitted: \(shapedDirective.type.rawValue) \(shapedDirective.zoneId.rawValue).")
+        appendInteractionEvent(
+            "武将军令已提交：\(shapedDirective.type.displayName) \(frontZoneDisplayName(refreshedZone))。"
+        )
         refreshSelectionAfterStateChange()
     }
 
@@ -2187,12 +2189,26 @@ final class AppContainer: ObservableObject {
         let acceptedCount = execution.commandResults.filter(\.succeeded).count
         let totalCount = execution.generatedCommands.count
         if totalCount == 0 {
-            return diagnostics.first ?? "General order produced no commands."
+            return diagnostics.first ?? "武将军令未生成命令。"
         }
         if acceptedCount == totalCount {
-            return "General order executed \(acceptedCount) command(s)."
+            return "武将军令已执行 \(acceptedCount) 条命令。"
         }
-        return "General order executed \(acceptedCount)/\(totalCount) command(s)."
+        return "武将军令已执行 \(acceptedCount)/\(totalCount) 条命令。"
+    }
+
+    private func frontZoneDisplayName(_ zone: FrontZone) -> String {
+        let trimmedName = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty, trimmedName != zone.id.rawValue {
+            return trimmedName
+        }
+
+        let regionNames = zone.regionIds.prefix(2).compactMap { regionId -> String? in
+            let name = gameState.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return name.isEmpty ? nil : name
+        }
+        let regionSuffix = regionNames.isEmpty ? "" : "：" + regionNames.joined(separator: "、")
+        return "\(zone.faction.shortDisplayName)防区\(regionSuffix)"
     }
 
     private func shouldRunAI(for faction: Faction, phase: GamePhase) -> Bool {
@@ -2340,13 +2356,13 @@ final class AppContainer: ObservableObject {
     private func handleDivisionTap(_ division: Division) {
         if observerModeEnabled {
             selectDivision(division)
-            appendInteractionEvent("Inspecting unit: \(division.name).")
+            appendInteractionEvent("查看军队：\(division.name)。")
             return
         }
 
         if division.faction == playerFaction {
             selectDivision(division)
-            appendInteractionEvent("Selected unit: \(division.name).")
+            appendInteractionEvent("已选择军队：\(division.name)。")
             return
         }
 
@@ -2411,9 +2427,9 @@ final class AppContainer: ObservableObject {
     private func selectionMessage(for coord: HexCoord) -> String {
         guard let selectedRegionId,
               let region = gameState.map.region(id: selectedRegionId) else {
-            return "Selected hex \(coord.q),\(coord.r)."
+            return "已选择地格：\(coord.q),\(coord.r)。"
         }
-        return "Selected region: \(region.name) (\(selectedRegionId.rawValue))."
+        return "已选择郡县：\(region.name)（\(selectedRegionId.rawValue)）。"
     }
 
     private func appendInteractionEvent(_ message: String) {

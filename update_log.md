@@ -5397,7 +5397,52 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮不启用真实 LLM，也不迁移 `MockAIClient` 的 Bastogne fallback 算法。
 - `AgentContext` / `AgentOrder` 仍保留 `divisionId`、`friendlyDivisions`、`enemyDivisions` 等兼容字段名；本轮只在 prompt 解释层迁移语义。
-- 并发子 Agent 发现 `AppContainer` 的玩家/武将交互日志仍有 `General order`、`command(s)`、`Inspecting unit` 等英文展示残留；建议后续单独做“武将军令与军队选择交互日志中文化”切片。
+- 并发子 Agent 发现 `AppContainer` 的玩家/武将交互日志仍有 `General order`、`command(s)`、`Inspecting unit` 等英文展示残留；后续“AppContainer 武将军令与军队选择交互日志三国化”切片已关闭该范围。
+
+## v2.4 - AppContainer 武将军令与军队选择交互日志三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 清理 `AppContainer` 玩家交互日志中仍直接显示的 `General order`、`command(s)`、`Inspecting unit`、`Selected unit` 等英文残留，让玩家围绕武将军令、军队、地格和郡县理解操作反馈。
+
+完成内容：
+
+- `submit(_:)` 的交互日志从 `Command accepted/rejected` 改为“命令已执行/命令被拒绝”。
+- 固守、允许撤退和补给在未选中可行动己方军队时显示中文失败原因。
+- 玩家武将宏观军令的阶段、防区、刷新、目标条件不足、无可执行命令、规则拒绝、手动指挥军队排除、提交和执行条数摘要改为中文三国语义。
+- 武将军令提交日志使用 `DirectiveType.displayName` 和私有防区展示名 helper；防区名优先读 `FrontZone.name`，缺失或等于 raw id 时用势力简称和前两个郡县名兜底。
+- 观察/选择军队、选择地格和选择郡县的交互日志改为中文。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_appcontainer_general_order_selection_log_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 目标英文残留扫描无命中：`General order`、`command(s)`、`Inspecting unit`、`Selected unit`、`Hold rejected`、`Allow retreat rejected`、`Resupply rejected`、`Production rejected`、`Player directive generated no executable commands`、`micromanaged division`、`Command \(status\)`、`Selected hex`、`Selected region`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只改玩家可见交互日志，不迁移 `Command` / `ZoneDirective` / `WarCommandExecutor` / `RuleEngine` 行为，不改记录 raw id、Codable 字段或 JSON schema。
+- `Command.displayName` 仍可能包含兼容 id；本轮只处理交互日志框架文案和防区提交展示名。
 
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 

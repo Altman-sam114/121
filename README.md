@@ -122,6 +122,7 @@ WWIIHexV0/
 - **v2.4 Agent 记录展示名兼容层**：`AgentDecisionRecord` 保留 raw `agentId`、`provider` 和原始 `rawJSON` 用于 Codable、parser 和回归审计，同时提供 `agentDisplayName`、`providerDisplayName` 与展示用调试 JSON；`TurnManager.contextSummary`、`AgentPanelView` 的 Agent/来源/子 Agent 字段、`AppContainer` AI 回合消息和交互日志使用张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文展示名，不再把 `guderian` / `MockAI` 当作主 UI 文案。
 - **v2.4 Agent 面板战略锚点展示名**：`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要优先显示 `CountryProfile.name`、`RegionNode.name` 与 `FrontZone.name`；防区名缺失或仍等于 raw id 时，由 `RootGameView` 按势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类只读展示名。底层 `CountryId`、`RegionId`、`FrontZoneId`、记录 Codable 和调试 JSON 不变。
 - **v2.4 Local LLM 提示词三国语义**：Legacy `LocalLLMDecisionProvider` 仍默认不启用，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`schemaVersion`、JSON keys、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
+- **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
 - **v2.4 命令结果中文化**：`CommandValidationError` 保留 rawValue / Codable 兼容，同时提供中文展示文案；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 会把玩家/AI 可见的成功、拒绝和校验原因写成中文，AI 面板不再直接展示常见校验枚举名；`CommandPanelView` 的不能下令状态按 `DiplomacyState` 区分敌军和非敌对军队。
 
 | 文件 | 职责 | 关键类型/协议 |
