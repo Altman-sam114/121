@@ -5051,6 +5051,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - AI 上游摘要的运行时行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测；本轮只做轻量语法、文本和冲突检查。
 
+## v2.4 - 武将骑战官道机动规则对齐兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 对齐武将 UI 提示与规则层道路机动触发条件，避免“骑兵突击”在面板提示官道/骑战机动，但实际 `GeneralInfluence` 无法借郡县官道网络触发加成。
+
+完成内容：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift` 抽出 `roadNetworkSkills` 私有集合，统一供道路机动加成和道路网络触发判断复用。
+- `cavalry_charge` 现在与 `logistics`、`rapid_exploitation`、`armor_expert` 一样，可在当前郡县存在官道时满足 `usesRoadNetwork` 条件；忠诚/满意门槛和道路机动加成上限仍保持不变。
+- 同步 `README.md`、`md/flow/flow.md`、`md/flow/flowchart.md` 和阶段 prompt 索引，明确本轮是骑战/官道机动规则口径对齐。
+
+关键文件：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_cavalry_road_skill_rule.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/GeneralInfluence.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不实现完整借道、同盟通行、共同堆叠、补给共享、完整骑兵重写或外交宣战制度。
+- 真实运行时 UI 和云端 Xcode build 仍待 `origin/main` 的 GitHub Actions `ci-results` 与后续 Agent C artifact 复判。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

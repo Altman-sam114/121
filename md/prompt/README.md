@@ -102,6 +102,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_visible_hostile_engagement_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_benefit_units_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_no_bonus_reason.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_cavalry_road_skill_rule.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_skill_display_labels.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_skill_road_combat_effect_hints.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_preview.md`

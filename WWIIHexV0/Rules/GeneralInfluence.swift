@@ -59,6 +59,13 @@ struct GeneralMovementInfluenceSummary: Equatable {
 }
 
 struct GeneralInfluence {
+    private static let roadNetworkSkills = [
+        "logistics",
+        "rapid_exploitation",
+        "armor_expert",
+        "cavalry_charge"
+    ]
+
     func effectiveMovementLimit(for division: Division, in state: GameState) -> Int {
         division.movement + roadMobilityBonus(for: division, in: state)
     }
@@ -94,7 +101,7 @@ struct GeneralInfluence {
             return 0
         }
         var bonus = 1
-        if hasAnySkill(["logistics", "rapid_exploitation", "armor_expert", "cavalry_charge"], in: assignment) {
+        if hasAnySkill(Self.roadNetworkSkills, in: assignment) {
             bonus += 1
         }
         return min(2, bonus)
@@ -185,7 +192,7 @@ struct GeneralInfluence {
         if state.map.tile(at: division.coord)?.hasRoad == true {
             return true
         }
-        if hasAnySkill(["logistics", "rapid_exploitation", "armor_expert"], in: assignment),
+        if hasAnySkill(Self.roadNetworkSkills, in: assignment),
            let regionId = state.map.region(for: division.coord),
            let region = state.map.region(id: regionId) {
             return region.displayHexes.contains { state.map.tile(at: $0)?.hasRoad == true }

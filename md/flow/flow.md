@@ -475,7 +475,7 @@ MarshalAgent / TheaterCommanderPool
 
 - 从 `GameState.warDeploymentState.frontZones[].generalAssignment` 找到单位所属武将。
 - 读取 `generalDisplayName`、`commandStyleRawValue`、`skills`、忠诚和满意度快照，不依赖 UI 或外部 registry。
-- `MovementRules.effectiveMovementLimit` 会在单位使用道路网络且武将状态可靠时提供 1-2 点道路机动加成。
+- `MovementRules.effectiveMovementLimit` 会在单位使用道路网络且武将状态可靠时提供 1-2 点道路机动加成；粮道调度、疾行、甲骑专精和骑兵突击类技能可以借当前郡县内已有官道网络触发该条件，避免只读技能提示与实际规则分叉。
 - `MovementRules.generalInfluenceSummary` 将同一套道路机动加成整理为只读摘要；`CommandExecutor.movementLog` 会在移动事件中输出中文武将姓名、加成和有效移动上限，不改变路径搜索或移动执行。
 - `CombatRules.effectiveAttack` 和 `effectiveDefense` 会按武将技能、风格质量、地形、道路/攻城场景给小幅攻防修正。
 - `CombatRules.generalInfluenceSummary` 将同一套攻防修正整理为只读摘要；`CommandExecutor.combatLog` 会在攻击和反击事件中输出中文摘要，优先使用 assignment 的武将姓名快照，不改变伤害计算。
