@@ -105,10 +105,10 @@ struct EconomyRules {
         state.economyState.updateLedger(ledger)
         let hexSummary = improvedHexes.isEmpty
             ? "整修驿道与桥涵"
-            : improvedHexes.map { "\($0.q),\($0.r)" }.joined(separator: "；")
+            : improvedHexes.map { roadHexDisplayName($0, in: state.map) }.joined(separator: "；")
         let infrastructure = state.map.region(id: regionId)?.infrastructure ?? region.infrastructure
         state.appendEvent(
-            "\(faction.displayName) 修缮 \(region.name) 道路：\(hexSummary)，基础设施 \(infrastructure)，消耗 \(resourceSummary(roadImprovementCost))。",
+            "\(faction.displayName) 修缮 \(regionDisplayName(region)) 道路：\(hexSummary)，基础设施 \(infrastructure)，消耗 \(resourceSummary(roadImprovementCost))。",
             category: .supply
         )
         return true
@@ -794,12 +794,50 @@ struct EconomyRules {
         for deployment: (coord: HexCoord, regionId: RegionId?),
         in state: GameState
     ) -> String {
-        let coordText = "\(deployment.coord.q),\(deployment.coord.r)"
         guard let regionId = deployment.regionId,
               let region = state.map.region(id: regionId),
               !region.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return "后方安全格 \(coordText)"
+            return "后方安全格 \(hexDisplayName(deployment.coord, in: state.map))"
         }
-        return "\(region.name) 后方安全格 \(coordText)"
+        return "\(regionDisplayName(region)) 后方安全格 \(hexDisplayName(deployment.coord, in: state.map))"
+    }
+
+    private func regionDisplayName(_ region: RegionNode) -> String {
+        let name = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == region.id.rawValue ? "未知郡县" : name
+    }
+
+    private func roadHexDisplayName(_ coord: HexCoord, in map: MapState) -> String {
+        let base = hexDisplayName(coord, in: map)
+        return base.contains("官道") ? base : "\(base)新修官道"
+    }
+
+    private func hexDisplayName(_ coord: HexCoord, in map: MapState) -> String {
+        guard let tile = map.tile(at: coord) else {
+            return "地格 \(coord.q),\(coord.r)"
+        }
+
+        let anchor = displayAnchor(for: tile, coord: coord, in: map)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(coord.q),\(coord.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord, in map: MapState) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = map.region(for: coord),
+           let region = map.region(id: regionId) {
+            let regionName = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !regionName.isEmpty && regionName != region.id.rawValue {
+                return regionName
+            }
+        }
+        return "地格"
     }
 }

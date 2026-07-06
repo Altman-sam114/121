@@ -159,6 +159,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_legacy_agent_error_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_appcontainer_general_order_selection_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_supply_retreat_siege_log_localization.md`
+- `md/prompt/v2.0-三国迁移/v2.4_supply_economy_road_log_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.4_economy_production_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_scenario_victory_condition_bridge.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_victory_scenario_conditions.md`

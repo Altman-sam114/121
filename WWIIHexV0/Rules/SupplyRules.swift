@@ -38,18 +38,19 @@ struct SupplyRules {
 
         let after = state.divisions[index]
         let hpRecovered = after.hp - before.hp
+        let divisionName = divisionDisplayName(after)
 
         if hpRecovered > 0 {
             state.appendEvent(
-                "\(after.name) 完成整补（\(after.supplyState.displayName)）：兵力 +\(hpRecovered)。"
+                "\(divisionName) 完成整补（\(after.supplyState.displayName)）：兵力 +\(hpRecovered)。"
             )
         } else if isBesieged(after, in: state) {
             state.appendEvent(
-                "\(after.name) 被围于城池或关隘，\(after.supplyState.displayName) 状态下无法恢复兵力。",
+                "\(divisionName) 被围于城池或关隘，\(after.supplyState.displayName) 状态下无法恢复兵力。",
                 category: .encircle
             )
         } else {
-            state.appendEvent("\(after.name) 处于 \(after.supplyState.displayName)，本次未能恢复兵力。")
+            state.appendEvent("\(divisionName) 处于 \(after.supplyState.displayName)，本次未能恢复兵力。")
         }
     }
 
@@ -67,12 +68,12 @@ struct SupplyRules {
             }
             state.divisions[index].beginRetreat(to: destination)
             state.appendEvent(
-                "\(division.name) 撤退：从 \(origin.q),\(origin.r) 后撤至 \(destination.q),\(destination.r)。"
+                "\(divisionDisplayName(division)) 撤退：从 \(hexDisplayName(origin, in: state)) 后撤至 \(hexDisplayName(destination, in: state))。"
             )
         } else {
             state.divisions[index].hp = max(1, state.divisions[index].hp - failedRetreatHPLoss)
             state.appendEvent(
-                "\(division.name) 撤退失败，额外损失 \(failedRetreatHPLoss) 点兵力。"
+                "\(divisionDisplayName(division)) 撤退失败，额外损失 \(failedRetreatHPLoss) 点兵力。"
             )
         }
     }
@@ -97,9 +98,9 @@ struct SupplyRules {
             if hpLost > 0 {
                 let message: String
                 if isBesieged(state.divisions[index], in: state) {
-                    message = "\(state.divisions[index].name) 粮道断绝，遭受围城损耗：兵力 -\(hpLost)。"
+                    message = "\(divisionDisplayName(state.divisions[index])) 粮道断绝，遭受围城损耗：兵力 -\(hpLost)。"
                 } else {
-                    message = "\(state.divisions[index].name) 遭受包围损耗：兵力 -\(hpLost)。"
+                    message = "\(divisionDisplayName(state.divisions[index])) 遭受包围损耗：兵力 -\(hpLost)。"
                 }
                 state.appendEvent(message, category: .encircle)
             }
@@ -321,7 +322,7 @@ struct SupplyRules {
         let wasRetreating = state.divisions[index].isRetreating
         state.divisions[index].advanceRetreatTurn()
         if wasRetreating && !state.divisions[index].isRetreating {
-            state.appendEvent("\(state.divisions[index].name) 完成撤退整顿。")
+            state.appendEvent("\(divisionDisplayName(state.divisions[index])) 完成撤退整顿。")
         }
 
         return true
@@ -338,6 +339,39 @@ struct SupplyRules {
         default:
             return 2
         }
+    }
+
+    private func divisionDisplayName(_ division: Division) -> String {
+        division.thematicDisplayName
+    }
+
+    private func hexDisplayName(_ coord: HexCoord, in state: GameState) -> String {
+        guard let tile = state.map.tile(at: coord) else {
+            return "地格 \(coord.q),\(coord.r)"
+        }
+
+        let anchor = displayAnchor(for: tile, coord: coord, in: state.map)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(coord.q),\(coord.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord, in map: MapState) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = map.region(for: coord),
+           let region = map.region(id: regionId) {
+            let regionName = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !regionName.isEmpty && regionName != region.id.rawValue {
+                return regionName
+            }
+        }
+        return "地格"
     }
 }
 

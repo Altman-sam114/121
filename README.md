@@ -25,7 +25,7 @@
 
 **当前 Legacy Agent D 错误边界：** `AgentDecisionParserError` 和 `AgentCommandMappingError` 的可见错误说明已改为中文军机/军令语义；`schemaVersion`、`agentId`、`toRegionId`、`targetDivisionId` 等 JSON 字段名和 parser / mapper 行为仍保持兼容，Legacy Agent D 也仍只作回归参考，不恢复为默认战争 AI 主路径。
 
-**当前经济/生产日志边界：** `EconomyRules` 的经济启动、排产、府库结算、战略粮草短缺、自动补员、粮草辎重完成、生产军队部署和无安全后方部署格事件日志已改为中文三国语义；资源摘要显示人口、军械、粮草，生产部署优先显示军队展示名和郡县后方安全格。底层 `EconomyResources` 字段、`ProductionKind` rawValue、生产队列、收入、维护费、补员、部署筛选和命令管线不变。
+**当前经济/生产日志边界：** `EconomyRules` 的经济启动、排产、府库结算、战略粮草短缺、自动补员、粮草辎重完成、生产军队部署和无安全后方部署格事件日志已改为中文三国语义；资源摘要显示人口、军械、粮草，生产部署优先显示军队展示名、郡县后方和地名优先的安全格摘要，修路结果优先显示城池、关隘、郡县、官道或地形，坐标只作次级定位。底层 `EconomyResources` 字段、`ProductionKind` rawValue、生产队列、收入、维护费、补员、修路选点、部署筛选和命令管线不变。
 
 **当前战略同步日志边界：** 占领后 region controller 变化、动态方面推进、周边前线变化和战略状态补建事件日志已改为中文三国语义，优先显示 `RegionNode.name`、`TheaterNode.name` 或 `FrontZone.name`；缺展示名时使用“未命名郡县 / 动态方面”等中文占位，不把 raw id 当玩家文案 fallback。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`Command.displayName`、Codable/rawValue、`hexToTheater`、`hexToFrontZone` 和同步规则不变。
 
@@ -148,7 +148,7 @@ WWIIHexV0/
 - **v2.4 HUD、菜单与军机面板三国化**：主 HUD 新局按钮、macOS 战局菜单、信息面板开关、紧凑面板 tab、`AgentPanelView` 标题/执行者字段、命令 fallback、`AppContainer` 军机回合消息、本地 mock / no-op 来源、兼容 fallback 指挥者名称和军队/郡县选择日志已改为中文三国语义；军队选择日志优先使用 `Division.thematicDisplayName`，底层记录、调试 JSON、命令管线和规则行为不变。
 - **v2.4 Local LLM 提示词三国语义**：Legacy `LocalLLMDecisionProvider` 仍默认不启用，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`schemaVersion`、JSON keys、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
 - **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
-- **v2.4 SupplyRules 撤退、围城与粮草日志三国化**：`SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件日志已改为中文；补给路径、围城判定、撤退目的地、损耗数值、事件类别和规则执行不变。
+- **v2.4 SupplyRules 撤退、围城与粮草日志三国化**：`SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件日志已改为中文，并使用军队主题展示名；撤退位置优先显示城池、关隘、郡县、官道或地形，坐标只作次级定位。补给路径、围城判定、撤退目的地、损耗数值、事件类别和规则执行不变。
 - **v2.4 SupplyRules 控制格 hostile gate 外交化**：`SupplyRules.isSafeRetreatTile` 和粮道 `canSupplyPass` 的 capturable 控制格阻断改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧 `Faction.isHostile(to:)` 阵营关系阻断粮道或撤退安全格。单位阻断、ZOC、补给源归属、堆叠限制、占领和共享补给制度边界不变。
 - **v2.4 WarCommandExecutor 落点 hostile controller 外交化**：`WarCommandExecutor` 目标郡县候选和接近候选的“敌控格优先”排序改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧二元阵营关系被宏观军令当成敌控优先落点。真实移动、攻击、占领、动态战区推进和借道边界仍由既有规则链路决定。
 - **v2.4 命令结果中文化**：`CommandValidationError` 保留 rawValue / Codable 兼容，同时提供中文展示文案；`RuleEngine`、`WarCommandExecutor`、`TurnManager` 和 `AgentDecisionRecord` 会把玩家/AI 可见的成功、拒绝和校验原因写成中文，AI 面板不再直接展示常见校验枚举名；`CommandPanelView` 的不能下令状态按 `DiplomacyState` 区分敌军和非敌对军队。

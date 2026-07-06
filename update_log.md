@@ -6330,6 +6330,53 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和任务面板仍待后续阶段。
 - 胜负触发的真实行为仍需等待云端 CI 和后续 Agent C artifact 复判；本地未做运行时 UI 烟测。
 
+## v2.4 - 粮道、撤退与修路日志展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移中武将、道路、粮道和交战的可见审计闭环，把 `SupplyRules`、`EconomyRules` 和 `GeneralInfluence` 中仍残留的旧军队名、裸 hex 坐标和 ASCII 道路机动文案收口为中文展示名。
+
+完成内容：
+
+- `SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件改用 `Division.thematicDisplayName`。
+- `SupplyRules.resolveRetreat` 的撤退位置改为地名优先摘要：城池 / 关隘 / 郡县 + 官道 / 地形 + 坐标，坐标只作次级定位。
+- `EconomyRules.improveRoad` 的修路结果不再只列裸 `q,r`，改为优先显示城池、关隘、郡县、官道或地形。
+- `EconomyRules.deploymentSummary` 的生产部署位置改为郡县展示名 + 地名优先安全格摘要，空名或等于 raw id 时使用“未知郡县”。
+- `GeneralMovementInfluenceSummary.logFragment` 将 `上限 base->effective` 改为“上限由 X 提至 Y”。
+- 本轮只改 `GameState.appendEvent(...)` 和武将道路日志片段文案，不改变补给路径、粮道通行、撤退目的地、围城判定、损耗数值、修路选点、生产部署筛选、武将道路机动数值、交战规则、Codable/rawValue 或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_supply_economy_road_log_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/SupplyRules.swift WWIIHexV0/Rules/EconomyRules.swift WWIIHexV0/Rules/GeneralInfluence.swift` 通过。
+- 旧可见文本残留精确扫描无命中：字符串字面量中的 `->`、旧英文 deployment/replacement 文案、`after.name`、`division.name`、`state.divisions[index].name`、裸 `improvedHexes.map { "\($0.q),\($0.r)" }`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `AgentPanelView` 仍会直接展示部分 raw JSON、diagnostics 或 errors，`TheaterSystem` 固定方面名仍有 `NorthWest/NorthEast` 等英文 display name 来源，已由并发只读子 Agent 标记为下一片候选。
+- 本轮不做运行时 UI 烟测；实际战报换行、长郡县名和窄屏展示仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+
 ## v2.4 - 郡县命令与军师指令诊断三国化
 
 完成日期：2026-07-07

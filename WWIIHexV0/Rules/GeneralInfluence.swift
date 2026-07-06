@@ -55,7 +55,7 @@ struct GeneralMovementInfluenceSummary: Equatable {
         guard roadBonus != 0 else {
             return nil
         }
-        return "武将道路：\(assignedGeneralDisplayName ?? "未命名武将") 机动 \(signed(roadBonus)) (上限 \(baseMovement)->\(effectiveMovement))"
+        return "武将道路：\(assignedGeneralDisplayName ?? "未命名武将") 机动 \(signed(roadBonus))，上限由 \(baseMovement) 提至 \(effectiveMovement)"
     }
 
     var assignedGeneralDisplayName: String? {
