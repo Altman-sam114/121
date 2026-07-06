@@ -44,15 +44,15 @@ struct UnitInspectorView: View {
                 }
 
                 LabeledContent("郡县") {
-                    Text(strategicState.regionId?.rawValue ?? "无")
+                    Text(strategicState.regionDisplayName ?? "无")
                 }
 
                 LabeledContent("动态方面") {
-                    Text(strategicState.dynamicTheaterId?.rawValue ?? "无")
+                    Text(strategicState.dynamicTheaterDisplayName ?? "无")
                 }
 
                 LabeledContent("防区") {
-                    Text(strategicState.frontZoneId?.rawValue ?? "无")
+                    Text(strategicState.frontZoneDisplayName ?? "无")
                 }
 
                 LabeledContent("部署") {
@@ -60,7 +60,7 @@ struct UnitInspectorView: View {
                 }
 
                 LabeledContent("战线") {
-                    Text(frontLineSummary(strategicState.frontLineIds))
+                    Text(frontLineSummary(strategicState.frontLineDisplayNames))
                         .multilineTextAlignment(.trailing)
                 }
 
@@ -144,8 +144,8 @@ struct UnitInspectorView: View {
             .joined(separator: " / ")
     }
 
-    private func frontLineSummary(_ ids: [FrontLineId]) -> String {
-        ids.isEmpty ? "无" : ids.map(\.rawValue).joined(separator: ", ")
+    private func frontLineSummary(_ displayNames: [String]) -> String {
+        displayNames.isEmpty ? "无" : displayNames.joined(separator: ", ")
     }
 
     private func generalAssignmentNotes(_ assignment: GeneralAssignment) -> [String] {
@@ -167,7 +167,8 @@ struct UnitInspectorView: View {
 
 private extension GeneralAssignment {
     var displayName: String {
-        generalDisplayName ?? generalId
+        let name = generalDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "未命名武将" : name
     }
 
     var styleDisplayName: String {
@@ -178,8 +179,8 @@ private extension GeneralAssignment {
             return "持重"
         case "cautious":
             return "谨慎"
-        case let rawValue?:
-            return rawValue
+        case .some:
+            return "自定风格"
         case nil:
             return "未定风格"
         }

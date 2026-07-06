@@ -5832,6 +5832,54 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只改地图兵牌显示，不做截图/模拟器视觉验收；实际字号和重叠风险需后续 UI 预览、人工查看或授权运行环境确认。
 - `UnitInspectorView`、`RegionInspectorView`、`MapDisplayAdapter` 仍有 raw id / 英文 fallback 候选，建议后续继续拆小切片处理。
 
+## v2.4 - 检查器战略展示名中文化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续处理武将、道路、交战相关检查器中的玩家可见迁移残留，避免军队详情和郡县详情直接显示战略 raw id 或英文 objective fallback。
+
+完成内容：
+
+- `UnitInspectorStrategicState` 追加郡县、动态方面、防区和战线展示名；`UnitInspectorView` 改为显示这些展示字段。
+- `RegionInspectorState` 追加选中地格动态方面/防区、郡县 dominant 方面/防区展示名；`RegionInspectorView` 改为显示这些展示字段。
+- `MapDisplayAdapter` 集中生成检查器展示名：郡县用 `RegionNode.name`，方面/防区优先用节点名称，空名、等于 raw id 或明显内部 id 时退回势力简称与前两个郡县名摘要，战线显示双方势力简称。
+- `objectiveStatus` 从 `None` / `controlled` 英文 fallback 改为中文“无”或“由某势力控制”。
+- 武将显示名缺失时，军队详情显示“未命名武将”；未知 `commandStyleRawValue` 显示“自定风格”，不直接透出 raw 值。
+- typed id 字段仍保留在 state 结构中，供内部逻辑、既有测试语义、Codable/rawValue 兼容使用；本轮不改变动态方面、防区、战线、道路、交战或外交规则。
+- 使用两个并发只读子 Agent 审计 `UnitInspectorView` 与 `RegionInspectorView` / `MapDisplayAdapter` 残留，主线程完成整合改动和冲突口径检查。
+
+关键文件：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_inspector_strategic_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift WWIIHexV0/UI/UnitInspectorView.swift WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 玩家可见旧残留扫描只命中 `frontLineIds.sorted { $0.rawValue < $1.rawValue }` 这一内部稳定排序；未命中 raw id 文本展示、`None`、`controlled`、`generalId` fallback 或未知风格 raw fallback。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做截图/模拟器视觉验收；方面/防区 fallback 文案的最终宽度和换行仍需后续 UI 预览、人工查看或授权运行环境确认。
+- `DiplomacyPanelView` 等其他面板仍可能有 country/bloc raw id 展示残留，建议后续继续拆小切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

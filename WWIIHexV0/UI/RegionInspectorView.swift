@@ -36,11 +36,11 @@ struct RegionInspectorView: View {
                 }
 
                 LabeledContent("动态方面") {
-                    Text(state.selectedHexDynamicTheaterId?.rawValue ?? "无")
+                    Text(state.selectedHexDynamicTheaterDisplayName ?? "无")
                 }
 
                 LabeledContent("防区") {
-                    Text(state.selectedHexFrontZoneId?.rawValue ?? "无")
+                    Text(state.selectedHexFrontZoneDisplayName ?? "无")
                 }
 
                 LabeledContent("当前官道") {
@@ -92,11 +92,11 @@ struct RegionInspectorView: View {
             }
 
             LabeledContent("方面") {
-                Text(state.theaterId?.rawValue ?? "无")
+                Text(state.theaterDisplayName ?? "无")
             }
 
             LabeledContent("防区") {
-                Text(state.frontZoneId?.rawValue ?? "无")
+                Text(state.frontZoneDisplayName ?? "无")
             }
 
             LabeledContent("战线压力") {
