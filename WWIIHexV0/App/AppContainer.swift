@@ -610,7 +610,11 @@ final class AppContainer: ObservableObject {
         }
 
         let enemyDivisions = gameState.divisions
-            .filter { $0.faction.isHostile(to: zone.faction) && !$0.isDestroyed }
+            .filter {
+                $0.faction.isHostile(to: zone.faction) &&
+                    !$0.isDestroyed &&
+                    mapDisplayAdapter.isDivisionVisible($0, viewerFaction: playerFaction)
+            }
         let nearestEnemyText = nearestEnemyText(for: divisions, enemyDivisions: enemyDivisions)
         let engagementPairingNote = engagementPairingText(
             for: divisions,

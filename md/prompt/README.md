@@ -96,6 +96,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_general_influence_panel_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_assigned_unit_readiness_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_assigned_unit_road_engagement_summary.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_visible_hostile_engagement_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_benefit_units_summary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_panel_road_no_bonus_reason.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_skill_display_labels.md`

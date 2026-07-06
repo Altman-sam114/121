@@ -4409,6 +4409,44 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，地图计划军令短标签在密集箭头、长武将名、长敌军名、小屏和 Dynamic Type 下的实际遮挡仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 地图和面板计划军令近敌/受压摘要是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
 
+## v2.4 - 武将面板可见敌军接敌摘要兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `AppContainer.selectedGeneralInfluenceNotes` 收集武将防区敌军集合时，除 `Faction.isHostile(to:)` 和未毁灭条件外，追加 `mapDisplayAdapter.isDivisionVisible(target, viewerFaction: playerFaction)`。
+- 武将面板“道路与交战”的最近敌军对象、距离、当前接敌配对和攻防修正范围只来自玩家视角可见 hostile 军队，避免隐藏敌军通过武将面板摘要泄漏。
+- 观察模式继续通过 `mapDisplayAdapter` 的 revealAll 行为兼容全图查看；普通玩家视角不使用防区 faction 或敌军 faction 推导额外视野。
+- 保持 `GeneralInfluence`、`MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮道、补给、外交和动态防区归属不变；本轮只做只读武将面板情报边界修正和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_visible_hostile_engagement_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，武将面板可见敌军过滤后，在隐藏敌军刚离开视野、观察模式、长武将名、长敌军名和 Dynamic Type 下的实际体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 武将面板道路与交战摘要仍是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
+
 ## v2.4 - 军队详情可见敌军接战预判兼容层
 
 完成日期：2026-07-06
