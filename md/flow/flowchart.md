@@ -11,6 +11,7 @@
   -> 游戏启动加载为 GameState
   -> hex 是真实战术权威
   -> region / theater / front / deploy 都是从 hex 和军队位置派生出来的战略层
+  -> 剧本 victoryConditions 进入 VictoryState，胜负判断仍读取 objective hex controller
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
   -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战
   -> 玩家和 AI 都必须把命令交给 RuleEngine
@@ -21,6 +22,7 @@ v2.4 命名边界：
 
 - `Faction.germany/allies` 仍是源码和旧 JSON 兼容 rawValue；UI 当前显示为曹操势力 / 袁绍势力。
 - 默认新局优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json`；旧阿登数据保留作 fallback。
+- `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 会随加载进入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 对应 hex controller 判断官渡剧本目标，HUD 会显示中文胜利原因；旧阿登胜负枚举和 fallback 规则保留兼容。
 - 单位模板优先加载 `sanguo_unit_templates.json`；缺文件时才 fallback 到旧 `unit_templates.json`。
 - `Faction` 可解码 `cao`、`yuan`、`liuBei`、`sun`、`liuBiao`、`maTeng`、`han`、`neutral`；`Faction.scenarioCases` 给 MapEditor、场景数据和战略派生层控制计算使用。
 - 默认 `Faction.activeTurnCases` / 兼容 `Faction.allCases` 仍只枚举当前可行动双方，新增三国势力不参与旧回合循环。
@@ -76,6 +78,7 @@ flowchart TD
     H2T["动态战区权威<br/>hexToTheater<br/>运行时推进只改具体 hex"]:::authority
     FRONT["前线层<br/>FrontLine / FrontSegment<br/>按双方动态战区的真实相邻 hex 生成"]:::derived
     DEPLOY["部署层<br/>WarDeploymentState<br/>用 hexToFrontZone 把单位分成前线/纵深/驻军"]:::derived
+    VICTORY["剧本胜负条件<br/>VictoryState.scenarioConditions + VictoryRules<br/>按 objective hex controller 判断许昌/邺城等目标"]:::rules
     ECO["经济总账<br/>EconomyState / EconomyRules<br/>收入、维护费、生产队列、自动补员、中文事件日志"]:::economy
     PLAYER["玩家输入<br/>点击地图、移动、攻击、结束回合"]:::input
     PGEN["玩家武将面板宏观军令<br/>GeneralCommandPanelView<br/>固守战线 / 进攻郡县"]:::input
@@ -123,7 +126,9 @@ flowchart TD
     R2T -.->|缺失时只用来补初始值| H2T
     HEX --> H2T
     H2T --> FRONT --> DEPLOY
+    HEX --> VICTORY
     GS --> ECO
+    GS --> VICTORY
     GS --> DIP
 
     PLAYER --> CMD
@@ -158,6 +163,7 @@ flowchart TD
     SYNC --> H2T
     SYNC --> FRONT
     SYNC --> DEPLOY
+    SYNC --> VICTORY
 
     GS --> UI
     HEX --> UI
@@ -166,6 +172,7 @@ flowchart TD
     H2T --> UI
     FRONT --> UI
     DEPLOY --> UI
+    VICTORY --> UI
     ECO --> UI
     DIP --> UI
     GOVREC --> UI
@@ -180,6 +187,7 @@ flowchart TD
     DREL --> UI
     DIP --> LOG
     DREL --> LOG
+    VICTORY --> LOG
     GOVREC --> LOG
     SREC --> LOG
     GREC --> LOG

@@ -6239,6 +6239,54 @@ guerrillaWarfare 额外参考 infrastructure
 - Legacy Agent D 仍保留 `divisionId` 等机器 id 作为错误定位锚点；本轮只中文化错误说明，不新增 id 到展示名的映射层。
 - Legacy Agent D 仍只作回归参考，默认战争 AI 主路径不回退旧管线。
 
+## v2.4 - 官渡剧本胜负条件兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进三国迁移，把官渡默认剧本 JSON 中已经声明的 `victoryConditions` 接入运行时胜负判断，减少旧阿登 `Bastogne / St. Vith` 胜负规则对默认体验的影响。
+
+完成内容：
+
+- `VictoryState` 新增轻量 `ScenarioVictoryCondition` 快照、`scenarioConditions` 和中文胜利原因展示字段，保留旧 `VictoryReason` rawValue 与阿登兼容字段。
+- `DataLoader.loadGameState()` 会把 active 的 `controlObjective` 剧本条件注入 `VictoryState.scenarioConditions`，并把加载日志改为中文。
+- `VictoryRules` 优先按 objective id 对应 hex 的 `HexTile.controller` 判断剧本胜负；官渡预览中袁绍控制许昌、曹操控制邺城会触发对应势力胜利和 JSON 中的中文原因。
+- `MapState` 新增 objective id 查询 helper，避免胜负判断依赖玩家可见名称。
+- `HUDView` 的胜负栏在已有 winner 基础上追加中文原因。
+- 旧阿登目标名、歼灭、断粮和最终回合 fallback 规则保留作历史兼容；本轮不实现计分、多目标限回合、模板歼灭条件或胜利详情面板。
+
+关键文件：
+
+- `WWIIHexV0/Core/VictoryState.swift`
+- `WWIIHexV0/Core/MapState.swift`
+- `WWIIHexV0/Data/DataLoader.swift`
+- `WWIIHexV0/Rules/VictoryRules.swift`
+- `WWIIHexV0/UI/HUDView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_scenario_victory_condition_bridge.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Core/VictoryState.swift WWIIHexV0/Core/MapState.swift WWIIHexV0/Data/DataLoader.swift WWIIHexV0/Rules/VictoryRules.swift WWIIHexV0/UI/HUDView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只支持 active `controlObjective`；`turns`、`turn`、`count`、`targetTemplateIds`、多目标计分和任务面板仍待后续阶段。
+- 胜负触发的真实行为仍需等待云端 CI 和后续 Agent C artifact 复判；本地未做运行时 UI 烟测。
+
 ## v2.4 - 经济与生产日志三国化
 
 完成日期：2026-07-06

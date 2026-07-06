@@ -158,6 +158,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_appcontainer_general_order_selection_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_supply_retreat_siege_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_economy_production_log_localization.md`
+- `md/prompt/v2.0-三国迁移/v2.4_scenario_victory_condition_bridge.md`
 - `md/prompt/v2.0-三国迁移/v2.4_ui_chrome_agent_label_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_war_executor_general_road_mobility.md`
 - `md/prompt/v2.0-三国迁移/v2.4_supply_control_hostile_gate.md`

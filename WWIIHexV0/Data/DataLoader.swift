@@ -149,17 +149,36 @@ struct DataLoader {
             warDeploymentState: warDeploymentState,
             diplomacyState: diplomacyState,
             divisions: divisions,
-            victoryState: .ongoing,
+            victoryState: .ongoing.withScenarioConditions(scenarioVictoryConditions(from: scenario)),
             selectedUnitSummary: nil,
             eventLog: [
                 GameLogEntry(
                     turn: turn,
                     faction: initialActiveFaction(for: scenario),
                     phase: GamePhase(rawValue: scenario.initialPhase) ?? .germanAI,
-                    message: "Loaded \(scenario.id) from MapEditor-compatible JSON."
+                    message: "已加载\(scenario.displayName)。"
                 )
             ]
         )
+    }
+
+    private func scenarioVictoryConditions(from scenario: ScenarioDefinition) -> [ScenarioVictoryCondition] {
+        scenario.victoryConditions.compactMap { definition in
+            guard definition.status == "active",
+                  let faction = Faction(rawValue: definition.faction) else {
+                return nil
+            }
+
+            return ScenarioVictoryCondition(
+                id: definition.id,
+                type: definition.type,
+                faction: faction,
+                objectiveId: definition.objectiveId,
+                objectiveIds: definition.objectiveIds ?? [],
+                status: definition.status,
+                description: definition.description
+            )
+        }
     }
 
     private func initialActiveFaction(for scenario: ScenarioDefinition) -> Faction {

@@ -6,6 +6,10 @@ struct VictoryRules {
             return
         }
 
+        if applyScenarioVictoryConditions(in: &state) {
+            return
+        }
+
         let bastogneController = state.map.controllerOfObjective(named: "Bastogne")
         let stVithController = state.map.controllerOfObjective(named: "St. Vith")
 
@@ -57,6 +61,39 @@ struct VictoryRules {
         if state.turn >= state.maxTurns && bastogneController == .allies {
             state.victoryState.winner = .allies
             state.victoryState.reason = .bastogneHeldByAlliesAtFinalTurn
+        }
+    }
+
+    private func applyScenarioVictoryConditions(in state: inout GameState) -> Bool {
+        for condition in state.victoryState.scenarioConditions where condition.status == "active" {
+            switch condition.type {
+            case "controlObjective":
+                guard controlsAllObjectives(for: condition, in: state.map) else {
+                    continue
+                }
+                state.victoryState.winner = condition.faction
+                state.victoryState.reason = .scenarioObjectiveControlled
+                state.victoryState.reasonDescription = condition.description
+                return true
+            default:
+                continue
+            }
+        }
+
+        return false
+    }
+
+    private func controlsAllObjectives(for condition: ScenarioVictoryCondition, in map: MapState) -> Bool {
+        let objectiveIds = Set(([condition.objectiveId].compactMap { $0 }) + condition.objectiveIds)
+        guard !objectiveIds.isEmpty else {
+            return false
+        }
+
+        return objectiveIds.allSatisfy { objectiveId in
+            guard let objective = map.objective(id: objectiveId) else {
+                return false
+            }
+            return map.tile(at: objective.coord)?.controller == condition.faction
         }
     }
 }

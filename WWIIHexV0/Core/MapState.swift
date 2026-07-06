@@ -86,6 +86,10 @@ struct MapState: Codable, Equatable {
         objectives.first { $0.name == name }
     }
 
+    func objective(id: String) -> Objective? {
+        objectives.first { $0.id == id }
+    }
+
     func controllerOfObjective(named name: String) -> Faction? {
         guard let coord = objective(named: name)?.coord else {
             return nil

@@ -77,7 +77,11 @@ struct HUDView: View {
         guard let winner = gameState.victoryState.winner else {
             return "未分胜负"
         }
-        return "\(winner.displayName) 胜利"
+        let victory = "\(winner.displayName) 胜利"
+        guard let reason = gameState.victoryState.displayReason else {
+            return victory
+        }
+        return "\(victory)：\(reason)"
     }
 
     private var activeLedger: FactionEconomyLedger {
