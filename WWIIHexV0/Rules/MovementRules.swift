@@ -38,7 +38,7 @@ struct MovementRules {
 
     func isEnemyZoneOfControl(_ coord: HexCoord, for faction: Faction, in state: GameState) -> Bool {
         state.divisions.contains { division in
-            division.faction.isHostile(to: faction) &&
+            state.diplomacyState.isHostile(between: division.faction, and: faction) &&
                 !division.isDestroyed &&
                 division.coord.distance(to: coord) == 1
         }

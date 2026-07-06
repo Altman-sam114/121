@@ -776,7 +776,7 @@ struct EconomyRules {
 
     private func isEnemyAdjacent(to coord: HexCoord, faction: Faction, in state: GameState) -> Bool {
         state.divisions.contains { other in
-            other.faction.isHostile(to: faction) &&
+            state.diplomacyState.isHostile(between: other.faction, and: faction) &&
                 !other.isDestroyed &&
                 other.coord.distance(to: coord) <= 1
         }

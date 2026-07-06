@@ -141,3 +141,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_appcontainer_diplomacy_hostile_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_display_diplomacy_hostile_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_attack_entry.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_zoc_supply_reinforcement.md`

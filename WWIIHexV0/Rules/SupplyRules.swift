@@ -228,7 +228,8 @@ struct SupplyRules {
     }
 
     private func canSupplyPass(through coord: HexCoord, tile: HexTile, for faction: Faction, in state: GameState) -> Bool {
-        if let division = state.division(at: coord), division.faction.isHostile(to: faction) {
+        if let division = state.division(at: coord),
+           state.diplomacyState.isHostile(between: division.faction, and: faction) {
             return false
         }
 
@@ -279,7 +280,7 @@ struct SupplyRules {
     private func hasAdjacentHostileDivision(to coord: HexCoord, faction: Faction, in state: GameState) -> Bool {
         state.divisions.contains { other in
             !other.isDestroyed &&
-                other.faction.isHostile(to: faction) &&
+                state.diplomacyState.isHostile(between: other.faction, and: faction) &&
                 other.coord.distance(to: coord) == 1
         }
     }

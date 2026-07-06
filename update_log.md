@@ -4797,6 +4797,53 @@ guerrillaWarfare 额外参考 infrastructure
 - 道路敌控区、粮道通行、安全补员邻接、部署层敌军存在/相邻敌对防区接触和非己方控制 hex/region 的推进/压力分类仍使用原控制权或 `Faction.isHostile(to:)` 口径；完整借道、同盟通行、共同作战堆叠、补给共享和外交宣战制度仍未实现。
 - 本轮没有运行本机运行时烟测；复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
+## v2.4 外交敌对 ZOC / 粮道 / 安全补员兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路和交战迁移，把单位级道路敌控区、粮道阻断、围城邻接和安全补员邻接从静态 `Faction.isHostile(to:)` 迁移到 `DiplomacyState` 的 hostile / atWar 口径。
+
+完成内容：
+
+- `WWIIHexV0/Rules/MovementRules.swift` 的 `isEnemyZoneOfControl` 改用 `state.diplomacyState.isHostile(between:and:)`，让外交非敌对单位不再形成道路/移动 ZOC。
+- `WWIIHexV0/Rules/SupplyRules.swift` 的粮道路径单位阻断和围城邻接 hostile 单位判断改用 `DiplomacyState`。
+- `WWIIHexV0/Rules/EconomyRules.swift` 的安全补员相邻敌军判断改用 `DiplomacyState`。
+- 保留 `SupplyRules` 的 capturable tile controller 判断、`MovementRules` 的非同 faction 堆叠/路径阻挡、部署层敌军存在/相邻敌对防区接触和占领/控制权语义，避免把本轮扩大成完整借道、同盟通行、共同作战堆叠或共享补给制度。
+
+关键文件：
+
+- `WWIIHexV0/Rules/MovementRules.swift`
+- `WWIIHexV0/Rules/SupplyRules.swift`
+- `WWIIHexV0/Rules/EconomyRules.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_zoc_supply_reinforcement.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/MovementRules.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/SupplyRules.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/EconomyRules.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `WarDeploymentManager` 的单位级敌军存在和相邻敌对防区接触仍待后续切片决定是否迁移到 `DiplomacyState`。
+- 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
+- 复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
