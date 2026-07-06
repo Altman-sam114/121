@@ -64,12 +64,13 @@ struct StrategistAgent {
             focusRegionIds: focusRegionIds,
             supportRegionIds: supportRegionIds,
             rulerPosture: rulerRecord?.posture,
-            intent: intent(selectedZoneId: selectedZoneId, focusRegionIds: focusRegionIds),
+            intent: intent(selectedZoneId: selectedZoneId, focusRegionIds: focusRegionIds, state: state),
             rationale: rationale(
                 selectedZoneId: selectedZoneId,
                 focusRegionIds: focusRegionIds,
                 rulerRecord: rulerRecord,
-                snapshot: snapshot
+                snapshot: snapshot,
+                state: state
             )
         )
         let adjustedEnvelope = DirectiveEnvelope(
@@ -220,9 +221,9 @@ struct StrategistAgent {
         }
     }
 
-    private func intent(selectedZoneId: FrontZoneId?, focusRegionIds: [RegionId]) -> String {
-        let zone = selectedZoneId?.rawValue ?? "无"
-        let regions = focusRegionIds.map(\.rawValue).joined(separator: ", ")
+    private func intent(selectedZoneId: FrontZoneId?, focusRegionIds: [RegionId], state: GameState) -> String {
+        let zone = frontZoneDisplayName(for: selectedZoneId, in: state)
+        let regions = regionDisplayList(focusRegionIds, in: state)
         return "军师以\(config.planningStyle.displayName)风格编排防区 \(zone)，目标 \(regions.isEmpty ? "无" : regions)。"
     }
 
@@ -230,13 +231,40 @@ struct StrategistAgent {
         selectedZoneId: FrontZoneId?,
         focusRegionIds: [RegionId],
         rulerRecord: RulerDecisionRecord?,
-        snapshot: StrategistBattlefieldSnapshot
+        snapshot: StrategistBattlefieldSnapshot,
+        state: GameState
     ) -> String {
         let posture = rulerRecord?.posture.displayName ?? "未定"
-        let zoneText = selectedZoneId?.rawValue ?? "无主防区"
+        let zoneText = frontZoneDisplayName(for: selectedZoneId, in: state, emptyText: "无主防区")
         let score = selectedZoneId.map { snapshot.zoneScores[$0, default: 0] } ?? 0
-        let focusText = focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        let focusText = regionDisplayList(focusRegionIds, in: state)
         return "承接君主\(posture)姿态，选择 \(zoneText)（评分 \(score)）并聚焦 \(focusText.isEmpty ? "暂无目标" : focusText)。"
+    }
+
+    private func frontZoneDisplayName(
+        for zoneId: FrontZoneId?,
+        in state: GameState,
+        emptyText: String = "无"
+    ) -> String {
+        guard let zoneId else {
+            return emptyText
+        }
+        guard let zone = state.warDeploymentState.frontZones[zoneId] else {
+            return "未知防区"
+        }
+        let name = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty && name != zone.id.rawValue {
+            return name
+        }
+        let regions = regionDisplayList(Array(zone.regionIds.prefix(2)), in: state)
+        return regions.isEmpty ? "\(zone.faction.shortDisplayName)防区" : "\(zone.faction.shortDisplayName)防区：\(regions)"
+    }
+
+    private func regionDisplayList(_ regionIds: [RegionId], in state: GameState) -> String {
+        regionIds
+            .map { state.map.region(id: $0)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
+            .map { $0.isEmpty ? "未知郡县" : $0 }
+            .joined(separator: "、")
     }
 
     private func appendStrategistContext(_ context: String?, record: StrategistDecisionRecord) -> String {

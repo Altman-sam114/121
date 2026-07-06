@@ -6032,6 +6032,52 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做 UI 截图/模拟器验收；外交面板关系行在窄宽度下的换行和截断效果需后续人工或授权运行环境确认。
 - 外交制度仍是最小关系状态兼容层；完整借道、臣属、贡赋、共同作战堆叠和共享补给源仍待后续阶段。
 
+## v2.4 - Agent 上下文展示名收敛
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进君主、外交官、太守、军师和模拟军机上下文中的玩家可见三国化，避免 `DirectiveEnvelope.theaterContext`、record rationale 和 `DiplomacyState.summary` 继续展示英文 fallback、`CountryId`、`RegionId` 或 `FrontZoneId` rawValue。
+
+完成内容：
+
+- `RulerAgent` 的君主上下文重点防区改用 `FrontZone.name`，缺名时回退为势力简称加前两个郡县名，不再显示 `preferredFrontZoneId.rawValue`。
+- `DiplomatAgent` 的 summary、rationale 和外交上下文使用国家展示名；缺国家资料时显示中文占位，不再把目标 country raw id 当作上下文文案 fallback。
+- `GovernorAgent` 和 `StrategistAgent` 的 rationale / intent / context 中重点郡县和主防区改用 `RegionNode.name`、`FrontZone.name` 或中文 fallback。
+- `MockAICommander` 的模拟军机摘要和 fallback 指挥官名称中文化，保留原 issuer id 和 zone id 兼容。
+- `DiplomacyState.summary` 改为中文摘要；legacy `.germany/.allies` 初始外交 profile 的可见名称改为曹操 / 袁绍语义，保留原 `CountryId`、`DiplomaticBlocId` 和 relation 兼容。
+- 本轮不改变外交关系、道路、粮道、交战、修路、生产、武将战术塑形、Codable schema 或调试 JSON 原始字段。
+
+关键文件：
+
+- `WWIIHexV0/Agents/RulerAgent.swift`
+- `WWIIHexV0/Agents/DiplomatAgent.swift`
+- `WWIIHexV0/Agents/GovernorAgent.swift`
+- `WWIIHexV0/Agents/StrategistAgent.swift`
+- `WWIIHexV0/Agents/MockAICommander.swift`
+- `WWIIHexV0/Core/DiplomacyState.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_context_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/RulerAgent.swift WWIIHexV0/Agents/DiplomatAgent.swift WWIIHexV0/Agents/GovernorAgent.swift WWIIHexV0/Agents/StrategistAgent.swift WWIIHexV0/Agents/MockAICommander.swift WWIIHexV0/Core/DiplomacyState.swift` 通过。
+- 旧英文与 raw 上下文 fallback 固定字符串扫描无命中：`German Reich`、`United States`、`Allied Coalition`、`mock directive(s)`、`no countries`、`hostile relation(s)`、`preferredFrontZoneId?.rawValue`、`targetCountryId?.rawValue`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+遗留风险：
+
+- 本轮不做 UI 截图/模拟器验收；上下文文本在面板中的实际换行仍需后续人工或授权运行环境确认。
+- legacy `.germany/.allies` 的 id 仍保留用于兼容；完整势力 id 迁移和多势力 turn order 仍待后续阶段。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

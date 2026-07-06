@@ -75,7 +75,7 @@ struct DiplomatAgent {
             turn: envelope.turn,
             directives: envelope.directives,
             commanderAgentId: envelope.commanderAgentId,
-            theaterContext: appendDiplomatContext(envelope.theaterContext, record: record)
+            theaterContext: appendDiplomatContext(envelope.theaterContext, record: record, state: state)
         )
         return DiplomatDirectiveAdjustment(envelope: adjustedEnvelope, record: record)
     }
@@ -146,7 +146,7 @@ struct DiplomatAgent {
     }
 
     private func summary(proposal: DiplomaticProposal, target: DiplomaticTarget?) -> String {
-        let targetText = target?.countryName ?? target?.countryId.rawValue ?? "无目标"
+        let targetText = target?.countryName ?? "无目标"
         return "\(proposal.displayName) -> \(targetText)"
     }
 
@@ -157,18 +157,29 @@ struct DiplomatAgent {
         snapshot: DiplomaticSnapshot
     ) -> String {
         let posture = rulerRecord?.posture.displayName ?? "未定"
-        let targetName = target?.countryName ?? target?.countryId.rawValue ?? "暂无可用对象"
+        let targetName = target?.countryName ?? "暂无可用对象"
         let relation = target?.relation.status.displayName ?? "无关系"
         return "外交官以\(config.diplomaticStyle.displayName)风格承接君主\(posture)姿态，针对 \(targetName)（\(relation)）提出\(proposal.displayName)；敌对关系 \(snapshot.hostileTargets.count)，中立关系 \(snapshot.neutralTargets.count)，高压防区 \(snapshot.highPressureZoneCount)。"
     }
 
-    private func appendDiplomatContext(_ context: String?, record: DiplomatDecisionRecord) -> String? {
-        let target = record.targetCountryId?.rawValue ?? "无对象"
+    private func appendDiplomatContext(_ context: String?, record: DiplomatDecisionRecord, state: GameState) -> String? {
+        let target = countryDisplayName(for: record.targetCountryId, in: state)
         let diplomatContext = "外交层：\(record.proposal.displayName) \(target)"
         guard let context, !context.isEmpty else {
             return diplomatContext
         }
         return "\(context) \(diplomatContext)"
+    }
+
+    private func countryDisplayName(for countryId: CountryId?, in state: GameState) -> String {
+        guard let countryId else {
+            return "无对象"
+        }
+        guard let country = state.diplomacyState.countries.first(where: { $0.id == countryId }) else {
+            return "未知外交对象"
+        }
+        let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == country.id.rawValue ? country.faction.displayName : name
     }
 }
 
@@ -193,7 +204,11 @@ extension DiplomatAgent {
         }
         let country = state.diplomacyState.primaryCountry(for: faction)
         let id = country?.rulerAgentId.replacingOccurrences(of: "ruler_", with: "diplomat_") ?? "diplomat_\(faction.rawValue)"
-        let name = country.map { "\($0.name)外交官" } ?? "\(faction.displayName)外交官"
+        let countryName = country.map { country -> String in
+            let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty || name == country.id.rawValue ? faction.displayName : name
+        } ?? faction.displayName
+        let name = "\(countryName)外交官"
         return DiplomatAgent(
             config: DiplomatAgentConfig(
                 id: id,
@@ -249,7 +264,7 @@ private struct DiplomaticSnapshot {
             )
             let target = DiplomaticTarget(
                 countryId: country.id,
-                countryName: country.name,
+                countryName: Self.countryDisplayName(country),
                 faction: country.faction,
                 relation: relation,
                 score: score
@@ -307,6 +322,11 @@ private struct DiplomaticSnapshot {
         let nonNeutralPenalty = country.faction == .neutral ? -20 : 0
         let selfPenalty = country.faction == faction ? -100 : 0
         return hostileBonus + targetRegionValue + warSupportBonus + nonNeutralPenalty + selfPenalty
+    }
+
+    private static func countryDisplayName(_ country: CountryProfile) -> String {
+        let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == country.id.rawValue ? country.faction.displayName : name
     }
 
     private static func contestedRegionIds(faction: Faction, state: GameState) -> [RegionId] {

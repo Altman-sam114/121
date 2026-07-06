@@ -69,6 +69,7 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`，把君主姿态写入 `DiplomacyState.rulerRecords`，再把调整后的 `DirectiveEnvelope` 交给 `WarCommandExecutor`；君主层不直接执行单位命令。
 - `DiplomatAgent.plan` 接在君主层之后，读取 `DiplomacyState` 的国家、集团和关系，输出同盟、停战、借道、称臣、讨伐檄文或奉表勤王等提案，写入 `DiplomacyState.diplomatRecords` 并追加外交上下文；`TurnManager.applyDiplomatPlanning` 会把有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 最小更新关系状态和紧张度。
 - `DiplomacyPanelView` 只读展示 `DiplomacyState`，国家、集团、关系双方、君主重点防区和外交对象优先使用 `CountryProfile.name`、`DiplomaticBloc.name`、`Faction.displayName` 和 `RootGameView` 生成的防区展示名；空名或等于 raw id 时使用“未知势力 / 未知集团 / 未知防区”等中文占位，不把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 当作玩家文案 fallback；这不改变外交关系、道路、粮道、交战或命令执行。
+- 君主、外交官、太守、军师和模拟军机追加到 `DirectiveEnvelope.theaterContext`、record rationale 或 `DiplomacyState.summary` 的展示文本同样使用国家、郡县和防区展示名：防区优先 `FrontZone.name`，否则用势力简称和前两个郡县名；郡县优先 `RegionNode.name`；外交对象优先 `CountryProfile.name`；legacy `.germany/.allies` 外交 profile 的可见名称显示为曹操/袁绍语义，原 id、bloc id、Codable 和调试 JSON 保持兼容。
 - `GovernorAgent.plan` 接在外交层之后，读取经济总账、郡县、道路、补给和生产队列，写入 `GameState.governorRecords` 并追加太守上下文；`TurnManager.applyGovernorPlanning` 会把 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，经 `CommandValidator -> CommandExecutor -> RuleEngine` 消耗资源、优先从已有官道或外部官道入口连缀最多两格战术道路并提升郡县基础设施，也会把 `recommendedProductionKind` 转换为 `Command.queueProduction` 校验资源并排入生产队列。
 - `StrategistAgent.plan` 接在太守层之后，重排目标 region、focus/support/convergence 和强度倾向，写入 `GameState.strategistRecords`；军师层同样不直接执行单位命令。
 - `GeneralAgent.plan` 接在军师层之后，也接入玩家武将面板宏观军令执行前；它读取 `FrontZone.generalAssignment` 与 `GeneralRegistry`，按武将忠诚、满意度、风格、技能和防区压力复核军令，塑形 `ZoneDirective.tactic` 并写入 `GameState.generalRecords`；武将层同样不直接执行单位命令。
@@ -433,14 +434,14 @@ MarshalAgent / TheaterCommanderPool
 - 自动 fallback 配置的显示名使用 `Faction.displayName`，兼容 `.germany/.allies` rawValue 时也显示为曹操势力/袁绍势力的君主或军议，不再展示 German Ruler / Allied Supreme Council。
 - 只调整 `ZoneDirective` 的姿态参数，例如进攻强度、防守预备队和优先 region 排序。
 - 生成 `RulerDecisionRecord`，写入 `DiplomacyState.rulerRecords`，并追加 diplomacy 日志。
-- 把姿态摘要追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
+- 把姿态摘要追加到 `DirectiveEnvelope.theaterContext`，防区使用展示名或中文 fallback，供 AI 面板和后续审计查看。
 
 `DiplomatAgent` 的职责：
 
 - 读取 `DiplomacyState` 中的国家、集团、关系、紧张度和君主姿态。
 - 选择同盟、停战、借道、称臣、讨伐檄文或奉表勤王等外交提案。
 - 生成 `DiplomatDecisionRecord`，写入 `DiplomacyState.diplomatRecords`，并追加 diplomacy 事件日志。
-- 把外交提案追加到 `DirectiveEnvelope.theaterContext` 和 AI raw JSON，供太守、军师、武将、AI 面板和外交面板审计读取。
+- 把外交提案追加到 `DirectiveEnvelope.theaterContext` 和 AI raw JSON，对象使用国家展示名或中文 fallback，供太守、军师、武将、AI 面板和外交面板审计读取。
 - `TurnManager` 会将有源国家和目标国家的提案转换为 `Command.proposeDiplomacy`，交给 `RuleEngine` 校验执行；执行结果进入 `AgentDecisionRecord.commandResults`。
 - 当前外交执行只映射到既有 `DiplomaticStatus` 和 tension：同盟可推进到共同作战/同盟，停战可降为中立，讨伐檄文可升为敌对/维持交战，借道/称臣/奉表只做状态或紧张度级兼容，不实现真实借道、贡赋或臣属制度。
 
@@ -449,7 +450,7 @@ MarshalAgent / TheaterCommanderPool
 - 读取 `EconomyState`、受控 `RegionNode`、道路、补给状态和生产队列。
 - 选择征兵、修路、屯田、治安或补给等内政重点。
 - 生成 `GovernorDecisionRecord`，写入 `GameState.governorRecords`，并追加 supply 事件日志。
-- 把太守建议追加到 `DirectiveEnvelope.theaterContext`，供军师、武将、AI 面板和 raw JSON 审计读取。
+- 把太守建议追加到 `DirectiveEnvelope.theaterContext`，重点郡县使用 `RegionNode.name` 或中文 fallback，供军师、武将、AI 面板和 raw JSON 审计读取。
 - `TurnManager` 会将 `roadRepair` 焦点的首个重点郡县转换为 `Command.improveRoad`，交给 `RuleEngine` 校验执行；执行时消耗资源，优先从已有官道、外部官道入口或郡县核心连缀最多两格战术道路，并把该郡县基础设施提升 1 点，上限 5。
 - `TurnManager` 会将 `recommendedProductionKind` 转换为 `Command.queueProduction`，交给 `RuleEngine` 校验执行；修路和生产的执行结果都会进入 `AgentDecisionRecord.commandResults`。
 - 当前内政执行只覆盖修路最小命令和既有生产队列；屯田和治安仍只作为审计重点，不修改郡县状态。
@@ -462,7 +463,7 @@ MarshalAgent / TheaterCommanderPool
 - 元帅/军师和自动防区指挥者 fallback 显示名使用 `Faction.shortDisplayName` 生成曹军/袁军军师或防区指挥官；id、schema 和战术选择保持兼容。
 - 补齐或收束 `focusRegionId`、`supportRegionIds`、`convergenceRegionId` 和部分强度倾向。
 - 生成 `StrategistDecisionRecord`，写入 `GameState.strategistRecords`，并追加事件日志。
-- 把军师意图追加到 `DirectiveEnvelope.theaterContext`，供 AI 面板和后续审计查看。
+- 把军师意图追加到 `DirectiveEnvelope.theaterContext`，主防区和目标郡县使用展示名或中文 fallback，供 AI 面板和后续审计查看。
 
 `GeneralAgent` 的职责：
 

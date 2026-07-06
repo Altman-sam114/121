@@ -96,7 +96,7 @@ struct GovernorAgent {
             turn: envelope.turn,
             directives: envelope.directives,
             commanderAgentId: envelope.commanderAgentId,
-            theaterContext: appendGovernorContext(envelope.theaterContext, record: record)
+            theaterContext: appendGovernorContext(envelope.theaterContext, record: record, state: state)
         )
         return GovernorDomesticAdjustment(envelope: adjustedEnvelope, record: record)
     }
@@ -220,7 +220,7 @@ struct GovernorAgent {
         state: GameState
     ) -> String {
         let postureText = rulerRecord.map { "承接君主\($0.posture.displayName)姿态" } ?? "无君主姿态输入"
-        let regionText = focusRegionIds.map(\.rawValue).joined(separator: ", ")
+        let regionText = regionDisplayList(focusRegionIds, in: state)
         let productionText = recommendedProductionKind?.displayName ?? "暂不建议新增队列"
         let lowSupplyCount = state.divisions.filter {
             $0.faction == config.faction && $0.supplyState != .supplied && !$0.isDestroyed
@@ -228,13 +228,20 @@ struct GovernorAgent {
         return "\(postureText)，太守以\(config.administrationStyle.displayName)风格转向\(focus.displayName)；重点郡县 \(regionText.isEmpty ? "无" : regionText)；建议生产 \(productionText)。粮草库存 \(ledger.stockpile.supplies)，低补给军队 \(lowSupplyCount)。"
     }
 
-    private func appendGovernorContext(_ context: String?, record: GovernorDecisionRecord) -> String? {
-        let regions = record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
+    private func appendGovernorContext(_ context: String?, record: GovernorDecisionRecord, state: GameState) -> String? {
+        let regions = regionDisplayList(record.focusRegionIds, in: state)
         let governorContext = "太守层：\(record.focus.displayName) \(regions.isEmpty ? "无重点郡县" : regions)"
         guard let context, !context.isEmpty else {
             return governorContext
         }
         return "\(context) \(governorContext)"
+    }
+
+    private func regionDisplayList(_ regionIds: [RegionId], in state: GameState) -> String {
+        regionIds
+            .map { state.map.region(id: $0)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
+            .map { $0.isEmpty ? "未知郡县" : $0 }
+            .joined(separator: "、")
     }
 }
 
@@ -259,7 +266,11 @@ extension GovernorAgent {
         }
         let country = state.diplomacyState.primaryCountry(for: faction)
         let id = country?.rulerAgentId.replacingOccurrences(of: "ruler_", with: "governor_") ?? "governor_\(faction.rawValue)"
-        let name = country.map { "\($0.name)太守" } ?? "\(faction.displayName)太守"
+        let countryName = country.map { country -> String in
+            let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty || name == country.id.rawValue ? faction.displayName : name
+        } ?? faction.displayName
+        let name = "\(countryName)太守"
         return GovernorAgent(
             config: GovernorAgentConfig(
                 id: id,

@@ -74,7 +74,7 @@ struct MockAICommander {
             turn: state.turn,
             directives: directives,
             commanderAgentId: issuerId,
-            theaterContext: "\(faction.displayName): \(directives.count) mock directive(s)."
+            theaterContext: "\(faction.displayName)：模拟军机生成 \(directives.count) 条防区指令。"
         )
     }
 
@@ -92,7 +92,7 @@ struct MockAICommander {
     private static func defaultConfig(for zone: FrontZone) -> ZoneCommanderAgentConfig {
         ZoneCommanderAgentConfig(
             id: "mock_\(zone.id.rawValue)",
-            name: "Mock Commander (\(zone.id.rawValue))",
+            name: "模拟防区指挥官",
             faction: zone.faction,
             assignedZoneId: zone.id,
             skills: [],

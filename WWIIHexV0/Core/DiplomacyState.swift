@@ -439,9 +439,13 @@ struct DiplomacyState: Codable, Equatable {
     }
 
     func summary(for faction: Faction) -> String {
-        let countryNames = countries(for: faction).map(\.name).joined(separator: ", ")
+        let countryNames = countries(for: faction)
+            .map { countryDisplayName($0, fallbackFaction: faction) }
+            .joined(separator: "、")
         let hostileCount = hostileCountryIds(to: faction).count
-        return "\(faction.displayName): \(countryNames.isEmpty ? "no countries" : countryNames); \(hostileCount) hostile relation(s)."
+        let countriesText = countryNames.isEmpty ? "未建档势力" : countryNames
+        let hostileText = hostileCount == 0 ? "无敌对关系" : "敌对关系 \(hostileCount) 个"
+        return "\(faction.displayName)：\(countriesText)；\(hostileText)。"
     }
 
     mutating func appendRulerRecord(_ record: RulerDecisionRecord) {
@@ -513,19 +517,19 @@ struct DiplomacyState: Codable, Equatable {
         case .germany:
             let country = CountryProfile(
                 id: "germany",
-                name: "German Reich",
+                name: "曹操",
                 faction: .germany,
                 blocId: "axis",
                 rulerAgentId: "ruler_germany",
                 isPrimaryBelligerent: true,
                 warSupport: 82
             )
-            return ([country], [DiplomaticBloc(id: "axis", name: "Axis", faction: .germany, memberCountryIds: [country.id])])
+            return ([country], [DiplomaticBloc(id: "axis", name: "曹操集团", faction: .germany, memberCountryIds: [country.id])])
         case .allies:
             let countries = [
                 CountryProfile(
                     id: "united_states",
-                    name: "United States",
+                    name: "袁绍",
                     faction: .allies,
                     blocId: "allied_coalition",
                     rulerAgentId: "ruler_allies",
@@ -534,7 +538,7 @@ struct DiplomacyState: Codable, Equatable {
                 ),
                 CountryProfile(
                     id: "united_kingdom",
-                    name: "United Kingdom",
+                    name: "河北诸将",
                     faction: .allies,
                     blocId: "allied_coalition",
                     rulerAgentId: "ruler_uk",
@@ -542,7 +546,7 @@ struct DiplomacyState: Codable, Equatable {
                 ),
                 CountryProfile(
                     id: "belgium",
-                    name: "Belgium",
+                    name: "附属郡县",
                     faction: .allies,
                     blocId: "allied_coalition",
                     rulerAgentId: "ruler_belgium",
@@ -554,7 +558,7 @@ struct DiplomacyState: Codable, Equatable {
                 [
                     DiplomaticBloc(
                         id: "allied_coalition",
-                        name: "Allied Coalition",
+                        name: "袁绍集团",
                         faction: .allies,
                         memberCountryIds: countries.map(\.id)
                     )
@@ -635,6 +639,11 @@ struct DiplomacyState: Codable, Equatable {
                 warSupport: 0
             )
         }
+    }
+
+    private func countryDisplayName(_ country: CountryProfile, fallbackFaction: Faction) -> String {
+        let name = country.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == country.id.rawValue ? fallbackFaction.displayName : name
     }
 
     private static func singleCountrySeed(

@@ -21,6 +21,8 @@
 
 **当前外交面板显示边界：** `DiplomacyPanelView` 只读展示 `DiplomacyState`，势力、集团、关系、君主重点防区和外交对象优先使用国家名、集团名、势力名和防区展示名；空名或等于 raw id 时显示“未知势力 / 未知集团 / 未知防区”等中文占位，不直接把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 作为玩家文案 fallback。外交关系、借道、敌对和交战规则仍由 `DiplomacyState`、`Command.proposeDiplomacy` 与规则系统决定。
 
+**当前 Agent 上下文显示边界：** 君主、外交官、太守、军师和模拟军机写入 `DirectiveEnvelope.theaterContext`、rationale 或 `DiplomacyState.summary` 时，防区优先显示 `FrontZone.name` 或势力简称加郡县名，郡县优先显示 `RegionNode.name`，外交对象优先显示 `CountryProfile.name`，缺资料时使用中文占位；legacy `.germany/.allies` 外交 profile 的可见名称已按曹操/袁绍语义显示。底层 id、bloc id、Codable、调试 JSON 和执行规则不变。
+
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 
 **当前检查器展示边界：** 军队详情和郡县详情由 `MapDisplayAdapter` 生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，优先读取 `RegionNode.name`、`TheaterNode.name`、`FrontZone.name`；空名、等于 raw id 或明显内部 id 时退回势力简称与郡县名摘要。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId`、`GeneralAssignment.generalId`、Codable rawValue、动态方面/防区/战线规则不变。

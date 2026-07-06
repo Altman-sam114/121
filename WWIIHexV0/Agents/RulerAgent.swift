@@ -62,7 +62,7 @@ struct RulerAgent {
             turn: envelope.turn,
             directives: directives,
             commanderAgentId: envelope.commanderAgentId,
-            theaterContext: appendRulerContext(envelope.theaterContext, record: record)
+            theaterContext: appendRulerContext(envelope.theaterContext, record: record, state: state)
         )
         return RulerDirectiveAdjustment(envelope: adjustedEnvelope, record: record)
     }
@@ -211,12 +211,39 @@ struct RulerAgent {
         }
     }
 
-    private func appendRulerContext(_ context: String?, record: RulerDecisionRecord) -> String {
-        let rulerContext = "君主 \(record.rulerAgentId)：\(record.posture.displayName)，目标 \(record.preferredFrontZoneId?.rawValue ?? "无")。"
+    private func appendRulerContext(_ context: String?, record: RulerDecisionRecord, state: GameState) -> String {
+        let zoneText = frontZoneDisplayName(for: record.preferredFrontZoneId, in: state, fallbackFaction: record.faction)
+        let rulerContext = "君主 \(record.rulerAgentId)：\(record.posture.displayName)，目标 \(zoneText)。"
         guard let context, !context.isEmpty else {
             return rulerContext
         }
         return "\(context) \(rulerContext)"
+    }
+
+    private func frontZoneDisplayName(
+        for zoneId: FrontZoneId?,
+        in state: GameState,
+        fallbackFaction: Faction
+    ) -> String {
+        guard let zoneId else {
+            return "无"
+        }
+        guard let zone = state.warDeploymentState.frontZones[zoneId] else {
+            return "\(fallbackFaction.shortDisplayName)防区"
+        }
+
+        let trimmedName = zone.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty && trimmedName != zone.id.rawValue {
+            return trimmedName
+        }
+
+        let regionNames = zone.regionIds
+            .prefix(2)
+            .compactMap { state.map.region(id: $0)?.name.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "、")
+        let regionSuffix = regionNames.isEmpty ? "" : "：\(regionNames)"
+        return "\(zone.faction.shortDisplayName)防区\(regionSuffix)"
     }
 
     private func stableUnique<T: Hashable>(_ values: [T]) -> [T] {
