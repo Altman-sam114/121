@@ -38,10 +38,8 @@ final class UnitNode: SKNode {
         body.zPosition = 0
         addChild(body)
 
-        // v0.21: NATO APP-6 兵牌内部图形（替代纯文字 markerCode）
-        addNATOSymbol(for: division, width: width, height: height)
+        addUnitKindGlyph(for: division, height: height)
 
-        // 兵力数字（移至底部，NATO symbol 占中央）
         addLabel(
             text: division.markerReadinessText,
             y: -height * 0.28,
@@ -57,59 +55,13 @@ final class UnitNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// v0.21: NATO APP-6 兵牌内部图形。
-    /// armor=椭圆、motorized=单斜线、infantry=X、artillery=圆。
-    private func addNATOSymbol(for division: Division, width: CGFloat, height: CGFloat) {
-        let lineColor = SKColor(white: 0.97, alpha: 0.95)
-        let lineWidth = max(1.5, min(width, height) * 0.08)
-        let inset = min(width, height) * 0.18
-
-        if division.isArtillery {
-            // 炮兵：圆
-            let radius = min(width, height) * 0.22
-            let circle = SKShapeNode(circleOfRadius: radius)
-            circle.strokeColor = lineColor
-            circle.lineWidth = lineWidth
-            circle.fillColor = .clear
-            circle.zPosition = 1
-            addChild(circle)
-        } else if division.isArmor {
-            // 装甲：椭圆
-            let ellipse = SKShapeNode(ellipseOf: CGSize(width: width - inset * 1.4, height: height - inset * 1.4))
-            ellipse.strokeColor = lineColor
-            ellipse.lineWidth = lineWidth
-            ellipse.fillColor = .clear
-            ellipse.zPosition = 1
-            addChild(ellipse)
-        } else {
-            // 步兵系：斜线。motorized 单斜线（\），infantry 双斜线（X）
-            let isMotorized = division.components.contains { $0.type == .motorizedInfantry && $0.weight >= 0.40 }
-            let halfW = width / 2 - inset
-            let halfH = height / 2 - inset
-
-            let slash1 = SKShapeNode()
-            let path1 = CGMutablePath()
-            path1.move(to: CGPoint(x: -halfW, y: halfH))
-            path1.addLine(to: CGPoint(x: halfW, y: -halfH))
-            slash1.path = path1
-            slash1.strokeColor = lineColor
-            slash1.lineWidth = lineWidth
-            slash1.zPosition = 1
-            addChild(slash1)
-
-            if !isMotorized {
-                // 步兵：第二条斜线（/）成 X
-                let slash2 = SKShapeNode()
-                let path2 = CGMutablePath()
-                path2.move(to: CGPoint(x: -halfW, y: -halfH))
-                path2.addLine(to: CGPoint(x: halfW, y: halfH))
-                slash2.path = path2
-                slash2.strokeColor = lineColor
-                slash2.lineWidth = lineWidth
-                slash2.zPosition = 1
-                addChild(slash2)
-            }
-        }
+    private func addUnitKindGlyph(for division: Division, height: CGFloat) {
+        addLabel(
+            text: division.markerCode,
+            y: height * 0.08,
+            fontSize: max(15, height * 0.48),
+            weight: "AvenirNext-DemiBold"
+        )
     }
 
     private func addLabel(text: String, y: CGFloat, fontSize: CGFloat, weight: String) {
@@ -198,17 +150,6 @@ private extension Division {
     }
 
     var markerReadinessText: String {
-        "\(strength)/\(maxStrength) \(retreatMode.markerCode)"
-    }
-}
-
-private extension RetreatMode {
-    var markerCode: String {
-        switch self {
-        case .retreatable:
-            return "R"
-        case .hold:
-            return "H"
-        }
+        "\(strength)/\(maxStrength) \(retreatMode.shortDisplayCode)"
     }
 }

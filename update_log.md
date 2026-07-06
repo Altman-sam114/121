@@ -5787,6 +5787,51 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只处理武将军令面板和武将档案的 rank / 头像辅助文案，不处理武将数据源本身。
 - 只读子 Agent 另确认 `UnitNode` 地图兵牌仍有 NATO APP-6 图形和 `R/H` 姿态标记，建议后续拆地图兵牌三国化切片处理。
 
+## v2.4 - 地图兵牌三国兵种符号与姿态中文化
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续推进地图第一视口三国化，把 `UnitNode` 中可见的 NATO APP-6 兵牌图形和 `R/H` 姿态标记改为三国兵种 glyph 与中文短姿态。
+
+完成内容：
+
+- `UnitNode` 用中心文字 glyph 显示 `械/骑/弓/卫/舟/轻/步`，替换旧 circle / ellipse / slash 兵牌图形。
+- `markerReadinessText` 改用 `RetreatMode.shortDisplayCode`，地图姿态短标记显示 `退/守`。
+- 删除 `UnitNode` 私有 NATO 绘制 helper 和私有 `RetreatMode.markerCode`。
+- 保持 `Division`、`ComponentType`、`RetreatMode` rawValue、移动、交战、撤退规则、补给标记、堆叠标记、玩家微操金色圈和 `BoardScene` 创建流程不变。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/SpriteKit/UnitNode.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_marker_sanguo_glyphs.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/UnitNode.swift` 通过。
+- 旧 NATO / R-H 口径扫描无命中：`rg -n "NATO|APP-6|addNATOSymbol|retreatMode\\.markerCode|return \"R\"|return \"H\"" WWIIHexV0/SpriteKit/UnitNode.swift`。
+- 新兵牌 glyph / 中文姿态扫描命中：`addUnitKindGlyph`、`markerCode`、`markerReadinessText` 和 `retreatMode.shortDisplayCode`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮只改地图兵牌显示，不做截图/模拟器视觉验收；实际字号和重叠风险需后续 UI 预览、人工查看或授权运行环境确认。
+- `UnitInspectorView`、`RegionInspectorView`、`MapDisplayAdapter` 仍有 raw id / 英文 fallback 候选，建议后续继续拆小切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
