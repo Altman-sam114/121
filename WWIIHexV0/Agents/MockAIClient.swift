@@ -1,7 +1,7 @@
 import Foundation
 
 // DEPRECATED as of v0.352 - kept for regression reference, not invoked by default. See WarPipelineMode.
-// Guderian MockAI. Heuristic: skip acted; low/encircled supply -> resupply;
+// Legacy Agent D MockAI. Heuristic: skip acted; low/encircled supply -> resupply;
 // in-range vulnerable enemy -> attack; else advance toward Bastogne on roads; else hold.
 
 struct MockAIClient: DecisionProvider {

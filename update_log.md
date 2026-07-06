@@ -5046,7 +5046,51 @@ guerrillaWarfare 额外参考 infrastructure
 
 遗留风险：
 
-- `general_agents.json`、`GameAgent.guderianFallback` 和 `MockAIClient` 仍保留旧兼容 MockAI / 阿登回归参考语义；后续可按 `v2.4_general_agent_fallback_sanguo_identity.md` 或 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+- `MockAIClient` 仍保留旧兼容 MockAI / 阿登回归参考语义；后续可按 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+
+## v2.4 - 兼容武将 Agent 身份三国化
+
+完成日期：2026-07-06
+
+目标：
+
+- 将 Legacy Agent D 默认武将配置从二战人物显示名迁移为三国武将语义，同时保持旧 `guderian` id、raw faction、JSON schema 和阿登回归校验兼容。
+
+完成内容：
+
+- `WWIIHexV0/Data/general_agents.json` 的 `guderian` 兼容 agent 默认显示名改为张辽，personality 文案改成骑军突击、官道机动、兵力集中、快速合围和攻城支援语义。
+- `WWIIHexV0/Agents/AgentConfiguration.swift` 的 `GameAgent.guderianFallback` 同步使用张辽显示名和三国武将 prompt。
+- `WWIIHexV0/Agents/GameAgent.swift` 和 `WWIIHexV0/Agents/MockAIClient.swift` 清理过期注释，明确这是 Legacy Agent D 兼容路径。
+- 保留 `guderian` id、`.germany` rawValue、旧单位分配、`GeneralAgentDefinition` schema、MockAI 算法和命令执行链不变。
+
+关键文件：
+
+- `WWIIHexV0/Data/general_agents.json`
+- `WWIIHexV0/Agents/AgentConfiguration.swift`
+- `WWIIHexV0/Agents/GameAgent.swift`
+- `WWIIHexV0/Agents/MockAIClient.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_agent_fallback_sanguo_identity.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/AgentConfiguration.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/GameAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/MockAIClient.swift` 通过。
+- `jq empty WWIIHexV0/Data/general_agents.json` 通过。
+- 改动文件尾随空白扫描、冲突标记扫描均无命中；运行时代码/数据/README/flow 的旧 Guderian 显示名和过期注释扫描无命中，阶段 prompt 仅保留目标与检查项中的旧词引用。
+- prompt 索引 Ruby 检查无缺项；`git diff --check` 通过。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `MockAIClient` 的 legacy 决策启发式仍会向 Bastogne fallback，并保留 armor / artillery 等旧战术文案；后续按 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+- `guderian` 作为兼容 id 仍可能在 `AgentDecisionRecord`、`TurnManager.contextSummary`、`AgentPanelView` raw JSON 或调试字段中出现；后续应按“Agent record display helper”小切片处理展示层 raw id。
 
 ## v2.4 外交敌对 AI 上游摘要兼容层
 

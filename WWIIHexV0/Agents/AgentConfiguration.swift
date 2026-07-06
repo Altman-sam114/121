@@ -41,11 +41,11 @@ extension GameAgent {
     static func guderianFallback(assignedDivisionIds: [String]) -> GameAgent {
         GameAgent(
             id: "guderian",
-            name: "Heinz Guderian",
+            name: "张辽",
             faction: .germany,
             role: .armyCommander,
             personality: AgentPersonality(
-                prompt: "Prioritize armored breakthrough, road movement, concentration of force, and rapid encirclement.",
+                prompt: "优先利用骑军突击、官道机动、兵力集中和快速合围；攻城时等待器械或优势支援。",
                 traits: ["breakthrough"],
                 aggression: 80,
                 riskTolerance: 75,

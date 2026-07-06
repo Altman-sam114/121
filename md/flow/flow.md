@@ -593,6 +593,8 @@ AppContainer.bootstrap()
   -> AppContainer(...)
 ```
 
+`GameAgent.guderian(...)` 是 Legacy Agent D 的兼容入口：方法名、agent id、`.germany` rawValue 和旧单位分配校验保持不变；默认 `general_agents.json` 和 fallback 显示名已改为张辽，personality 文案使用骑军突击、官道机动、快速合围和攻城支援语义。MockAI 启发式仍按旧回归路径另行迁移，不在这里改变决策算法。
+
 `DataLoader.loadInitialGameState()` 当前优先走编辑器兼容 JSON：
 
 ```text
