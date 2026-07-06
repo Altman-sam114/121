@@ -4287,6 +4287,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，新增多行“官道压迫”摘要在窄屏、长军队名、长武将名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 官道压迫来源是只读态势摘要，不代表完整路径安全、真实攻击合法性、胜率、借道、同盟通行或敌方回合反制制度。
 
+## v2.4 - 武将面板麾下军队道路与接敌摘要兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- 新增 `GeneralAssignedDivisionRow` 轻量只读 row model，由 `AppContainer.selectedGeneralAssignedDivisionRows` 统一生成武将面板“麾下军队”行摘要。
+- 麾下军队行在既有兵力、粮草、军令和行动状态之外，追加当前官道态势：`据官道`、`官道受压` 或 `离官道`。
+- 麾下军队行追加可见敌军接敌态势：可战、受敌射、互在射程、最近可见敌军或无可见敌军。
+- 接敌摘要只使用当前 viewer 可见、未毁灭且 `Faction.isHostile(to:)` 判定 hostile 的敌军，避免隐藏敌军泄漏，也不把非敌对势力写成敌军。
+- `GeneralCommandPanelView` 改为接收 `GeneralAssignedDivisionRow` 并只负责展示；`RootGameView` 两个入口改传 `selectedGeneralAssignedDivisionRows`。
+- 保持 `MovementRules`、`CombatRules`、`SupplyRules`、`CommandValidator`、`RuleEngine`、`CommandExecutor`、真实 `ZoneDirective` 执行、移动、攻击、道路、粮道、补给和动态防区归属不变；本轮只做武将面板只读态势摘要和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/UI/GeneralCommandPanelView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_panel_assigned_unit_road_engagement_summary.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift WWIIHexV0/UI/GeneralCommandPanelView.swift WWIIHexV0/UI/RootGameView.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，麾下军队行追加官道和接敌摘要后，在窄屏、长军队名、长敌军名和 Dynamic Type 下的实际换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 麾下军队道路与接敌摘要是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、同盟借道或敌方回合反制制度。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

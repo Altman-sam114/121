@@ -1,6 +1,12 @@
 import Combine
 import Foundation
 
+struct GeneralAssignedDivisionRow: Equatable {
+    let id: String
+    let iconName: String
+    let summary: String
+}
+
 final class AppContainer: ObservableObject {
     @Published private(set) var gameState: GameState
     @Published private(set) var selectedUnitId: String?
@@ -509,6 +515,22 @@ final class AppContainer: ObservableObject {
             .sorted { $0.id < $1.id }
     }
 
+    var selectedGeneralAssignedDivisionRows: [GeneralAssignedDivisionRow] {
+        let movementRules = MovementRules()
+        let visibleHostiles = gameState.divisions.filter { division in
+            division.faction.isHostile(to: playerFaction) &&
+                !division.isDestroyed &&
+                mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction)
+        }
+        return selectedGeneralAssignedDivisions.map {
+            generalAssignedDivisionRow(
+                for: $0,
+                movementRules: movementRules,
+                visibleHostiles: visibleHostiles
+            )
+        }
+    }
+
     var selectedGeneralInfluenceNotes: [String] {
         guard let zone = selectedGeneralCommandZone,
               let assignment = selectedGeneralAssignment else {
@@ -769,6 +791,118 @@ final class AppContainer: ObservableObject {
             return nil
         }
         return "近敌 \(nearest.enemy.thematicDisplayName) 距 \(nearest.distance) 格（\(nearest.division.thematicDisplayName)）"
+    }
+
+    private func generalAssignedDivisionRow(
+        for division: Division,
+        movementRules: MovementRules,
+        visibleHostiles: [Division]
+    ) -> GeneralAssignedDivisionRow {
+        let roadSummary = generalAssignedDivisionRoadSummary(
+            for: division,
+            movementRules: movementRules
+        )
+        let engagementSummary = generalAssignedDivisionEngagementSummary(
+            for: division,
+            visibleHostiles: visibleHostiles
+        )
+        let summary = "\(division.thematicDisplayName)：兵 \(division.strength)/\(division.maxStrength)，粮 \(division.supplyState.shortDisplayName)，令 \(division.retreatMode.shortDisplayCode)，\(generalAssignedDivisionActionSummary(for: division))；\(roadSummary)；\(engagementSummary)"
+        return GeneralAssignedDivisionRow(
+            id: division.id,
+            iconName: generalAssignedDivisionIconName(for: division),
+            summary: summary
+        )
+    }
+
+    private func generalAssignedDivisionActionSummary(for division: Division) -> String {
+        if division.isDestroyed {
+            return "溃散"
+        }
+        if division.isRetreating {
+            return "撤退"
+        }
+        if division.canAct {
+            return "可动"
+        }
+        return "已动"
+    }
+
+    private func generalAssignedDivisionRoadSummary(
+        for division: Division,
+        movementRules: MovementRules
+    ) -> String {
+        guard gameState.map.tile(at: division.coord)?.hasRoad == true else {
+            return "离官道"
+        }
+        if movementRules.isEnemyZoneOfControl(division.coord, for: division.faction, in: gameState) {
+            return "官道受压"
+        }
+        return "据官道"
+    }
+
+    private func generalAssignedDivisionEngagementSummary(
+        for division: Division,
+        visibleHostiles: [Division]
+    ) -> String {
+        let distances = visibleHostiles.map {
+            (
+                enemy: $0,
+                distance: division.coord.distance(to: $0.coord)
+            )
+        }
+        guard !distances.isEmpty else {
+            return "无可见敌军"
+        }
+
+        let attackable = distances
+            .filter { $0.distance <= division.range }
+            .sorted(by: generalAssignedDivisionDistanceSort)
+            .first
+        let threatened = distances
+            .filter { $0.distance <= $0.enemy.range }
+            .sorted(by: generalAssignedDivisionDistanceSort)
+            .first
+
+        if let attackable, let threatened {
+            if attackable.enemy.id == threatened.enemy.id {
+                return "接敌 \(attackable.enemy.thematicDisplayName) 距 \(attackable.distance)，互在射程"
+            }
+            return "可战 \(attackable.enemy.thematicDisplayName) 距 \(attackable.distance)，受敌射 \(threatened.enemy.thematicDisplayName) 距 \(threatened.distance)"
+        }
+        if let attackable {
+            return "可战 \(attackable.enemy.thematicDisplayName) 距 \(attackable.distance)"
+        }
+        if let threatened {
+            return "受敌射 \(threatened.enemy.thematicDisplayName) 距 \(threatened.distance)"
+        }
+
+        guard let nearest = distances.sorted(by: generalAssignedDivisionDistanceSort).first else {
+            return "无可见敌军"
+        }
+        return "近敌 \(nearest.enemy.thematicDisplayName) 距 \(nearest.distance)"
+    }
+
+    private func generalAssignedDivisionDistanceSort(
+        _ lhs: (enemy: Division, distance: Int),
+        _ rhs: (enemy: Division, distance: Int)
+    ) -> Bool {
+        if lhs.distance != rhs.distance {
+            return lhs.distance < rhs.distance
+        }
+        if lhs.enemy.thematicDisplayName != rhs.enemy.thematicDisplayName {
+            return lhs.enemy.thematicDisplayName < rhs.enemy.thematicDisplayName
+        }
+        return lhs.enemy.id < rhs.enemy.id
+    }
+
+    private func generalAssignedDivisionIconName(for division: Division) -> String {
+        if division.isArmor {
+            return "shield.lefthalf.filled"
+        }
+        if division.isArtillery {
+            return "scope"
+        }
+        return "person.3.fill"
     }
 
     var selectedGeneralHQUnderAttack: Bool {

@@ -4,7 +4,7 @@ struct GeneralCommandPanelView: View {
     let zone: FrontZone?
     let general: GeneralData?
     let assignment: GeneralAssignment?
-    let assignedDivisions: [Division]
+    let assignedDivisionRows: [GeneralAssignedDivisionRow]
     let influenceNotes: [String]
     let targetRegion: RegionNode?
     let targetZone: FrontZone?
@@ -102,18 +102,20 @@ struct GeneralCommandPanelView: View {
                     .foregroundStyle(.orange)
             }
 
-            if !assignedDivisions.isEmpty {
+            if !assignedDivisionRows.isEmpty {
                 Text("麾下军队")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 4) {
-                    ForEach(Array(assignedDivisions.prefix(5)), id: \.id) { division in
-                        Label(assignedDivisionSummary(for: division), systemImage: unitIcon(for: division))
+                    ForEach(Array(assignedDivisionRows.prefix(5)), id: \.id) { row in
+                        Label(row.summary, systemImage: row.iconName)
                             .font(.caption)
-                            .lineLimit(2)
+                            .lineLimit(nil)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    if assignedDivisions.count > 5 {
-                        Text("另有 \(assignedDivisions.count - 5) 支麾下军队")
+                    if assignedDivisionRows.count > 5 {
+                        Text("另有 \(assignedDivisionRows.count - 5) 支麾下军队")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -203,31 +205,6 @@ struct GeneralCommandPanelView: View {
         case .cautious:
             return "谨慎"
         }
-    }
-
-    private func unitIcon(for division: Division) -> String {
-        if division.isArmor {
-            return "shield.lefthalf.filled"
-        }
-        if division.isArtillery {
-            return "scope"
-        }
-        return "person.3.fill"
-    }
-
-    private func assignedDivisionSummary(for division: Division) -> String {
-        let actionSummary: String
-        if division.isDestroyed {
-            actionSummary = "溃散"
-        } else if division.isRetreating {
-            actionSummary = "撤退"
-        } else if division.canAct {
-            actionSummary = "可动"
-        } else {
-            actionSummary = "已动"
-        }
-
-        return "\(division.thematicDisplayName)：兵 \(division.strength)/\(division.maxStrength)，粮 \(division.supplyState.shortDisplayName)，令 \(division.retreatMode.shortDisplayCode)，\(actionSummary)"
     }
 
     private func influenceIcon(for note: String) -> String {
