@@ -1,6 +1,6 @@
 # 三国棋策 Agent — iOS / macOS AI Agent 战棋迁移版
 
-> **当前状态：v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路和交战兼容层进行中。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
+> **当前状态：v2.5 发布级三国 UI、美术和交互收口起步；v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路和交战兼容层仍是规则主线。工程仍沿用 `WWIIHexV0` 目录、`Faction.germany/allies`、`Division`、`TacticName` 等源码兼容名，但默认新局已优先加载 `guandu_200_scenario.json` / `guandu_200_regions.json` 和 `sanguo_unit_templates.json`；旧阿登数据与旧 `unit_templates.json` 保留作 fallback 和历史回归参考。`Faction` 已可解码曹、袁、刘备、孙氏、刘表、马腾、汉室和中立等三国势力，底层行动权威不变：玩家、AI 和后续聊天命令仍必须落到 `Command` / `ZoneDirective`，再经 `WarCommandExecutor -> RuleEngine` 校验执行。历史重测试基线只作参考；当前工作流默认不跑 Xcode / XCTest / 模拟器，只按 `md/test/test.md` 做轻量检查。**
 
 ---
 
@@ -36,6 +36,8 @@
 **当前剧本胜负条件边界：** `DataLoader` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 和 hex controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，并在 HUD 的“胜负”中显示中文胜利原因。`RegionVictoryRules` / `RegionRuleSystem` 的只读战略分析也会先按同一剧本条件评估，避免 region 层分析继续只看旧阿登城市名。旧 `VictoryReason` rawValue、阿登目标名和歼灭/断粮 fallback 规则保留作历史兼容；本轮不实现多目标计分、限回合条件、歼灭模板条件或完整胜利面板。
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
+
+**当前 v2.5 UI 收口边界：** `SanguoDesignTokens` 已作为共享视觉 token 起步，提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入这组 token。MapEditor 新建军队默认模板已切到 `sanguo_unit_templates.json` 的步卒营、骑军、弓弩营、器械营、守军和舟师，并把新建城池、粮仓和导出错误文案改为三国语义。该切片只改变显示和编辑器默认值，不改变规则、JSON schema、Codable rawValue、旧 fallback 数据或命令管线。
 
 **当前检查器展示边界：** 军队详情和郡县详情由 `MapDisplayAdapter` 生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，优先读取 `RegionNode.name`、`TheaterNode.name`、`FrontZone.name`；空名、等于 raw id 或明显内部 id 时退回势力简称与郡县名摘要。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId`、`GeneralAssignment.generalId`、Codable rawValue、动态方面/防区/战线规则不变。
 

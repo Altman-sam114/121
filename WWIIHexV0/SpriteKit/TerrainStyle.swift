@@ -1,6 +1,8 @@
 import SpriteKit
 
 enum TerrainStyle {
+    static let mapBackground = SKColor(red: 0.13, green: 0.17, blue: 0.14, alpha: 1)
+
     static func fillColor(for terrain: BaseTerrain) -> SKColor {
         switch terrain {
         case .plain:

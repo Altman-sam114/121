@@ -22,14 +22,14 @@ final class BoardScene: SKScene {
         // v0.21: resizeFill 让 scene 跟 SKView 同尺寸；hex 大小由 HexLayout.fixed 决定（不塞满），
         // 超出 view 的 hex 画在 scene 外，由平移（任务 0.2）暴露。
         scaleMode = .resizeFill
-        backgroundColor = SKColor(red: 0.16, green: 0.20, blue: 0.18, alpha: 1.0)
+        backgroundColor = TerrainStyle.mapBackground
         setupCamera()
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         scaleMode = .resizeFill
-        backgroundColor = SKColor(red: 0.16, green: 0.20, blue: 0.18, alpha: 1.0)
+        backgroundColor = TerrainStyle.mapBackground
         setupCamera()
     }
 

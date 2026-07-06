@@ -7,6 +7,7 @@ struct EventLogView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("战报")
                 .font(.headline)
+                .foregroundStyle(SanguoDesignTokens.inkText)
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
@@ -43,8 +44,12 @@ struct EventLogView: View {
             .frame(minHeight: 120)
         }
         .padding(12)
-        .background(PlatformStyles.systemBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(SanguoDesignTokens.parchmentPanel.opacity(0.94))
+        .overlay {
+            RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius)
+                .stroke(SanguoDesignTokens.panelStroke, lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
     }
 
     private var recentEntries: [LogDisplayEntry] {
@@ -164,23 +169,23 @@ private enum LogDisplayCategory {
     var foregroundStyle: Color {
         switch self {
         case .combat:
-            return .red
+            return SanguoDesignTokens.vermilion
         case .retreat:
-            return .orange
+            return SanguoDesignTokens.bronze
         case .reinforcement:
-            return .green
+            return SanguoDesignTokens.jade
         case .encirclement:
-            return .purple
+            return Color(red: 0.42, green: 0.25, blue: 0.56)
         case .supply:
-            return .teal
+            return SanguoDesignTokens.riverBlue
         case .frontChange:
-            return .blue
+            return Color(red: 0.18, green: 0.34, blue: 0.58)
         case .theaterChange:
-            return .indigo
+            return Color(red: 0.28, green: 0.24, blue: 0.48)
         case .regionOwnerChange:
-            return .mint
+            return Color(red: 0.24, green: 0.48, blue: 0.32)
         case .diplomacy:
-            return .cyan
+            return Color(red: 0.10, green: 0.52, blue: 0.62)
         case .event:
             return .secondary
         }

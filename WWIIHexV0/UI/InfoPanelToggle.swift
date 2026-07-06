@@ -14,6 +14,7 @@ struct InfoPanelToggle<Summary: View, Content: View>: View {
                     Text("军情")
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
+                        .frame(minHeight: SanguoDesignTokens.controlMinHeight)
                 }
                 .buttonStyle(.bordered)
 

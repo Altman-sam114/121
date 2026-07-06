@@ -19,15 +19,15 @@ enum MapEditorExportError: Error, CustomStringConvertible, Equatable {
     var description: String {
         switch self {
         case .unassignedHex(let coord):
-            return "Hex \(coord.mapEditorKey) is not assigned to a region."
+            return "地格 \(coord.mapEditorKey) 未归属任何郡县。"
         case .emptyRegion(let id):
-            return "Region \(id.rawValue) has no hexes."
+            return "郡县 \(id.rawValue) 没有地格。"
         case .missingRegion(let id):
-            return "Region \(id.rawValue) is referenced but not defined."
+            return "郡县 \(id.rawValue) 被引用但尚未定义。"
         case .invalidTerrain(let terrain):
-            return "Terrain \(terrain.rawValue) cannot be exported."
+            return "地形 \(terrain.rawValue) 暂不能导出。"
         case .encodingFailed(let message):
-            return "Encoding failed: \(message)"
+            return "编码导出失败：\(message)"
         }
     }
 }
@@ -94,7 +94,7 @@ enum MapEditorExporter {
 
         let keyLocations = document.sortedHexes.compactMap { hex -> KeyLocationDefinition? in
             guard hex.cityName != nil || hex.fortressName != nil || hex.isSupplySource else { return nil }
-            let name = hex.cityName ?? hex.fortressName ?? "Supply \(hex.coord.mapEditorKey)"
+            let name = hex.cityName ?? hex.fortressName ?? "粮仓 \(hex.coord.mapEditorKey)"
             return KeyLocationDefinition(
                 id: name.normalizedMapEditorIdentifier,
                 name: name,

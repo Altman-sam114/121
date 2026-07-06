@@ -9,6 +9,7 @@ struct NewGameButton: View {
                 .font(.caption.weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
+                .frame(minHeight: SanguoDesignTokens.controlMinHeight)
         }
         .buttonStyle(.bordered)
     }

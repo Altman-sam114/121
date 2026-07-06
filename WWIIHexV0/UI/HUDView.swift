@@ -28,8 +28,10 @@ struct HUDView: View {
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
+                        .frame(minHeight: SanguoDesignTokens.controlMinHeight)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(SanguoDesignTokens.vermilion)
             }
 
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 8) {
@@ -56,15 +58,20 @@ struct HUDView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(PlatformStyles.systemBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .foregroundStyle(SanguoDesignTokens.inkText)
+        .background(SanguoDesignTokens.parchmentPanel.opacity(0.96))
+        .overlay {
+            RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius)
+                .stroke(SanguoDesignTokens.panelStroke, lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
     }
 
     private func metric(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(SanguoDesignTokens.mutedInk)
             Text(value)
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)

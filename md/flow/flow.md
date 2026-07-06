@@ -1,6 +1,6 @@
-# 三国棋策 Agent 核心流程文档（v2.4 君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道和交战兼容层）
+# 三国棋策 Agent 核心流程文档（v2.5 UI 收口起步，v2.4 君主/外交/太守/军师/武将规则主线）
 
-> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.4 当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战兼容层：源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
+> 本文是项目当前核心逻辑的接手文档。项目正从 `WWIIHexV0` 二战原型迁移为“三国棋策 Agent”。v2.5 已开始发布级三国 UI、美术和交互收口：共享 `SanguoDesignTokens` 起步接入 HUD、战报、主覆盖层和 SpriteKit 地图底色，MapEditor 默认军队模板改用三国模板并中文化新建城池、粮仓和导出错误文案；v2.4 规则主线当前完成官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战兼容层。源码仍保留 `Faction.germany/allies`、`Division`、`Theater`、`FrontZone` 等兼容名，默认加载已优先使用 `guandu_200_scenario.json` / `guandu_200_regions.json` / `sanguo_unit_templates.json`；`Faction` 已可解码 cao / yuan / liuBei / sun / liuBiao / maTeng / han / neutral；玩家可见 UI 术语已开始迁移为势力、军队、武将、郡县、方面、防区、钱粮、军械、粮草。目标不是复述历史设计，而是按当前代码真实链路说明：数据如何进入游戏，hex / region / theater / front / deploy 如何派生，AI / 玩家命令如何落到规则系统。
 
 资料依据：`AGENTS.md`、`README.md`、`update_log.md`、`md/test/test.md`、`md/prompt/v2.0-三国迁移/codex-v2.0-三国aiagent迁移总提示词.md`、v0.355/v0.36/v0.37 阶段文档，以及当前源码中的 `Core/`、`Rules/`、`Commands/`、`Agents/`、`Turn/`、`App/`、`SpriteKit/`、`UI/`、`MapEditor/` 与关键测试。
 
@@ -45,6 +45,7 @@ MapEditor / JSON 数据
 v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战兼容层：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
+- v2.5 UI 收口当前只是视觉 token 和编辑器默认值起步：`SanguoDesignTokens` 提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入；MapEditor 新建军队模板默认使用 `infantry_camp`、`cavalry_wing`、`archer_camp`、`siege_engine_camp`、`garrison_camp`、`naval_fleet`，新建城池、粮仓和导出错误文案中文化。该切片不改变规则、JSON schema、旧 fallback 数据、Codable rawValue 或命令管线。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
 - 默认 `DataLoader.loadInitialGameState()` 先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到阿登兼容数据。
 - `DataLoader.loadUnitTemplates()` 先尝试 `sanguo_unit_templates.json`，缺文件时再 fallback 到旧 `unit_templates.json`；如果三国模板存在但解析失败，会暴露错误而不是静默退旧数据。

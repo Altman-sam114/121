@@ -21,7 +21,7 @@ struct RootGameView: View {
                         onNewGame: container.resetGame
                     )
                     .padding(8)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
                     .padding(.top, 8)
                     .padding(.horizontal, 8)
 
@@ -35,7 +35,7 @@ struct RootGameView: View {
                     }
                     .pickerStyle(.segmented)
                     .padding(8)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
                     .padding(.horizontal, 8)
 
                     Toggle("观察", isOn: Binding(
@@ -44,8 +44,9 @@ struct RootGameView: View {
                     ))
                     .toggleStyle(.button)
                     .font(.caption.weight(.semibold))
+                    .frame(minHeight: SanguoDesignTokens.controlMinHeight)
                     .padding(8)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
                     .padding(.horizontal, 8)
 
                     Spacer()
@@ -64,6 +65,7 @@ struct RootGameView: View {
                         .lineLimit(1)
                 }
                 .buttonStyle(.bordered)
+                .frame(minHeight: SanguoDesignTokens.controlMinHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .padding(10)
 
@@ -71,7 +73,7 @@ struct RootGameView: View {
                     .allowsHitTesting(false)
             }
         }
-        .background(PlatformStyles.systemBackground)
+        .background(SanguoDesignTokens.jade.opacity(0.18))
         .sheet(isPresented: $isGeneralProfilePresented) {
             if let general = container.selectedGeneral {
                 GeneralProfileView(
@@ -106,10 +108,10 @@ struct RootGameView: View {
             compactPanelWithTabs
         }
         .frame(width: width, height: height)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius))
         .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(.secondary.opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: SanguoDesignTokens.panelCornerRadius)
+                .stroke(SanguoDesignTokens.panelStroke, lineWidth: 1)
         }
         .padding(isLandscape ? 10 : 0)
         .frame(

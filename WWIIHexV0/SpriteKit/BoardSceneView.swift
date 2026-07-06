@@ -20,7 +20,7 @@ struct BoardSceneView: NSViewRepresentable {
         let view = BoardEventSKView()
         view.ignoresSiblingOrder = true
         view.allowsTransparency = false
-        view.backgroundColor = SKColor(red: 0.16, green: 0.20, blue: 0.18, alpha: 1)
+        view.backgroundColor = TerrainStyle.mapBackground
 
         let scene = BoardScene(size: CGSize(width: 1400, height: 900))
         context.coordinator.scene = scene
@@ -102,7 +102,7 @@ struct BoardSceneView: UIViewRepresentable {
     func makeUIView(context: Context) -> SKView {
         let view = SKView()
         view.ignoresSiblingOrder = true
-        view.backgroundColor = SKColor(red: 0.16, green: 0.20, blue: 0.18, alpha: 1)
+        view.backgroundColor = TerrainStyle.mapBackground
 
         // v0.21: 放大 scene 容纳大 hex（hexSize=36），给平移余量
         let scene = BoardScene(size: CGSize(width: 1400, height: 900))

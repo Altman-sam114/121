@@ -14,7 +14,7 @@ final class MapEditorViewModel: ObservableObject {
     @Published var selectedRegionId: RegionId?
     @Published var selectedTheaterId: TheaterId?
     @Published var eraseRegionMembership: Bool = false
-    @Published var selectedUnitTemplateId: String = "infantry_division"
+    @Published var selectedUnitTemplateId: String = "infantry_camp"
     @Published var selectedUnitFaction: Faction = .germany
     @Published var selectedUnitHP: Int = 10
     @Published var selectedUnitFacing: HexDirection = .west
@@ -36,7 +36,7 @@ final class MapEditorViewModel: ObservableObject {
 
     @Published var newRegionText: String = "新省份"
     @Published var newTheaterText: String = "新战区"
-    @Published var newUnitNameText: String = "师"
+    @Published var newUnitNameText: String = "军队"
 
     init(document: MapEditorDocument = .new(width: 8, height: 6)) {
         self.document = document
@@ -376,7 +376,7 @@ final class MapEditorViewModel: ObservableObject {
         hex.isSupplySource = paintSupply
         hex.supplyFaction = paintSupply ? supplyFaction : nil
         if selectedTerrain == .city, hex.cityName == nil {
-            hex.cityName = "City \(coord.q),\(coord.r)"
+            hex.cityName = "城池 \(coord.q),\(coord.r)"
         } else if selectedTerrain != .city {
             hex.cityName = nil
         }

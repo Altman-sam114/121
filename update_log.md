@@ -6568,6 +6568,60 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做运行时 UI 烟测；经济和生产日志在事件日志面板中的换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 生产、补员和粮草仍是当前最小兼容层；完整屯田、治安、独立粮仓、多势力经济回合和共享补给制度仍待后续阶段。
 
+## v2.5 - UI 视觉 token 与 MapEditor 默认三国模板小步
+
+完成日期：2026-07-06
+
+目标：
+
+- 作为 v2.5 发布级三国 UI、美术和交互收口的起步切片，建立共享三国视觉 token，并修正 MapEditor 新建军队默认仍指向二战模板的问题。
+
+完成内容：
+
+- 新增 `SanguoDesignTokens`，集中提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度。
+- HUD、战报、主覆盖层和顶层关键按钮接入共享 token；结束回合按钮使用朱印色，HUD / 战报使用绢帛面板和墨色文字。
+- SpriteKit 地图背景色收敛到 `TerrainStyle.mapBackground`，`BoardScene` 和 `BoardSceneView` 共用同一地图底色。
+- MapEditor 部队模板 Picker 从旧步兵师/装甲师/摩托化师/重炮主力切到 `sanguo_unit_templates.json` 的步卒营、骑军、弓弩营、器械营、守军、舟师。
+- MapEditor 默认军队模板改为 `infantry_camp`，默认军队名改为“军队”，新建城市默认名改为“城池 q,r”。
+- MapEditor 导出错误和无命名补给点 fallback 改为中文郡县/粮仓语义。
+- 本轮只改变显示、编辑器默认值和文档，不改变规则、命令、AI、JSON schema、旧 fallback 数据、Codable rawValue 或 Xcode project。
+
+关键文件：
+
+- `WWIIHexV0/UI/PlatformStyles.swift`
+- `WWIIHexV0/UI/HUDView.swift`
+- `WWIIHexV0/UI/EventLogView.swift`
+- `WWIIHexV0/UI/RootGameView.swift`
+- `WWIIHexV0/UI/NewGameButton.swift`
+- `WWIIHexV0/UI/InfoPanelToggle.swift`
+- `WWIIHexV0/SpriteKit/TerrainStyle.swift`
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `WWIIHexV0/SpriteKit/BoardSceneView.swift`
+- `MapEditor/MapEditorView.swift`
+- `MapEditor/MapEditorViewModel.swift`
+- `MapEditor/MapEditorExporter.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_ui_design_tokens_mapeditor_defaults.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/PlatformStyles.swift WWIIHexV0/UI/HUDView.swift WWIIHexV0/UI/EventLogView.swift WWIIHexV0/UI/RootGameView.swift WWIIHexV0/UI/NewGameButton.swift WWIIHexV0/UI/InfoPanelToggle.swift WWIIHexV0/SpriteKit/TerrainStyle.swift WWIIHexV0/SpriteKit/BoardSceneView.swift WWIIHexV0/SpriteKit/BoardScene.swift MapEditor/MapEditorView.swift MapEditor/MapEditorViewModel.swift MapEditor/MapEditorExporter.swift` 未执行成功：当前环境没有 `swiftc`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- MapEditor 旧默认模板和旧英文导出文案定向扫描无命中：`步兵师`、`装甲师`、`摩托化师`、`重炮主力`、`infantry_division`、`panzer_division`、`motorized_division`、`artillery_division`、`City \(coord`、`Supply \(hex`、`Hex ... not assigned`、`Region ... has no hexes`、`Encoding failed`。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮未做运行时 UI 截图或点击烟测；绢帛面板、按钮高度、地图底色和 MapEditor 文案的真实视觉效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- v2.5 发布级 UI 仍未完成真实头像、旗帜、城池/关隘/渡口/粮仓图标、完整视觉资产和新手体验。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
