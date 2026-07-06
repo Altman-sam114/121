@@ -4844,6 +4844,68 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
 - 复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
 
+## v2.4 外交敌对部署接触兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 继续围绕武将、道路、部署和交战迁移，把 `WarDeploymentManager` 的单位级敌军存在和相邻敌对防区接触从静态 `Faction.isHostile(to:)` 迁移到 `DiplomacyState` 的 hostile / atWar 口径。
+
+完成内容：
+
+- `WWIIHexV0/Rules/WarDeploymentManager.swift` 为 `makeInitialState`、`update`、`advanceRegion`、`advanceHex`、`collapseFront`、`deploymentRole` 和内部 rebuild/helper 增加可选 `DiplomacyState` 参数，默认 nil 时继续 fallback 到 `Faction.isHostile(to:)`，兼容历史测试和 Probe。
+- `hasEnemyPresence`、`enemyZoneIdsTouching`、`regionTouchesEnemyZone`、`hexTouchesEnemyZone` 改用统一外交 hostile helper。
+- `DataLoader`、`StrategicStateBootstrapper`、`StrategicStateSynchronizer`、`CommandExecutor` 和 `WarCommandExecutor` 的真实运行时部署初始化、刷新和推进路径显式传入 `state.diplomacyState`。
+- `BoardScene`、`MapDisplayAdapter`、`MapLayerOverlayCalculator` 的部署图层 / 军队检查器 `deploymentRole` fallback 也传入真实外交状态。
+- 保留 `HexTile.controller`、`RegionNode.controller`、非己方控制 hex / region 的部署压力分类、非同 faction 堆叠阻挡和 encirclement 出口/接触拓扑语义；本轮不实现完整借道、同盟通行、共同作战堆叠或共享补给。
+
+关键文件：
+
+- `WWIIHexV0/Rules/WarDeploymentManager.swift`
+- `WWIIHexV0/Data/DataLoader.swift`
+- `WWIIHexV0/Core/WarDeploymentState.swift`
+- `WWIIHexV0/Core/StrategicStateBootstrapper.swift`
+- `WWIIHexV0/Rules/StrategicStateSynchronizer.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/SpriteKit/MapLayerOverlayCalculator.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_diplomacy_hostile_deployment_contact.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/WarDeploymentManager.swift` 通过。
+- `swiftc -parse WWIIHexV0/Data/DataLoader.swift` 通过。
+- `swiftc -parse WWIIHexV0/Core/WarDeploymentState.swift` 通过。
+- `swiftc -parse WWIIHexV0/Core/StrategicStateBootstrapper.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/StrategicStateSynchronizer.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/CommandExecutor.swift` 通过。
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- `swiftc -parse WWIIHexV0/SpriteKit/BoardScene.swift` 通过。
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift` 通过。
+- `swiftc -parse WWIIHexV0/SpriteKit/MapLayerOverlayCalculator.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `FrontLineManager` 的动态前线接触、`AgentContexts` / MockAI 的敌军摘要仍存在后续外交 hostile 迁移空间，且涉及更大接口和 AI context 口径，需单独切片。
+- 本轮没有实现完整借道、同盟通行、共同作战堆叠、补给共享或外交宣战制度。
+- 复杂多势力关系下的真实战局行为仍待云端 CI、后续 Agent C artifact 复判或人工授权补测。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

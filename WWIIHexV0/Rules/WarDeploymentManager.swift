@@ -5,7 +5,8 @@ struct WarDeploymentManager {
         map: MapState,
         theaterState: TheaterState,
         divisions: [Division],
-        turn: Int? = nil
+        turn: Int? = nil,
+        diplomacyState: DiplomacyState? = nil
     ) -> WarDeploymentState {
         var zones: [FrontZoneId: FrontZone] = [:]
         var hexToZone: [HexCoord: FrontZoneId] = [:]
@@ -41,6 +42,7 @@ struct WarDeploymentManager {
             map: map,
             divisions: divisions,
             turn: turn,
+            diplomacyState: diplomacyState,
             updatedZoneIds: Set(zones.keys)
         )
     }
@@ -50,7 +52,8 @@ struct WarDeploymentManager {
         map: MapState,
         divisions: [Division],
         turn: Int,
-        events: [WarDeploymentEvent] = []
+        events: [WarDeploymentEvent] = [],
+        diplomacyState: DiplomacyState? = nil
     ) -> WarDeploymentState {
         let dirtyRegions = dirtyRegions(from: events, state: state)
         guard !dirtyRegions.isEmpty else {
@@ -68,6 +71,7 @@ struct WarDeploymentManager {
             map: map,
             divisions: divisions,
             turn: turn,
+            diplomacyState: diplomacyState,
             updatedZoneIds: zoneIds
         )
     }
@@ -79,7 +83,8 @@ struct WarDeploymentManager {
         state: WarDeploymentState,
         map: MapState,
         divisions: [Division],
-        turn: Int
+        turn: Int,
+        diplomacyState: DiplomacyState? = nil
     ) -> WarDeploymentState {
         guard let breakthroughHex = map.region(id: regionId)?.representativeHex else {
             return state
@@ -92,7 +97,8 @@ struct WarDeploymentManager {
             state: state,
             map: map,
             divisions: divisions,
-            turn: turn
+            turn: turn,
+            diplomacyState: diplomacyState
         )
     }
 
@@ -103,7 +109,8 @@ struct WarDeploymentManager {
         state: WarDeploymentState,
         map: MapState,
         divisions: [Division],
-        turn: Int
+        turn: Int,
+        diplomacyState: DiplomacyState? = nil
     ) -> WarDeploymentState {
         guard state.frontZones[advancingZoneId] != nil,
               let regionId = map.region(for: hex) else {
@@ -144,6 +151,7 @@ struct WarDeploymentManager {
             map: map,
             divisions: divisions,
             turn: turn,
+            diplomacyState: diplomacyState,
             updatedZoneIds: touched
         )
     }
@@ -153,7 +161,8 @@ struct WarDeploymentManager {
         state: WarDeploymentState,
         map: MapState,
         divisions: [Division],
-        turn: Int
+        turn: Int,
+        diplomacyState: DiplomacyState? = nil
     ) -> WarDeploymentState {
         guard let zone = state.frontZones[zoneId],
               zone.state == .totalWar || zone.pressure > zone.regionIds.count else {
@@ -178,11 +187,17 @@ struct WarDeploymentManager {
             map: map,
             divisions: divisions,
             turn: turn,
+            diplomacyState: diplomacyState,
             updatedZoneIds: Set([zoneId]).union(depthZoneIds)
         )
     }
 
-    func deploymentRole(for division: Division, in map: MapState, state: WarDeploymentState) -> UnitDeploymentRole {
+    func deploymentRole(
+        for division: Division,
+        in map: MapState,
+        state: WarDeploymentState,
+        diplomacyState: DiplomacyState? = nil
+    ) -> UnitDeploymentRole {
         if let role = listedDeploymentRole(for: division.id, state: state) {
             return role
         }
@@ -211,7 +226,8 @@ struct WarDeploymentManager {
             faction: zone.faction,
             zones: state.frontZones,
             hexToZone: state.hexToFrontZone,
-            map: map
+            map: map,
+            diplomacyState: diplomacyState
         ) || map.tile(at: division.coord)?.controller != zone.faction {
             return .frontUnit
         }
@@ -245,6 +261,7 @@ struct WarDeploymentManager {
         map: MapState,
         divisions: [Division],
         turn: Int?,
+        diplomacyState: DiplomacyState?,
         updatedZoneIds: Set<FrontZoneId>
     ) -> WarDeploymentState {
         var nextZones = zones
@@ -256,9 +273,18 @@ struct WarDeploymentManager {
             regionToZone: regionToZone,
             map: map,
             divisions: divisions,
+            diplomacyState: diplomacyState,
             scopeZoneIds: scopedZoneIds
         )
-        assignUnits(zones: &nextZones, hexToZone: hexToZone, regionToZone: regionToZone, map: map, divisions: divisions, scopeZoneIds: scopedZoneIds)
+        assignUnits(
+            zones: &nextZones,
+            hexToZone: hexToZone,
+            regionToZone: regionToZone,
+            map: map,
+            divisions: divisions,
+            diplomacyState: diplomacyState,
+            scopeZoneIds: scopedZoneIds
+        )
 
         let scannedRegionCount = scopedZoneIds.reduce(0) { total, zoneId in
             total + (nextZones[zoneId]?.regionIds.count ?? 0)
@@ -319,6 +345,7 @@ struct WarDeploymentManager {
         regionToZone: [RegionId: FrontZoneId],
         map: MapState,
         divisions: [Division],
+        diplomacyState: DiplomacyState?,
         scopeZoneIds: Set<FrontZoneId>
     ) {
         for zoneId in scopeZoneIds {
@@ -332,12 +359,13 @@ struct WarDeploymentManager {
                     faction: zone.faction,
                     zones: zones,
                     hexToZone: hexToZone,
-                    map: map
+                    map: map,
+                    diplomacyState: diplomacyState
                 )
 
                 let hasEnemyPresence = divisions.contains { division in
                     guard !division.isDestroyed,
-                          division.faction.isHostile(to: zone.faction) else {
+                          isHostile(division.faction, to: zone.faction, diplomacyState: diplomacyState) else {
                         return false
                     }
                     return division.location(in: map) == regionId
@@ -392,6 +420,7 @@ struct WarDeploymentManager {
         regionToZone: [RegionId: FrontZoneId],
         map: MapState,
         divisions: [Division],
+        diplomacyState: DiplomacyState?,
         scopeZoneIds: Set<FrontZoneId>
     ) {
         for zoneId in scopeZoneIds {
@@ -435,7 +464,8 @@ struct WarDeploymentManager {
                 faction: assignedZone.faction,
                 zones: zones,
                 hexToZone: hexToZone,
-                map: map
+                map: map,
+                diplomacyState: diplomacyState
             )
             let isInsideEnemyDynamicZone = assignedZoneId != zoneId
             let isOnEnemyControlledHex = map.tile(at: division.coord)?.controller != assignedZone.faction
@@ -508,7 +538,8 @@ struct WarDeploymentManager {
         faction: Faction,
         zones: [FrontZoneId: FrontZone],
         hexToZone: [HexCoord: FrontZoneId],
-        map: MapState
+        map: MapState,
+        diplomacyState: DiplomacyState?
     ) -> Set<FrontZoneId> {
         guard let region = map.region(id: regionId) else {
             return []
@@ -521,7 +552,7 @@ struct WarDeploymentManager {
                       let enemyZoneId = hexToZone[neighborHex],
                       enemyZoneId != zoneId,
                       let enemyFaction = zones[enemyZoneId]?.faction,
-                      enemyFaction.isHostile(to: faction) else {
+                      isHostile(enemyFaction, to: faction, diplomacyState: diplomacyState) else {
                     continue
                 }
                 enemyZoneIds.insert(enemyZoneId)
@@ -599,7 +630,8 @@ struct WarDeploymentManager {
         zones: [FrontZoneId: FrontZone],
         hexToZone: [HexCoord: FrontZoneId],
         regionToZone: [RegionId: FrontZoneId],
-        map: MapState
+        map: MapState,
+        diplomacyState: DiplomacyState?
     ) -> Bool {
         guard let faction = zones[zoneId]?.faction else {
             return false
@@ -611,7 +643,7 @@ struct WarDeploymentManager {
                   let neighborFaction = zones[neighborZoneId]?.faction else {
                 return false
             }
-            return neighborFaction.isHostile(to: faction)
+            return isHostile(neighborFaction, to: faction, diplomacyState: diplomacyState)
         }
     }
 
@@ -621,7 +653,8 @@ struct WarDeploymentManager {
         faction: Faction,
         zones: [FrontZoneId: FrontZone],
         hexToZone: [HexCoord: FrontZoneId],
-        map: MapState
+        map: MapState,
+        diplomacyState: DiplomacyState?
     ) -> Bool {
         guard map.tile(at: hex) != nil else {
             return false
@@ -633,11 +666,15 @@ struct WarDeploymentManager {
                   let neighborFaction = zones[neighborZoneId]?.faction else {
                 continue
             }
-            if neighborFaction.isHostile(to: faction) {
+            if isHostile(neighborFaction, to: faction, diplomacyState: diplomacyState) {
                 return true
             }
         }
         return false
+    }
+
+    private func isHostile(_ lhs: Faction, to rhs: Faction, diplomacyState: DiplomacyState?) -> Bool {
+        diplomacyState?.isHostile(between: lhs, and: rhs) ?? lhs.isHostile(to: rhs)
     }
 
     private func faction(for theater: TheaterNode, map: MapState) -> Faction? {

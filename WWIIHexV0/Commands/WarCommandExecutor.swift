@@ -1159,7 +1159,8 @@ struct WarCommandExecutor {
                 map: state.map,
                 divisions: state.divisions,
                 turn: state.turn,
-                events: deploymentEvents
+                events: deploymentEvents,
+                diplomacyState: state.diplomacyState
             )
             .preservingGeneralAssignments(from: deploymentBeforeUpdate)
         }
@@ -1215,7 +1216,8 @@ struct WarCommandExecutor {
                 state: state.warDeploymentState,
                 map: state.map,
                 divisions: state.divisions,
-                turn: state.turn
+                turn: state.turn,
+                diplomacyState: state.diplomacyState
             )
         }
         state.appendEvent(

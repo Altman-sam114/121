@@ -48,7 +48,8 @@ struct StrategicStateBootstrapper {
                 from: next.theaterState,
                 map: next.map,
                 divisions: next.divisions,
-                turn: next.turn
+                turn: next.turn,
+                diplomacyState: next.diplomacyState
             )
             next.appendEvent(
                 "FrontZone deployment state bootstrapped from theater data.",
@@ -87,7 +88,8 @@ struct StrategicStateBootstrapper {
             from: next.theaterState,
             map: next.map,
             divisions: next.divisions,
-            turn: next.turn
+            turn: next.turn,
+            diplomacyState: next.diplomacyState
         )
         next.warDeploymentState = rebuiltDeployment.preservingGeneralAssignments(from: state.warDeploymentState)
         return next

@@ -841,7 +841,8 @@ final class BoardScene: SKScene {
         let role = deploymentManager.deploymentRole(
             for: division,
             in: renderState.gameState.map,
-            state: renderState.gameState.warDeploymentState
+            state: renderState.gameState.warDeploymentState,
+            diplomacyState: renderState.gameState.diplomacyState
         )
         return TerrainStyle.deploymentUnitColor(for: division.faction, role: role)
     }

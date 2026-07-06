@@ -54,7 +54,8 @@ struct StrategicStateSynchronizer {
             map: state.map,
             divisions: state.divisions,
             turn: syncTurn,
-            events: deploymentEvents
+            events: deploymentEvents,
+            diplomacyState: state.diplomacyState
         )
 
         if emitRegionOwnerEvents {
