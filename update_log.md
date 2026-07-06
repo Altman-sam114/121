@@ -5554,6 +5554,53 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮只改 UI chrome、审计面板标题、交互日志展示名和阶段文档，不迁移 `Command` / `ZoneDirective` / `WarCommandExecutor` / `RuleEngine` 行为，不改记录 raw id、Codable 字段、调试 JSON 或 JSON schema。
 - `DiplomacyPanelView` 的 `Agent` 字段、单位兵牌 `R/H`、检查器 raw id 和经济/生产英文事件日志仍建议后续另拆小切片处理。
 
+## v2.4 - WarCommandExecutor 武将官道机动落地
+
+完成日期：2026-07-06
+
+目标：
+
+- 让 AI / 玩家武将宏观军令在 `WarCommandExecutor` 选兵和行军落点时读取武将道路机动结果，避免 `GeneralInfluence` 的官道机动只停留在 UI 预览和移动日志。
+
+完成内容：
+
+- `WarCommandExecutor` 新增私有 `MovementRules` 复用实例。
+- 攻击单位排序的 movement 指标从 `division.movement` 改为 `MovementRules.effectiveMovementLimit(for:in:)`。
+- 防守落点和接近落点复用同一个 `MovementRules.movementRange(for:in:)`。
+- `tacticalDestination(in:for:state:)` 对目标郡县候选 hex 的可达判断从直线距离 `<= division.movement` 改为 `MovementRules.shortestPath(for:to:in:) != nil`。
+- 宏观军令因此会在选兵/落点阶段尊重武将官道机动、道路成本、敌控区停止、地形惩罚和单位占位；真实移动、攻击、占领和动态战区推进仍经底层命令与规则系统执行。
+- 新增阶段提示词，更新 README、核心流程文档、流程图和 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_war_executor_general_road_mobility.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 旧绕过口径扫描无命中：`MovementRules().`、`division.coord.distance(to: $0) <= division.movement`、`movement: division.movement`。
+- 新机动口径扫描确认命中：`movementRules.effectiveMovementLimit(for: division, in: state)`、`movementRules.shortestPath(for: division, to: $0, in: state)`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮会改变宏观 `ZoneDirective` 生成 `.move` 的候选落点和攻击单位排序；真实合法性仍由 `CommandValidator -> RuleEngine` 校验。
+- 本轮不改 `MovementRules`、`GeneralInfluence`、道路机动数值、战斗伤害、撤退、补给、动态战区推进或外交 hostile 规则。
+- 并发 SupplyRules 审计发现粮道/撤退安全格仍有两处 `tile.controller?.isHostile(to:)` 控制格判断，建议后续另拆“SupplyRules 控制格 hostile gate 外交化”切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

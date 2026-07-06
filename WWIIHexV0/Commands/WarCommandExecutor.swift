@@ -14,6 +14,7 @@ struct WarCommandExecutionResult: Equatable {
 struct WarCommandExecutor {
     let commandHandler: GameCommandHandling
     private let occupationRules = OccupationRules()
+    private let movementRules = MovementRules()
 
     private struct AttackTacticProfile {
         let includeDepthUnits: Bool
@@ -733,7 +734,7 @@ struct WarCommandExecutor {
             artilleryPriority: profile.artilleryFirst && division.isArtillery ? 1 : 0,
             mobilePriority: isMobile(division) ? 1 : 0,
             attackPower: division.attack,
-            movement: division.movement,
+            movement: movementRules.effectiveMovementLimit(for: division, in: state),
             strength: division.strength,
             id: division.id
         )
@@ -826,7 +827,7 @@ struct WarCommandExecutor {
             + (parameters.fallbackRegionIds ?? [])
             + zone.frontSegments.map(\.regionId)
         )
-        let movementRange = MovementRules().movementRange(for: division, in: state)
+        let movementRange = movementRules.movementRange(for: division, in: state)
         let preferredRegions = preferredRegionIds.compactMap { regionId in
             state.map.region(id: regionId)
         }
@@ -1003,7 +1004,10 @@ struct WarCommandExecutor {
                 return lhsDistance < rhsDistance
             }
 
-        if let destination = candidates.first(where: { $0 != division.coord && division.coord.distance(to: $0) <= division.movement }) {
+        if let destination = candidates.first(where: {
+            $0 != division.coord &&
+                movementRules.shortestPath(for: division, to: $0, in: state) != nil
+        }) {
             return destination
         }
 
@@ -1019,7 +1023,7 @@ struct WarCommandExecutor {
         for division: Division,
         state: GameState
     ) -> HexCoord? {
-        let movementRange = MovementRules().movementRange(for: division, in: state)
+        let movementRange = movementRules.movementRange(for: division, in: state)
         return movementRange
             .filter { $0 != division.coord }
             .filter { state.division(at: $0) == nil }
