@@ -4409,6 +4409,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，地图计划军令短标签在密集箭头、长武将名、长敌军名、小屏和 Dynamic Type 下的实际遮挡仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 地图和面板计划军令近敌/受压摘要是只读态势提示，不代表完整路径安全、真实攻击合法性、胜率、隐藏敌军、同盟借道、移动后同回合攻击或敌方回合反制制度。
 
+## v2.4 - 军队可见官道受压审计兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `AppContainer` 新增 `isVisibleHostileZoneOfControl`，用玩家视角可见、未毁灭且 `Faction.isHostile(to:)` 的军队判断只读 UI 文案中的官道受压。
+- `AppContainer` 新增 `visibilityFilteredPreviewState`，在军队详情/接战预判的只读可达范围计算中剔除玩家不可见 hostile 军队，避免隐藏敌军 ZOC 改写可达官道、最近安全官道或接近候选摘要。
+- `selectedUnitMobilityPreviewNotes` 的当前位置官道受压、可达官道安全/受压数量和最近安全官道距离改为玩家视角可见 hostile 口径。
+- `selectedUnitCombatPreviewNotes` 的接战官道压制位、未接敌接近候选和官道接近安全/受压数量改为玩家视角可见 hostile 口径。
+- `GeneralCommandPanelView` 麾下军队行的官道受压摘要通过 `AppContainer.generalAssignedDivisionRoadSummary` 使用同一可见 hostile 口径。
+- 保持 `MovementRules.isEnemyZoneOfControl`、`MovementRules.movementRange` 真实规则、`CombatRules`、`GeneralInfluence`、`CommandValidator`、`WarCommandExecutor`、`RuleEngine`、`CommandExecutor`、真实移动、攻击、道路、粮道、补给、外交和动态防区归属不变；本轮只做只读道路/交战预览情报边界修正和文档同步。
+
+关键系统：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_visible_road_pressure_audit.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做运行时 UI 烟测，过滤隐藏敌军后的道路/接近预判在观察模式、敌军刚离开视野、长军队名和 Dynamic Type 下的实际体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 只读可达/道路安全摘要为避免情报泄漏会使用过滤隐藏敌军后的预览状态，可能与真实移动命令受隐藏敌军 ZOC 阻挡的结果不完全一致；真实合法性仍以 `CommandValidator -> RuleEngine` 为准。
+
 ## v2.4 - 武将面板可见敌军接敌摘要兼容层
 
 完成日期：2026-07-06

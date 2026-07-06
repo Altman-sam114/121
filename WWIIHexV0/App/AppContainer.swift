@@ -329,7 +329,8 @@ final class AppContainer: ObservableObject {
 
         let movementRules = MovementRules()
         let summary = movementRules.generalInfluenceSummary(for: division, in: gameState)
-        let reachableCoords = movementRules.movementRange(for: division, in: gameState)
+        let previewState = visibilityFilteredPreviewState(for: division.faction)
+        let reachableCoords = movementRules.movementRange(for: division, in: previewState)
         let reachableCount = reachableCoords.count
         var notes = [
             "机动：基础 \(summary.baseMovement)，有效 \(summary.effectiveMovement)，可达 \(reachableCount) 格"
@@ -343,7 +344,7 @@ final class AppContainer: ObservableObject {
             notes.append("道路：未分配武将，按基础机动行军")
         }
 
-        if let currentRoadStatus = currentRoadStatusNote(for: division, movementRules: movementRules) {
+        if let currentRoadStatus = currentRoadStatusNote(for: division) {
             notes.append(currentRoadStatus)
         } else if let roadCount = currentRegionRoadCount(for: division), roadCount > 0 {
             notes.append("郡县官道：\(roadCount) 格，可作为行军和粮道参考")
@@ -353,8 +354,7 @@ final class AppContainer: ObservableObject {
 
         if let roadAccessNote = reachableRoadAccessNote(
             for: division,
-            reachableCoords: reachableCoords,
-            movementRules: movementRules
+            reachableCoords: reachableCoords
         ) {
             notes.append(roadAccessNote)
         }
@@ -517,7 +517,6 @@ final class AppContainer: ObservableObject {
     }
 
     var selectedGeneralAssignedDivisionRows: [GeneralAssignedDivisionRow] {
-        let movementRules = MovementRules()
         let visibleHostiles = gameState.divisions.filter { division in
             division.faction.isHostile(to: playerFaction) &&
                 !division.isDestroyed &&
@@ -526,7 +525,6 @@ final class AppContainer: ObservableObject {
         return selectedGeneralAssignedDivisions.map {
             generalAssignedDivisionRow(
                 for: $0,
-                movementRules: movementRules,
                 visibleHostiles: visibleHostiles
             )
         }
@@ -829,12 +827,10 @@ final class AppContainer: ObservableObject {
 
     private func generalAssignedDivisionRow(
         for division: Division,
-        movementRules: MovementRules,
         visibleHostiles: [Division]
     ) -> GeneralAssignedDivisionRow {
         let roadSummary = generalAssignedDivisionRoadSummary(
-            for: division,
-            movementRules: movementRules
+            for: division
         )
         let engagementSummary = generalAssignedDivisionEngagementSummary(
             for: division,
@@ -861,14 +857,11 @@ final class AppContainer: ObservableObject {
         return "已动"
     }
 
-    private func generalAssignedDivisionRoadSummary(
-        for division: Division,
-        movementRules: MovementRules
-    ) -> String {
+    private func generalAssignedDivisionRoadSummary(for division: Division) -> String {
         guard gameState.map.tile(at: division.coord)?.hasRoad == true else {
             return "离官道"
         }
-        if movementRules.isEnemyZoneOfControl(division.coord, for: division.faction, in: gameState) {
+        if isVisibleHostileZoneOfControl(division.coord, for: division.faction) {
             return "官道受压"
         }
         return "据官道"
@@ -1483,6 +1476,24 @@ final class AppContainer: ObservableObject {
         }
     }
 
+    private func isVisibleHostileZoneOfControl(_ coord: HexCoord, for faction: Faction) -> Bool {
+        gameState.divisions.contains { division in
+            division.faction.isHostile(to: faction) &&
+                !division.isDestroyed &&
+                mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction) &&
+                division.coord.distance(to: coord) == 1
+        }
+    }
+
+    private func visibilityFilteredPreviewState(for faction: Faction) -> GameState {
+        var previewState = gameState
+        previewState.divisions = gameState.divisions.filter { division in
+            !division.faction.isHostile(to: faction) ||
+                mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction)
+        }
+        return previewState
+    }
+
     private func plannedOperationPressureText(
         hasTarget: Bool,
         sourceIsPressured: Bool,
@@ -1588,7 +1599,8 @@ final class AppContainer: ObservableObject {
             return []
         }
 
-        let reachableCoords = movementRules.movementRange(for: attacker, in: gameState)
+        let previewState = visibilityFilteredPreviewState(for: attacker.faction)
+        let reachableCoords = movementRules.movementRange(for: attacker, in: previewState)
         let approachGap = max(0, nearest.distance - attacker.range)
         var notes = [
             "接战距离：最近 \(nearest.target.thematicDisplayName)，距 \(nearest.distance) 格，射程 \(attacker.range)，需接近 \(approachGap) 格"
@@ -1597,7 +1609,6 @@ final class AppContainer: ObservableObject {
             attacker: attacker,
             enemies: enemies,
             reachableCoords: reachableCoords,
-            movementRules: movementRules,
             combatRules: combatRules
         ) {
             notes.append(candidateText)
@@ -1622,8 +1633,7 @@ final class AppContainer: ObservableObject {
         if let roadApproach = combatOutOfRangeRoadApproachText(
             attacker: attacker,
             target: nearest.target,
-            reachableCoords: reachableCoords,
-            movementRules: movementRules
+            reachableCoords: reachableCoords
         ) {
             notes.append(roadApproach)
         }
@@ -1635,7 +1645,8 @@ final class AppContainer: ObservableObject {
         target: Division,
         movementRules: MovementRules
     ) -> String? {
-        var candidateCoords = movementRules.movementRange(for: attacker, in: gameState)
+        let previewState = visibilityFilteredPreviewState(for: attacker.faction)
+        var candidateCoords = movementRules.movementRange(for: attacker, in: previewState)
         candidateCoords.insert(attacker.coord)
 
         let roadAttackCoords = candidateCoords.filter { coord in
@@ -1650,7 +1661,7 @@ final class AppContainer: ObservableObject {
             fragments.append("无可用官道压制位")
         } else {
             let pressuredCount = roadAttackCoords.filter {
-                movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+                isVisibleHostileZoneOfControl($0, for: attacker.faction)
             }.count
             let safeCount = roadAttackCoords.count - pressuredCount
             fragments.append("\(roadAttackCoords.count) 个官道压制位")
@@ -1679,7 +1690,6 @@ final class AppContainer: ObservableObject {
         attacker: Division,
         enemies: [(target: Division, distance: Int)],
         reachableCoords: Set<HexCoord>,
-        movementRules: MovementRules,
         combatRules: CombatRules
     ) -> String? {
         let candidates = enemies.sorted {
@@ -1707,8 +1717,7 @@ final class AppContainer: ObservableObject {
                 attacker: attacker,
                 target: candidate.target,
                 currentDistance: candidate.distance,
-                reachableCoords: reachableCoords,
-                movementRules: movementRules
+                reachableCoords: reachableCoords
             ))
             if let defenderName = influence.defenderGeneralName ?? influence.defenderGeneralId {
                 details.append("敌将 \(defenderName)")
@@ -1722,8 +1731,7 @@ final class AppContainer: ObservableObject {
         attacker: Division,
         target: Division,
         currentDistance: Int,
-        reachableCoords: Set<HexCoord>,
-        movementRules: MovementRules
+        reachableCoords: Set<HexCoord>
     ) -> [String] {
         let reachableCloserCoords = reachableCoords.filter {
             $0.distance(to: target.coord) < currentDistance
@@ -1746,7 +1754,7 @@ final class AppContainer: ObservableObject {
         }
         if !roadCloserCoords.isEmpty {
             let safeRoadCount = roadCloserCoords.count {
-                !movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+                !isVisibleHostileZoneOfControl($0, for: attacker.faction)
             }
             if safeRoadCount > 0 {
                 details.append("安全官道 \(safeRoadCount)")
@@ -1797,7 +1805,6 @@ final class AppContainer: ObservableObject {
         attacker: Division,
         target: Division,
         reachableCoords: Set<HexCoord>,
-        movementRules: MovementRules
     ) -> String? {
         let currentDistance = attacker.coord.distance(to: target.coord)
         let reachableRoadCoords = reachableCoords.filter { coord in
@@ -1813,7 +1820,7 @@ final class AppContainer: ObservableObject {
                 .map { $0.distance(to: target.coord) }
                 .min() ?? currentDistance
             let pressuredCount = reachableRoadCoords.filter {
-                movementRules.isEnemyZoneOfControl($0, for: attacker.faction, in: gameState)
+                isVisibleHostileZoneOfControl($0, for: attacker.faction)
             }.count
             let safeCount = reachableRoadCoords.count - pressuredCount
             let inRangeRoadCoords = reachableRoadCoords.filter {
@@ -2015,12 +2022,12 @@ final class AppContainer: ObservableObject {
         }
     }
 
-    private func currentRoadStatusNote(for division: Division, movementRules: MovementRules) -> String? {
+    private func currentRoadStatusNote(for division: Division) -> String? {
         guard gameState.map.tile(at: division.coord)?.hasRoad == true else {
             return nil
         }
 
-        if movementRules.isEnemyZoneOfControl(division.coord, for: division.faction, in: gameState) {
+        if isVisibleHostileZoneOfControl(division.coord, for: division.faction) {
             return "当前位置：已在官道，受敌控区压迫"
         }
         return "当前位置：已在官道，未受敌控区压迫"
@@ -2028,8 +2035,7 @@ final class AppContainer: ObservableObject {
 
     private func reachableRoadAccessNote(
         for division: Division,
-        reachableCoords: Set<HexCoord>,
-        movementRules: MovementRules
+        reachableCoords: Set<HexCoord>
     ) -> String? {
         let reachableRoadCoords = reachableCoords.filter {
             gameState.map.tile(at: $0)?.hasRoad == true
@@ -2041,14 +2047,14 @@ final class AppContainer: ObservableObject {
         }
 
         let contestedRoadCount = reachableRoadCoords.count {
-            movementRules.isEnemyZoneOfControl($0, for: division.faction, in: gameState)
+            isVisibleHostileZoneOfControl($0, for: division.faction)
         }
         let safeRoadCount = reachableRoadCoords.count - contestedRoadCount
         let nearestRoadDistance = reachableRoadCoords.map {
             division.coord.distance(to: $0)
         }.min() ?? 0
         let safeRoadCoords = reachableRoadCoords.filter {
-            !movementRules.isEnemyZoneOfControl($0, for: division.faction, in: gameState)
+            !isVisibleHostileZoneOfControl($0, for: division.faction)
         }
         let nearestSafeRoadDistance = safeRoadCoords.map {
             division.coord.distance(to: $0)

@@ -106,6 +106,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_unit_combat_no_hostile_empty_state.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_inspector_road_combat_note_wrapping.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_current_road_pressure_preview.md`
+- `md/prompt/v2.0-三国迁移/v2.4_unit_visible_road_pressure_audit.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_road_mobility_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_reachable_road_preview.md`
 - `md/prompt/v2.0-三国迁移/v2.4_unit_reachable_road_distance_preview.md`
