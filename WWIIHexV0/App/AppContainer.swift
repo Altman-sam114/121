@@ -139,9 +139,9 @@ final class AppContainer: ObservableObject {
                 self.lastAgentDecisionRecord = outcome.record
                 self.lastWarDirectiveRecords = outcome.directiveRecords
                 self.lastCommandMessage = outcome.record.errors.isEmpty
-                    ? "AI turn completed."
-                    : "AI turn completed with \(outcome.record.errors.count) issue(s)."
-                self.appendInteractionEvent("AI \(outcome.record.provider) resolved \(outcome.record.commandResults.count) command result(s).")
+                    ? "AI 回合已完成。"
+                    : "AI 回合完成，存在 \(outcome.record.errors.count) 项问题。"
+                self.appendInteractionEvent("\(outcome.record.providerDisplayName) 完成 \(outcome.record.commandResults.count) 条命令结果。")
                 self.isRunningAI = false
                 self.refreshSelectionAfterStateChange()
             }

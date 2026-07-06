@@ -33,11 +33,11 @@ struct AgentPanelView: View {
                 .font(.headline)
 
             LabeledContent("Agent") {
-                Text(record?.agentId ?? "sanguo_mock_general")
+                Text(record?.agentDisplayName ?? "兼容武将")
             }
 
             LabeledContent("来源") {
-                Text(record?.provider ?? "MockStrategy")
+                Text(record?.providerDisplayName ?? "兼容策略")
             }
 
             LabeledContent("意图") {
@@ -55,7 +55,7 @@ struct AgentPanelView: View {
             if let rulerRecord {
                 Divider()
                 LabeledContent("君主") {
-                    Text(rulerRecord.rulerAgentId)
+                    Text(AgentDecisionRecord.displayName(forAgentId: rulerRecord.rulerAgentId))
                 }
                 LabeledContent("姿态") {
                     Text(rulerRecord.posture.displayName)
@@ -70,7 +70,7 @@ struct AgentPanelView: View {
             if let diplomatRecord {
                 Divider()
                 LabeledContent("外交官") {
-                    Text(diplomatRecord.diplomatAgentId)
+                    Text(AgentDecisionRecord.displayName(forAgentId: diplomatRecord.diplomatAgentId))
                 }
                 LabeledContent("提案") {
                     Text(diplomatRecord.proposal.displayName)
@@ -94,7 +94,7 @@ struct AgentPanelView: View {
             if let governorRecord {
                 Divider()
                 LabeledContent("太守") {
-                    Text(governorRecord.governorAgentId)
+                    Text(AgentDecisionRecord.displayName(forAgentId: governorRecord.governorAgentId))
                 }
                 LabeledContent("内政") {
                     Text(governorRecord.focus.displayName)
@@ -118,7 +118,7 @@ struct AgentPanelView: View {
             if let strategistRecord {
                 Divider()
                 LabeledContent("军师") {
-                    Text(strategistRecord.strategistAgentId)
+                    Text(AgentDecisionRecord.displayName(forAgentId: strategistRecord.strategistAgentId))
                 }
                 if let zoneId = strategistRecord.selectedFrontZoneId {
                     LabeledContent("主防区") {
@@ -236,11 +236,11 @@ struct AgentPanelView: View {
                 }
             }
 
-            Text("Raw JSON")
+            Text("调试 JSON")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(record?.rawJSON ?? rawJSONPlaceholder)
+            Text(record?.debugJSONDisplay ?? rawJSONPlaceholder)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
@@ -305,7 +305,7 @@ struct AgentPanelView: View {
     private var rawJSONPlaceholder: String {
         """
         {
-          "agentId": "sanguo_mock_general",
+          "agentDisplayName": "兼容武将",
           "status": "placeholder",
           "orders": []
         }

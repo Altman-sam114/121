@@ -136,3 +136,72 @@ struct AgentDecisionRecord: Identifiable, Codable, Equatable {
     let commandResults: [CommandResultSummary]
     let errors: [String]
 }
+
+extension AgentDecisionRecord {
+    var agentDisplayName: String {
+        Self.displayName(forAgentId: agentId)
+    }
+
+    var providerDisplayName: String {
+        Self.displayName(forProvider: provider)
+    }
+
+    var debugJSONDisplay: String? {
+        rawJSON.map(Self.localizedDebugJSONForDisplay)
+    }
+
+    static func displayName(forAgentId agentId: String) -> String {
+        switch agentId {
+        case "guderian":
+            return "张辽"
+        case "system":
+            return "系统"
+        case "sanguo_mock_general":
+            return "兼容武将"
+        default:
+            if agentId.hasPrefix("ruler_") {
+                return "君主"
+            }
+            if agentId.hasPrefix("diplomat_") {
+                return "外交官"
+            }
+            if agentId.hasPrefix("governor_") {
+                return "太守"
+            }
+            if agentId.hasPrefix("marshal_") {
+                return "军师"
+            }
+            return agentId
+        }
+    }
+
+    static func displayName(forProvider provider: String) -> String {
+        provider
+            .split(separator: "+")
+            .map { providerComponentDisplayName(String($0)) }
+            .joined(separator: " + ")
+    }
+
+    private static func providerComponentDisplayName(_ provider: String) -> String {
+        switch provider {
+        case "MockAI":
+            return "兼容武将 AI"
+        case "System":
+            return "系统"
+        case "RulerDiplomatGovernorStrategistGeneralDirective":
+            return "君主/外交/太守/军师/武将指令"
+        case "RulerDiplomatGovernorStrategistGeneralMarshalDirective":
+            return "君主/外交/太守/军师/武将/军师指令"
+        default:
+            return provider
+        }
+    }
+
+    private static func localizedDebugJSONForDisplay(_ rawJSON: String) -> String {
+        rawJSON
+            .replacingOccurrences(of: "\"agentId\" : \"guderian\"", with: "\"agentDisplayName\" : \"张辽\"")
+            .replacingOccurrences(of: "\"agentId\": \"guderian\"", with: "\"agentDisplayName\": \"张辽\"")
+            .replacingOccurrences(of: "\"provider\" : \"MockAI\"", with: "\"providerDisplayName\" : \"兼容武将 AI\"")
+            .replacingOccurrences(of: "\"provider\": \"MockAI\"", with: "\"providerDisplayName\": \"兼容武将 AI\"")
+    }
+}

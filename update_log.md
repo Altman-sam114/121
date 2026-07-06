@@ -5090,7 +5090,53 @@ guerrillaWarfare 额外参考 infrastructure
 遗留风险：
 
 - `MockAIClient` 的 legacy 决策启发式仍会向 Bastogne fallback，并保留 armor / artillery 等旧战术文案；后续按 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
-- `guderian` 作为兼容 id 仍可能在 `AgentDecisionRecord`、`TurnManager.contextSummary`、`AgentPanelView` raw JSON 或调试字段中出现；后续应按“Agent record display helper”小切片处理展示层 raw id。
+
+## v2.4 - Agent 记录展示名兼容层
+
+完成日期：2026-07-06
+
+目标：
+
+- 减少 AI 面板、交互日志和上下文摘要中的 raw agent id / provider 残留，让兼容 `guderian` id 以张辽展示，让 `MockAI` 以兼容武将 AI 展示；底层 id、provider、JSON schema 和解析校验保持不变。
+
+完成内容：
+
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift` 新增 `agentDisplayName`、`providerDisplayName` 和 `debugJSONDisplay` 展示 helper；raw `agentId`、`provider`、`rawJSON` 仍原样存储。
+- `WWIIHexV0/Turn/TurnManager.swift` 的 `contextSummary`、上游 Agent 事件和 diagnostics 改为中文摘要，并使用 agent 展示名。
+- `WWIIHexV0/UI/AgentPanelView.swift` 的 Agent、来源、君主/外交官/太守/军师和调试 JSON 主展示改读展示名，不直接把 `guderian` / `MockAI` 当作主 UI 文案。
+- `WWIIHexV0/App/AppContainer.swift` 的 AI 回合消息和交互日志改为中文，并使用 provider 展示名。
+- 保留 AgentDecision parser、mapper、命令执行链、`AgentDecisionEnvelope.agentId`、`AgentDecisionRecord.agentId` 和原始 raw JSON 不变。
+
+关键文件：
+
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_record_display_names.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/AgentDecisionRecord.swift` 通过。
+- `swiftc -parse WWIIHexV0/Turn/TurnManager.swift` 通过。
+- `swiftc -parse WWIIHexV0/UI/AgentPanelView.swift` 通过。
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 改动文件尾随空白扫描、冲突标记扫描均无命中。
+- 旧直出模式扫描无命中：`Text(record?.agentId`、`Text(record?.provider`、`AI turn completed`、`AI \(outcome.record.provider)`、旧英文 context summary 和上游 Agent id 事件模板均未命中。
+- prompt 索引 Ruby 检查无缺项；`git diff --check` 通过。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `MockAIClient` 的 legacy 决策文本仍可能在意图、理由和调试 JSON 中出现 Bastogne / armor / artillery；后续按 `v2.4_mockai_visible_text_localization` 或 `v2.4_mockai_rationale_sanguo_localization.md` 单独迁移。
+- `AgentPanelView` 中防区、目标郡县和部分 directive summary 仍可能显示 raw region / zone id；后续按 UnitInspector / AgentPanel 战略锚点名称小切片迁移。
 
 ## v2.4 外交敌对 AI 上游摘要兼容层
 

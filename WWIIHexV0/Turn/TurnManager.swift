@@ -374,8 +374,9 @@ struct TurnManager {
         let adjustment = ruler.adjust(envelope: envelope, in: state)
         var nextState = state
         nextState.diplomacyState.appendRulerRecord(adjustment.record)
+        let rulerName = AgentDecisionRecord.displayName(forAgentId: adjustment.record.rulerAgentId)
         nextState.appendEvent(
-            "\(adjustment.record.rulerAgentId) 为 \(faction.displayName) 采取\(adjustment.record.posture.displayName)姿态。",
+            "\(rulerName) 为 \(faction.displayName) 采取\(adjustment.record.posture.displayName)姿态。",
             category: .diplomacy
         )
         let targetSummary = adjustment.record.preferredFrontZoneId?.rawValue ?? "无"
@@ -384,7 +385,7 @@ struct TurnManager {
             envelope: adjustment.envelope,
             record: adjustment.record,
             diagnostics: [
-                "君主 \(adjustment.record.rulerAgentId) 以\(adjustment.record.posture.displayName)姿态塑形指令；优先防区 \(targetSummary)。"
+                "君主 \(rulerName) 以\(adjustment.record.posture.displayName)姿态塑形指令；优先防区 \(targetSummary)。"
             ]
         )
     }
@@ -399,8 +400,9 @@ struct TurnManager {
         let adjustment = strategist.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
         nextState.appendStrategistRecord(adjustment.record)
+        let strategistName = AgentDecisionRecord.displayName(forAgentId: adjustment.record.strategistAgentId)
         nextState.appendEvent(
-            "\(adjustment.record.strategistAgentId) 编排 \(faction.displayName) 军令：\(adjustment.record.intent)",
+            "\(strategistName) 编排 \(faction.displayName) 军令：\(adjustment.record.intent)",
             category: .event,
             relatedRecordId: adjustment.record.id
         )
@@ -410,7 +412,7 @@ struct TurnManager {
             envelope: adjustment.envelope,
             record: adjustment.record,
             diagnostics: [
-                "军师 \(adjustment.record.strategistAgentId) 编排目标 \(targetSummary.isEmpty ? "无" : targetSummary)。"
+                "军师 \(strategistName) 编排目标 \(targetSummary.isEmpty ? "无" : targetSummary)。"
             ]
         )
     }
@@ -431,15 +433,16 @@ struct TurnManager {
         let adjustment = diplomat.plan(envelope: envelope, in: state, rulerRecord: rulerRecord)
         var nextState = state
         nextState.diplomacyState.appendDiplomatRecord(adjustment.record)
+        let diplomatName = AgentDecisionRecord.displayName(forAgentId: adjustment.record.diplomatAgentId)
         nextState.appendEvent(
-            "\(adjustment.record.diplomatAgentId) 提出 \(faction.displayName) 外交方案：\(adjustment.record.summary)",
+            "\(diplomatName) 提出 \(faction.displayName) 外交方案：\(adjustment.record.summary)",
             category: .diplomacy,
             relatedRecordId: adjustment.record.id
         )
         let target = adjustment.record.targetCountryId?.rawValue ?? "无对象"
         var commandResults: [CommandResultSummary] = []
         var diagnostics = [
-            "外交官 \(adjustment.record.diplomatAgentId) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
+            "外交官 \(diplomatName) 建议\(adjustment.record.proposal.displayName)，对象 \(target)。"
         ]
         if let command = diplomacyCommand(for: adjustment.record) {
             let result = commandHandler.execute(command, in: nextState)
@@ -493,15 +496,16 @@ struct TurnManager {
         var nextState = state
         nextState.appendGovernorRecord(adjustment.record)
         let recommendation = governorRecommendationSummary(adjustment.record)
+        let governorName = AgentDecisionRecord.displayName(forAgentId: adjustment.record.governorAgentId)
         nextState.appendEvent(
-            "\(adjustment.record.governorAgentId) 建议 \(faction.displayName) \(adjustment.record.focus.displayName)：\(recommendation)",
+            "\(governorName) 建议 \(faction.displayName) \(adjustment.record.focus.displayName)：\(recommendation)",
             category: .supply,
             relatedRecordId: adjustment.record.id
         )
         let regions = adjustment.record.focusRegionIds.map(\.rawValue).joined(separator: ", ")
         var commandResults: [CommandResultSummary] = []
         var diagnostics = [
-            "太守 \(adjustment.record.governorAgentId) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
+            "太守 \(governorName) 建议\(adjustment.record.focus.displayName)；重点郡县 \(regions.isEmpty ? "无" : regions)。"
         ]
         let commands = governorCommands(for: adjustment.record)
         if commands.isEmpty {
@@ -737,7 +741,8 @@ struct TurnManager {
     }
 
     static func contextSummary(_ context: AgentContext) -> String {
-        "\(context.agentId) turn \(context.turn): \(context.friendlyDivisions.count) friendly divisions, \(context.enemyDivisions.count) known enemy divisions, \(context.objectives.count) objectives visible."
+        let agentName = AgentDecisionRecord.displayName(forAgentId: context.agentId)
+        return "\(agentName) 第 \(context.turn) 回合：己方军队 \(context.friendlyDivisions.count) 支，可见敌军 \(context.enemyDivisions.count) 支，可见目标 \(context.objectives.count) 个。"
     }
 
     static func canonicalJSON(_ envelope: AgentDecisionEnvelope) throws -> String {
