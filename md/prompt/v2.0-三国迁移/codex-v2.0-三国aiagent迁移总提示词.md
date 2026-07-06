@@ -466,7 +466,7 @@ MapEditor 迁移：
 
 新增或迁移规则：
 
-- 粮草：`SupplyRules` 保留基础，展示为粮道/粮草。
+- 粮草：`SupplyRules` 保留基础，展示为粮道/粮草；hex 粮道控制格、撤退安全格、region 级战略粮道控制区通行和撤退安全郡县都应按 `DiplomacyState` hostile / atWar 口径判断敌对。
 - 围城：城池 region 或 fortress hex 被敌邻接且粮道断绝时，防御和恢复下降；占领仍必须从 hex 执行。
 - 士气：可先从日志和战斗修正开始，不强制首轮加字段。
 - 武将影响：首版可通过 `GeneralAssignment` 的 skill 调整 tactic 选择或小幅战斗修正，不能直接跳过规则。
