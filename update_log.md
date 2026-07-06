@@ -4610,6 +4610,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做本机运行时 UI 烟测；郡县检查器外交分组在动态外交状态变化、缺国家建档、观察模式、长军队名和 Dynamic Type 下的实际表现仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 真实攻击合法性、道路敌控区、粮道阻断、补给、安全补员和部署层仍按现有规则口径执行；这次只是郡县检查器只读展示口径与外交关系摘要对齐。
 
+## v2.4 - 部署层与 Region 命令敌对边界兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `WarDeploymentManager.rebuildSegments` 的单位级 `hasEnemyPresence` 改用 `division.faction.isHostile(to: zone.faction)`，避免中立或非 hostile 单位触发敌军存在。
+- `WarDeploymentManager.enemyZoneIdsTouching`、`regionTouchesEnemyZone` 和 `hexTouchesEnemyZone` 的相邻防区接触改用 `neighborFaction.isHostile(to: faction)`，避免中立或非 hostile 防区生成敌对前线接触。
+- `RegionCommandValidator` 的 `.attack` 目标阵营校验改用 `target.faction.isHostile(to: attacker.faction)`，与 hex `CommandValidator.validateAttack` 口径对齐。
+- 保持非己方控制 hex/region 的部署压力和前沿分类不动；`controller != faction` 仍表达未控制、争夺或非所属位置，不等同于敌军单位。
+- `Faction.isHostile(to:)`、`RuleEngine`、`CommandExecutor`、`MovementRules`、`SupplyRules`、真实伤害、移动、补给和完整借道/同盟通行制度不变。
+
+关键系统：
+
+- `WWIIHexV0/Rules/WarDeploymentManager.swift`
+- `WWIIHexV0/Rules/RegionCommandValidator.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_deployment_region_hostile_rules.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/WarDeploymentManager.swift` 通过。
+- `swiftc -parse WWIIHexV0/Rules/RegionCommandValidator.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做本机运行时前线/部署烟测；中立或非 hostile 防区不再生成敌对接触后，动态部署层在复杂多势力接壤下的实际 front/depth/garrison 分配仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- RegionCommandValidator 只是旧 region 命令校验兼容层；默认执行链仍会经 `CommandIntentAdapter -> CommandValidator -> RuleEngine` 兜底。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

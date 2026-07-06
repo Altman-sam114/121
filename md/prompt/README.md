@@ -72,6 +72,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_hostile_road_combat_boundary.md`
 - `md/prompt/v2.0-三国迁移/v2.4_ai_executor_unit_hostile_filtering.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_inspector_diplomacy_hostile_grouping.md`
+- `md/prompt/v2.0-三国迁移/v2.4_deployment_region_hostile_rules.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_combat_log_audit.md`
 - `md/prompt/v2.0-三国迁移/v2.4_combat_factor_log_audit.md`
 - `md/prompt/v2.0-三国迁移/v2.4_general_name_snapshot.md`
