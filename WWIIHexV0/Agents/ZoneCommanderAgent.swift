@@ -592,7 +592,7 @@ struct ZoneCommanderAgent: ZoneCommanderProviding {
         let visibleEnemyRegions = Set(visibleEnemyRegionIds(zone: zone, state: state))
         var strengthByRegion: [RegionId: Int] = [:]
 
-        for division in state.divisions where division.faction != zone.faction && !division.isDestroyed {
+        for division in state.divisions where division.faction.isHostile(to: zone.faction) && !division.isDestroyed {
             guard let regionId = division.location(in: state.map),
                   visibleEnemyRegions.contains(regionId) else {
                 continue
@@ -707,7 +707,7 @@ struct ZoneCommanderAgent: ZoneCommanderProviding {
         state: GameState
     ) -> Bool {
         state.divisions.contains { division in
-            guard division.faction != zone.faction,
+            guard division.faction.isHostile(to: zone.faction),
                   !division.isDestroyed else {
                 return false
             }

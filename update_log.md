@@ -4526,6 +4526,50 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮没有做运行时 UI 烟测，军队详情可见敌军过滤后，在敌军刚离开视野、选中敌军、观察模式和 Dynamic Type 下的实际体验仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 军队详情接战预判和攻击高亮是只读态势提示，不代表完整攻击合法性、隐藏敌军、真实胜率、同盟借道、移动后同回合攻击或敌方回合反制制度。
 
+## v2.4 - AI 与执行器单位敌对筛选兼容层
+
+完成日期：2026-07-06
+
+核心更新：
+
+- `WarCommandExecutor.enemyStrength`、`hasEnemyPresence` 和 `visibleEnemyDivision` 改用 `Faction.isHostile(to:)` 筛选单位级敌军，避免同阵营或 `.neutral` 中立单位影响突破目标排序、敌军存在判断或具体攻击目标选择。
+- `RulerAgent`、`MockAICommander` 和 `ZoneCommanderAgent` 的单位级敌军强度、威胁和接触判断改用 hostile 口径，减少三国多势力场景下把中立单位当作敌军的误判。
+- 保持 region/controller 的非所属判断不动；本轮只修单位级敌对筛选，不把未控制区域等同于敌军单位。
+- 真实移动、攻击、道路、粮道、补给、外交、生产、回合推进、`CommandValidator`、`RuleEngine` 和 `Faction.isHostile(to:)` 语义不变。
+
+关键系统：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Agents/RulerAgent.swift`
+- `WWIIHexV0/Agents/MockAICommander.swift`
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_ai_executor_unit_hostile_filtering.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/RulerAgent.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/MockAICommander.swift` 通过。
+- `swiftc -parse WWIIHexV0/Agents/ZoneCommanderAgent.swift` 通过。
+- 本轮改动文件尾随空白扫描无命中。
+- 行首冲突标记扫描无命中。
+- 旧默认测试口径扫描无命中。
+- `git diff --check` 通过，无输出。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+
+未跑：
+
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮没有做本机运行时 AI 回合或战斗烟测；AI 威胁、突破排序和执行器目标选择在完整多势力外交关系、非交战、同盟或借道制度下的行为仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 区域非所属/争夺判断仍可把未控制 region 纳入目标候选，这是战略目标选择语义，不代表该 region 内一定存在 hostile 单位。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

@@ -300,7 +300,7 @@ struct RulerStrategicSnapshot {
     private static func enemyStrength(adjacentTo zone: FrontZone, state: GameState) -> Int {
         let visibleEnemyRegions = Set(zone.frontSegments.map(\.regionId))
         return state.divisions
-            .filter { $0.faction != zone.faction && !$0.isDestroyed }
+            .filter { $0.faction.isHostile(to: zone.faction) && !$0.isDestroyed }
             .filter { division in
                 guard let regionId = division.location(in: state.map) else {
                     return false

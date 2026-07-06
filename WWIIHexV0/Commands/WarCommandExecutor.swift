@@ -806,7 +806,7 @@ struct WarCommandExecutor {
     ) -> Int {
         state.divisions
             .filter { division in
-                guard division.faction != faction,
+                guard division.faction.isHostile(to: faction),
                       !division.isDestroyed else {
                     return false
                 }
@@ -929,7 +929,7 @@ struct WarCommandExecutor {
         state: GameState
     ) -> Bool {
         state.divisions.contains { division in
-            guard division.faction != zone.faction,
+            guard division.faction.isHostile(to: zone.faction),
                   !division.isDestroyed else {
                 return false
             }
@@ -946,7 +946,7 @@ struct WarCommandExecutor {
         let regionSet = Set(regionIds)
         return state.divisions
             .filter { target in
-                guard target.faction != zone.faction,
+                guard target.faction.isHostile(to: zone.faction),
                       !target.isDestroyed,
                       let targetRegion = target.location(in: state.map),
                       regionSet.contains(targetRegion) else {

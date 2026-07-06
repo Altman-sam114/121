@@ -80,8 +80,8 @@ v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧
 - `EconomyState` 是 faction 级经济总账；收入来自受控 region、城市、工厂、基础设施和补给值，但战术占领仍以 hex 为准。
 - `RegionDataSet` 中 owner/controller 缺省或 null 会映射为 `.neutral`，不会再 fallback 给 `.allies`。
 - Theater / FrontLine / WarDeployment / Region visibility 这类派生层使用 `Faction.scenarioCases` 识别地图上的三国势力；`Faction.allCases` 当前只保留旧二元回合兼容含义。
-- 规则/AI 摘要中的敌对判断优先用 `Faction.isHostile(to:)`；`Faction.opponent` 只作为旧兼容 helper，不应作为新代码敌我关系来源。
-- `MovementRules.isEnemyZoneOfControl`、`CommandValidator.validateAttack`、`AppContainer` 的地图点击攻击/可见攻击高亮/武将宏观目标选择、`SupplyRules.canSupplyPass` 和 `EconomyRules` 的安全补员邻接判断当前都已经接入 `Faction.isHostile(to:)`；只读预判和高亮还会通过 `MapDisplayAdapter` 过滤玩家视角可见敌军，完整借道/同盟通行仍待后续外交制度。
+- 规则/AI 摘要、MockAI 威胁估算和 `WarCommandExecutor` 单位目标筛选中的敌对判断优先用 `Faction.isHostile(to:)`；`Faction.opponent` 只作为旧兼容 helper，不应作为新代码敌我关系来源。
+- `MovementRules.isEnemyZoneOfControl`、`CommandValidator.validateAttack`、`WarCommandExecutor` 单位级敌军强度/存在/目标筛选、`RulerAgent` / `MockAICommander` / `ZoneCommanderAgent` 单位级敌军摘要、`AppContainer` 的地图点击攻击/可见攻击高亮/武将宏观目标选择、`SupplyRules.canSupplyPass` 和 `EconomyRules` 的安全补员邻接判断当前都已经接入 `Faction.isHostile(to:)`；只读预判和高亮还会通过 `MapDisplayAdapter` 过滤玩家视角可见敌军，完整借道/同盟通行仍待后续外交制度。
 - `DiplomacyState.initial` 能为三国势力生成基础 country / bloc profile；默认关系当前只把曹袁设为 `atWar`，汉室/中立和其他势力默认 `neutral`。
 - 玩家、AI、后续聊天命令最终都必须经过 `Command` / `ZoneDirective -> WarCommandExecutor -> RuleEngine`，不能直接改 `GameState`。
 - v0.5 默认战争 AI 上游是 `MarshalAgent -> TheaterDirective JSON -> TheaterDirectiveDecoder -> TheaterDirectiveCompiler`，下游执行收口到 `ZoneDirective -> WarCommandExecutor -> RuleEngine`。
