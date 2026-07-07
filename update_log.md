@@ -7034,6 +7034,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时加载失败 UI 检查；真实错误弹出/日志路径的可见性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - `loadArdennesDataSet()`、`loadArdennesV02Regions()`、旧阿登数据文件名和通用 missing resource 错误仍可能暴露 raw 资源名，后续如需完全隐藏旧阿登路径应单独切片处理。
 
+## v2.5 - 缺失数据资源错误展示安全补丁
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 玩家/编辑器可见文案收口，避免 `DataLoaderError.missingResource` 直接把 `ardennes_v0_scenario.json`、`ardennes_v02_regions.json` 等 raw 资源名拼入错误说明。
+
+完成内容：
+
+- `DataLoaderError.description` 的缺资源错误从英文 `Missing data resource: <resource>.json` 改为中文“缺少...。”。
+- 常见资源名映射为中文安全类别：官渡剧本数据、官渡郡县数据、兼容剧本数据、兼容郡县数据、三国军队模板、兼容军队模板、地形规则数据、兼容武将配置。
+- 未知资源名显示为“指定数据文件”，不直接暴露 raw 文件名。
+- 本轮保留 `DataLoaderError.missingResource(String)` payload、所有资源名、`loadArdennes*` API、fallback、JSON、规则、AI 和命令管线不变。
+
+关键文件：
+
+- `WWIIHexV0/Data/ScenarioDefinition.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_missing_resource_error_display_safety.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Data/ScenarioDefinition.swift` 通过。
+- `rg -n "Missing data resource" WWIIHexV0/Data/ScenarioDefinition.swift` 无命中。
+- 直接拼接 raw resourceName / `.json` 的旧展示扫描无命中；当前缺资源描述只调用中文 `resourceDisplayName(for:)` 映射。
+- `ardennes_v0_scenario`、`ardennes_v02_regions` 只保留在 `resourceDisplayName(for:)` 的安全映射 case 中，不作为错误句子直接展示。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片适合只改 `DataLoaderError.description/errorDescription` 展示，不应修改 enum case、resourceName、`loadArdennes*` API、旧阿登资源名、MapEditor 缺资源路径或 fallback JSON；另一个子 Agent 标出旧 fallback `unit_templates.json` displayName 残留，本轮不混入。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时加载失败 UI 检查；真实错误弹出位置和调试日志中的可见路径仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- 旧 fallback `WWIIHexV0/Data/unit_templates.json` 的 displayName 仍有 Panzer / Division 英文展示名，已由并发只读子 Agent 标出，后续应作为独立 JSON display-only 切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

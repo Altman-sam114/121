@@ -160,7 +160,7 @@ enum DataLoaderError: Error, CustomStringConvertible, LocalizedError {
     var description: String {
         switch self {
         case .missingResource(let resourceName):
-            return "Missing data resource: \(resourceName).json"
+            return "缺少\(Self.resourceDisplayName(for: resourceName))。"
         case .validationFailed(let errors):
             return errors.map(\.description).joined(separator: "\n")
         }
@@ -168,5 +168,28 @@ enum DataLoaderError: Error, CustomStringConvertible, LocalizedError {
 
     var errorDescription: String? {
         description
+    }
+
+    private static func resourceDisplayName(for resourceName: String) -> String {
+        switch resourceName {
+        case "guandu_200_scenario":
+            return "官渡剧本数据"
+        case "guandu_200_regions":
+            return "官渡郡县数据"
+        case "ardennes_v0_scenario":
+            return "兼容剧本数据"
+        case "ardennes_v02_regions":
+            return "兼容郡县数据"
+        case "sanguo_unit_templates":
+            return "三国军队模板"
+        case "unit_templates":
+            return "兼容军队模板"
+        case "terrain_rules":
+            return "地形规则数据"
+        case "general_agents":
+            return "兼容武将配置"
+        default:
+            return "指定数据文件"
+        }
     }
 }
