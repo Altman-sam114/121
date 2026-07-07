@@ -200,4 +200,6 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.5_war_executor_combat_target_situation.md`
 - `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_situation_diagnostics.md`
 - `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_path_limit_diagnostics.md`
+- `md/prompt/v2.0-三国迁移/v2.5_region_victory_objective_fallback.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_dynamic_advance_hostile_gate.md`
 - `md/prompt/v2.0-三国迁移/v2.5_fallback_json_display_names.md`

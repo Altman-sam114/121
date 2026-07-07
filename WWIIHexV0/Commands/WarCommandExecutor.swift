@@ -1400,6 +1400,9 @@ struct WarCommandExecutor {
         guard state.theaterState.dynamicTheaterId(for: hex, map: state.map) != advancingTheaterId else {
             return regionId
         }
+        guard let advancingFaction = state.warDeploymentState.frontZones[advancingZoneId]?.faction else {
+            return nil
+        }
         guard shouldAdvanceDynamicTheater(
             hex: hex,
             advancingZoneId: advancingZoneId,
@@ -1414,7 +1417,7 @@ struct WarCommandExecutor {
             divisions: state.divisions,
             breakthroughHex: hex,
             advancingTheaterId: advancingTheaterId,
-            faction: state.warDeploymentState.frontZones[advancingZoneId]?.faction ?? .germany
+            faction: advancingFaction
         )
         state.theaterState = expansion.state
 
@@ -1457,11 +1460,11 @@ struct WarCommandExecutor {
         if let destinationZoneId,
            destinationZoneId != advancingZoneId,
            let destinationFaction = state.warDeploymentState.frontZones[destinationZoneId]?.faction {
-            return destinationFaction != advancingFaction
+            return state.diplomacyState.isHostile(between: destinationFaction, and: advancingFaction)
         }
 
         if let controller = state.map.tile(at: hex)?.controller {
-            return controller != advancingFaction
+            return state.diplomacyState.isHostile(between: controller, and: advancingFaction)
         }
 
         return false

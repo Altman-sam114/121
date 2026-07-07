@@ -22,8 +22,8 @@ struct RegionVictoryRules {
             return scenarioAssessment
         }
 
-        let bastogneController = controller(ofCityNamed: "Bastogne", in: state)
-        let stVithController = controller(ofCityNamed: "St. Vith", in: state)
+        let bastogneController = state.map.controllerOfObjective(id: "bastogne")
+        let stVithController = state.map.controllerOfObjective(id: "st_vith")
 
         if bastogneController == .germany && stVithController == .germany {
             return RegionVictoryAssessment(winner: .germany, reason: .bastogneAndStVithControlledByGermany)
@@ -34,10 +34,6 @@ struct RegionVictoryRules {
         }
 
         return RegionVictoryAssessment(winner: nil, reason: nil)
-    }
-
-    func controller(ofCityNamed name: String, in state: GameState) -> Faction? {
-        state.map.regions.values.first { $0.city?.name == name }?.controller
     }
 
     private func assessScenarioVictory(in state: GameState) -> RegionVictoryAssessment? {

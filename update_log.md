@@ -7611,6 +7611,85 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；更细的道路审计文案需要在 AI 回合或玩家武将宏观军令实际生成移动命令后确认面板观感。
 - `shortestPathIgnoringMovement` 仍复用通行、敌控区和占位规则；“无通路”表示在当前规则下无可用路径，不单独承诺具体阻断来源。
 
+## v2.5 - Region 胜负 fallback 目标 id 同源
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移，把 `RegionVictoryRules` 的旧 fallback 胜负分析从展示城市名查找改为 objective id 查找，和 `VictoryRules` 使用同一套稳定目标锚点，避免旧英文地名或后续展示名调整影响 region 只读胜负分析。
+
+完成内容：
+
+- `RegionVictoryRules.assessVictory(in:)` 未命中剧本胜负条件时，改为通过 `state.map.controllerOfObjective(id: "bastogne")` 和 `state.map.controllerOfObjective(id: "st_vith")` 读取 fallback 控制权。
+- 移除 `controller(ofCityNamed:in:)` 展示名查找 helper，`RegionVictoryRules.swift` 不再把 `"Bastogne"` / `"St. Vith"` 字符串作为规则锚点。
+- 保持旧 fallback 的 winner、`VictoryReason` rawValue 和只读 assessment 行为不变；官渡 scenario victory 主路径、JSON schema、HUD、命令/AI 管线均不变。
+
+关键文件：
+
+- `WWIIHexV0/Rules/RegionVictoryRules.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_region_victory_objective_fallback.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift WWIIHexV0/Rules/RegionVictoryRules.swift` 通过。
+- 定向扫描确认 `RegionVictoryRules.swift` 不再包含 `Bastogne`、`St. Vith` 或 `controller(ofCityNamed` 规则锚点。
+- 定向扫描确认 `RegionVictoryRules.swift` 包含 `controllerOfObjective(id: "bastogne")` 和 `controllerOfObjective(id: "st_vith")`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不跑 RegionVictoryRules XCTest；旧 fixture 语义需等待云端 build 和后续授权测试确认。
+- 旧 fallback objective id `bastogne` / `st_vith` 仍作为 Codable / 历史测试兼容锚点保留，后续完整三国剧本应继续优先使用 `ScenarioVictoryCondition`。
+
+## v2.5 - 宏观动态方面推进外交敌对 gate
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把 `WarCommandExecutor` 宏观军令移动后的动态方面推进从“目标不是己方”收敛为“目标是外交 hostile / atWar”，避免非敌对第三方、中立或借道状态被宏观执行器误判为可推进动态方面。
+
+完成内容：
+
+- `WarCommandExecutor.applyStrategicAdvance` 中 `TheaterSystem.expandDynamicTheater` 的 faction 改为必须来自 `advancingZoneId` 对应的 `FrontZone.faction`；缺失时不推进，不再 fallback 到 `.germany`。
+- `WarCommandExecutor.shouldAdvanceDynamicTheater` 检查目标已有 zone faction 和 hex controller 时，改用 `state.diplomacyState.isHostile(between:and:)` 判断是否允许推进。
+- 保持动态方面只推进单个 breakthrough hex，不改变 `regionToTheater`、`TheaterSystem`、`WarDeploymentManager`、占领规则、命令执行顺序、JSON schema 或 UI。
+- 并发只读子 Agent 复核指出 `CommandExecutor` 直接命令路径仍有同类 “not self” 谓词；本轮按低冲突范围只修宏观 `WarCommandExecutor`，直接命令 parity 记录为后续风险。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_dynamic_advance_hostile_gate.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift WWIIHexV0/Rules/RegionVictoryRules.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 不再包含宏观动态方面推进处的 `.germany` fallback、`destinationFaction != advancingFaction` 或 `controller != advancingFaction`。
+- 定向扫描确认 `WarCommandExecutor.swift` 包含 `isHostile(between: destinationFaction, and: advancingFaction)` 与 `isHostile(between: controller, and: advancingFaction)`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- `WWIIHexV0/Rules/CommandExecutor.swift` 直接命令路径的动态推进谓词仍使用 “not self”；后续应单独做 parity 切片，避免玩家微操移动与宏观武将军令口径分叉。
+- 本轮不运行本机动态战区回归或模拟器检查；运行时行为等待云端 build 与后续授权测试确认。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
