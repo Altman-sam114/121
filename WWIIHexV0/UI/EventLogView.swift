@@ -62,8 +62,8 @@ struct EventLogView: View {
     private func metadata(for entry: GameLogEntry) -> String {
         let faction = entry.faction?.displayName ?? "系统"
         let phase = entry.phase?.displayName ?? "开局"
-        if let relatedRecordId = entry.relatedRecordId {
-            return "回合 \(entry.turn) - \(faction) - \(phase) - \(relatedRecordId)"
+        if entry.relatedRecordId != nil {
+            return "回合 \(entry.turn) - \(faction) - \(phase) - 军机审计"
         }
         return "回合 \(entry.turn) - \(faction) - \(phase)"
     }

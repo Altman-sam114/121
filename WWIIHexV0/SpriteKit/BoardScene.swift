@@ -600,7 +600,7 @@ final class BoardScene: SKScene {
               !generalId.isEmpty else {
             return nil
         }
-        return generalId
+        return "未命名武将"
     }
 
     private func shortOperationName(_ name: String) -> String {

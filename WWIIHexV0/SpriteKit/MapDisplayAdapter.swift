@@ -70,6 +70,7 @@ struct RegionInspectorState: Equatable {
 
 struct UnitInspectorStrategicState: Equatable {
     let coord: HexCoord
+    let coordDisplayName: String
     let regionId: RegionId?
     let regionDisplayName: String?
     let dynamicTheaterId: TheaterId?
@@ -333,6 +334,7 @@ struct MapDisplayAdapter {
         let dynamicTheaterId = state.theaterState.dynamicTheaterId(for: division.coord, map: state.map)
         return UnitInspectorStrategicState(
             coord: division.coord,
+            coordDisplayName: hexDisplayName(division.coord),
             regionId: regionId,
             regionDisplayName: unitRegionDisplayName(for: regionId),
             dynamicTheaterId: dynamicTheaterId,
@@ -378,6 +380,34 @@ struct MapDisplayAdapter {
         }
         let name = state.map.region(id: regionId)?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return name.isEmpty ? "未命名郡县" : name
+    }
+
+    private func hexDisplayName(_ coord: HexCoord) -> String {
+        guard let tile = state.map.tile(at: coord) else {
+            return "未知地格（\(coord.q),\(coord.r)）"
+        }
+        let anchor = displayAnchor(for: tile, coord: coord)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(coord.q),\(coord.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = state.map.region(for: coord),
+           let region = state.map.region(id: regionId) {
+            let regionName = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !regionName.isEmpty && regionName != region.id.rawValue {
+                return regionName
+            }
+        }
+        return "地格"
     }
 
     private func theaterDisplayName(for theaterId: TheaterId?) -> String? {

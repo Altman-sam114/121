@@ -42,6 +42,7 @@ v2.4 命名边界：
 - `GeneralData.rank` raw 字段保留数据兼容；`GeneralCommandPanelView` 和 `GeneralProfileView` 使用 `rankDisplayName` 将旧英文 fallback 军衔显示为三国语义军衔，头像辅助功能文案使用中文“头像”。
 - 武将统军风格通过 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 共享展示；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 实际执行口径一致。军机面板可见的防区/方面指令摘要和 fallback diagnostics 使用中文文案；武将道路/交战日志、计划军令摘要、武将层复核事件和军机面板记录缺少展示名时使用“未命名武将 / 未知郡县 / 未知防区”等中文占位，不把 raw `generalId`、`RegionId` 或 `FrontZoneId` 当作玩家文案 fallback；directive schema、记录 id 和执行规则不变。
 - `UnitNode` 地图兵牌使用三国兵种 glyph 和 `退/守` 姿态短标记；`Division` / `ComponentType` / `RetreatMode` rawValue 与规则行为不变。
+- 军队详情、玩家选择地格日志、移动命令结果、行军日志、动态方面推进事件和地图计划军令标签使用城池、关隘、郡县、官道或地形优先的中文地格展示，坐标只作括号内次级定位；缺武将展示名时显示“未命名武将”，战报 metadata 只显示“军机审计”而不显示 raw `relatedRecordId`，外交面板记录字段显示“执行者”而不是英文 `Agent`。
 - 军队详情和郡县详情的郡县、动态方面、防区、战线和要地状态由 `MapDisplayAdapter` 生成玩家可见展示名，不再直接显示战略 raw id 或 `None/controlled` 英文 fallback；typed id、Codable rawValue、动态方面/防区/战线规则行为不变。
 - `AgentPanelView` 的主审计字段、君主/外交官/太守/军师/武将记录和防区指令摘要优先使用展示名；标题、执行者和命令 fallback 已显示为军机谋议、执行者和军令，外交对象来自 `CountryProfile.name`，郡县来自 `RegionNode.name`，防区来自 `FrontZone.name` 或 `曹军防区：官渡、许昌` 这类只读 fallback；意图、摘要、命令结果、错误和诊断会过滤 raw JSON、英文兼容 id、旧二战词、内部方面 rawValue 和明显机器字段，面板底部显示中文审计摘要而不默认展开原始 JSON；调试 JSON 和 Codable raw id 仍保留在记录结构中。
 - `DiplomacyPanelView` 只读展示国家、集团、关系双方、君主重点防区和外交对象，优先使用国家名、集团名、势力名和 `RootGameView` 生成的防区展示名；缺展示名时显示中文占位，不把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 当作玩家文案 fallback；外交规则、道路、粮道和交战规则不变。

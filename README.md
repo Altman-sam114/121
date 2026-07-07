@@ -31,6 +31,8 @@
 
 **当前命令结果展示名边界：** `RuleEngine` 成功 `CommandResult.message` 已改为 state-aware 中文摘要，移动/交战会使用 `Division.thematicDisplayName`，修路会显示郡县名，外交会显示国家或势力名；`AppContainer` 玩家交互日志不再重复拼接 raw id 版 `Command.displayName`，`AgentPanelView` 的命令结果标题显示“进军命令 / 交战命令 / 修缮道路命令”等类别。`Command.displayName` 本体、`CommandResultSummary.commandDisplayName` 存储字段、Codable/rawValue 和旧 AI 兼容判断不变。
 
+**当前地格与战报展示边界：** 军队详情、玩家选择地格日志、移动命令结果、行军日志、动态方面推进事件和地图计划军令标签使用城池、关隘、郡县、官道或地形优先的中文展示，坐标只作为括号内次级定位；缺武将展示名时显示“未命名武将”，不把 `generalId` 直接放到地图标签。战报 metadata 不再直接显示 `relatedRecordId`，有审计关联时显示“军机审计”；外交面板君主和外交官记录字段显示“执行者”而不是英文 `Agent`。底层 `HexCoord`、`GameLogEntry.relatedRecordId`、`PlayerPlannedOperation.createdByGeneralId`、Codable/rawValue、移动、道路、交战和外交规则不变。
+
 **当前指令诊断展示边界：** 旧 `RegionCommand.displayName` 兼容层已收口为“郡县进军 / 郡县交战 / 郡县固守 / 郡县补给”等安全类别；`CommandIntentAdapterError` 和 `TheaterDirectiveDecoderError` 的可见说明已改为中文军师/郡县语义，缺失防区、方面或郡县时不把 raw id 当作玩家文案；`TurnManager` 的外交和太守命令成功诊断复用 `CommandResult.message`。底层 region 命令、军师指令 JSON、Codable schema、rawValue、命令校验和规则执行不变。
 
 **当前军机面板与方面展示安全边界：** `AgentPanelView` 的意图、摘要、命令结果、错误和防区指令诊断会过滤 raw JSON、英文兼容 id、`NorthWest` 等内部方面 rawValue、旧 `germany/allies` / `division` 文案和明显机器字段；面板底部显示中文审计摘要，不再默认展开原始 JSON。`FixedTheaterKind` 仍保留 `NorthWest/NorthEast/SouthWest/SouthEast` 作为 Codable / id 兼容值，但 `TheaterNode.name` 创建时显示为“西北方面 / 东北方面 / 西南方面 / 东南方面”，缺失的临时方面显示为势力简称加“临时方面”。底层 `TheaterId`、`WarDirectiveRecord`、`AgentDecisionRecord.debugJSONDisplay`、Codable/rawValue、动态方面推进、道路和交战规则不变。
@@ -151,7 +153,7 @@ WWIIHexV0/
 - **v2.4 Agent 面板战略锚点展示名**：`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要优先显示 `CountryProfile.name`、`RegionNode.name` 与 `FrontZone.name`；防区名缺失或仍等于 raw id 时，由 `RootGameView` 按势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类只读展示名；意图、摘要、命令结果、错误和诊断会过滤明显 raw/debug 文本，面板底部显示审计摘要。底层 `CountryId`、`RegionId`、`FrontZoneId`、记录 Codable 和调试 JSON 字段不变。
 - **v2.4 HUD、菜单与军机面板三国化**：主 HUD 新局按钮、macOS 战局菜单、信息面板开关、紧凑面板 tab、`AgentPanelView` 标题/执行者字段、命令 fallback、`AppContainer` 军机回合消息、本地 mock / no-op 来源、兼容 fallback 指挥者名称和军队/郡县选择日志已改为中文三国语义；军队选择日志优先使用 `Division.thematicDisplayName`，底层记录、调试 JSON、命令管线和规则行为不变。
 - **v2.4 Local LLM 提示词三国语义**：Legacy `LocalLLMDecisionProvider` 仍默认不启用，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`schemaVersion`、JSON keys、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
-- **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
+- **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；选择无郡县地格时使用地名/地形优先展示，坐标只作次级定位；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
 - **v2.4 SupplyRules 撤退、围城与粮草日志三国化**：`SupplyRules` 的整补、围城恢复阻断、撤退、撤退失败、粮道断绝围城损耗、包围损耗和撤退整顿事件日志已改为中文，并使用军队主题展示名；撤退位置优先显示城池、关隘、郡县、官道或地形，坐标只作次级定位。补给路径、围城判定、撤退目的地、损耗数值、事件类别和规则执行不变。
 - **v2.4 SupplyRules 控制格 hostile gate 外交化**：`SupplyRules.isSafeRetreatTile` 和粮道 `canSupplyPass` 的 capturable 控制格阻断改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧 `Faction.isHostile(to:)` 阵营关系阻断粮道或撤退安全格。单位阻断、ZOC、补给源归属、堆叠限制、占领和共享补给制度边界不变。
 - **v2.4 WarCommandExecutor 落点 hostile controller 外交化**：`WarCommandExecutor` 目标郡县候选和接近候选的“敌控格优先”排序改用 `DiplomacyState.isHostile(between:and:)`；非敌对控制格不再仅因旧二元阵营关系被宏观军令当成敌控优先落点。真实移动、攻击、占领、动态战区推进和借道边界仍由既有规则链路决定。

@@ -1273,10 +1273,30 @@ struct WarCommandExecutor {
     }
 
     private func hexDisplayName(_ hex: HexCoord, in state: GameState) -> String {
-        if let regionId = state.map.region(for: hex) {
-            return "格 \(hex.q),\(hex.r)（\(regionDisplayName(regionId, in: state.map))）"
+        guard let tile = state.map.tile(at: hex) else {
+            return "未知地格（\(hex.q),\(hex.r)）"
         }
-        return "格 \(hex.q),\(hex.r)"
+        let anchor = displayAnchor(for: tile, coord: hex, in: state.map)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(hex.q),\(hex.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord, in map: MapState) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = map.region(for: coord) {
+            let regionName = regionDisplayName(regionId, in: map)
+            if regionName != "未知郡县" {
+                return regionName
+            }
+        }
+        return "地格"
     }
 
     private func actingDivisionId(for command: Command) -> String? {

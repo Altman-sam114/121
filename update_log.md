@@ -6668,6 +6668,56 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做运行时 UI 烟测；审计摘要的实际布局、过滤兜底覆盖率和方面名在不同面板里的真实呈现仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
 - 子 Agent 标记的裸坐标显示仍待后续切片处理，重点包括 `UnitInspectorView`、`AppContainer` 点击日志、`RuleEngine` / `CommandExecutor` 行军日志和 `WarCommandExecutor` 动态方面事件。
 
+## v2.4 - 地格、战报与外交标签展示安全收敛
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进武将、道路和交战相关玩家可见审计闭环，把裸坐标、战报 raw record id、外交面板英文 `Agent` 标签和地图计划军令 raw `generalId` fallback 收敛为中文三国语义。
+
+完成内容：
+
+- `MapDisplayAdapter` 为 `UnitInspectorStrategicState` 增加地格展示名，军队详情“地格”改为城池、关隘、郡县、官道或地形优先，坐标只作括号内次级定位。
+- `AppContainer` 选择无郡县地格日志、`RuleEngine` 移动命令结果、`CommandExecutor` 行军日志 / 动态方面推进事件和 `WarCommandExecutor` 宏观军令动态方面事件使用同一类地名/地形优先格式。
+- `EventLogView` 战报 metadata 有 `relatedRecordId` 时显示“军机审计”，不直接展示 raw record id。
+- `DiplomacyPanelView` 君主和外交官记录字段从英文 `Agent` 改为“执行者”。
+- `BoardScene` 地图计划军令标签缺武将展示名时显示“未命名武将”，不 fallback 到 raw `generalId`。
+- 本轮不改变 `HexCoord`、`GameLogEntry.relatedRecordId`、`PlayerPlannedOperation.createdByGeneralId`、Codable schema、rawValue、移动、占领、动态方面推进、道路、粮道、交战、外交或武将塑形规则。
+
+关键文件：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/UnitInspectorView.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `WWIIHexV0/Rules/RuleEngine.swift`
+- `WWIIHexV0/Rules/CommandExecutor.swift`
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/UI/EventLogView.swift`
+- `WWIIHexV0/UI/DiplomacyPanelView.swift`
+- `WWIIHexV0/SpriteKit/BoardScene.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_hex_metadata_display_safety.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift WWIIHexV0/UI/UnitInspectorView.swift WWIIHexV0/App/AppContainer.swift WWIIHexV0/Rules/RuleEngine.swift WWIIHexV0/Rules/CommandExecutor.swift WWIIHexV0/Commands/WarCommandExecutor.swift WWIIHexV0/UI/EventLogView.swift WWIIHexV0/UI/DiplomacyPanelView.swift WWIIHexV0/SpriteKit/BoardScene.swift` 通过。
+- 定向残留扫描无命中：`已选择地格：\(coord.q`、`行军至 \(destination.q`、`格 \(hex.q`、`relatedRecordId)`、`LabeledContent("Agent")`、`return generalId`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做运行时 UI 烟测；地格文案在窄面板、地图短标签和战报中的真实换行仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+- `Command.displayName` 本体仍保留 raw id / 坐标兼容输出，后续若有新 UI 复用该字段仍需通过 state-aware display formatter 收口。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

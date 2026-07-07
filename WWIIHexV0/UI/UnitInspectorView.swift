@@ -40,7 +40,7 @@ struct UnitInspectorView: View {
 
             if let strategicState {
                 LabeledContent("地格") {
-                    Text("\(strategicState.coord.q),\(strategicState.coord.r)")
+                    Text(strategicState.coordDisplayName)
                 }
 
                 LabeledContent("郡县") {

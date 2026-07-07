@@ -2443,9 +2443,37 @@ final class AppContainer: ObservableObject {
     private func selectionMessage(for coord: HexCoord) -> String {
         guard let selectedRegionId,
               let region = gameState.map.region(id: selectedRegionId) else {
-            return "已选择地格：\(coord.q),\(coord.r)。"
+            return "已选择地格：\(hexDisplayName(coord))。"
         }
         return "已选择郡县：\(region.name)。"
+    }
+
+    private func hexDisplayName(_ coord: HexCoord) -> String {
+        guard let tile = gameState.map.tile(at: coord) else {
+            return "未知地格（\(coord.q),\(coord.r)）"
+        }
+        let anchor = displayAnchor(for: tile, coord: coord)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(coord.q),\(coord.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = gameState.map.region(for: coord),
+           let region = gameState.map.region(id: regionId) {
+            let regionName = region.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !regionName.isEmpty && regionName != region.id.rawValue {
+                return regionName
+            }
+        }
+        return "地格"
     }
 
     private func appendInteractionEvent(_ message: String) {

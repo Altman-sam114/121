@@ -108,7 +108,7 @@ struct DiplomacyPanelView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("君主")
                 .font(.subheadline.weight(.semibold))
-            LabeledContent("Agent") {
+            LabeledContent("执行者") {
                 Text(AgentDecisionRecord.displayName(forAgentId: record.rulerAgentId))
             }
             LabeledContent("姿态") {
@@ -130,7 +130,7 @@ struct DiplomacyPanelView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("外交官")
                 .font(.subheadline.weight(.semibold))
-            LabeledContent("Agent") {
+            LabeledContent("执行者") {
                 Text(AgentDecisionRecord.displayName(forAgentId: record.diplomatAgentId))
             }
             LabeledContent("提案") {

@@ -66,11 +66,30 @@ struct RuleEngine {
     }
 
     private func destinationDisplayName(_ destination: HexCoord, in state: GameState) -> String {
-        if let regionId = state.map.region(for: destination) {
-            let regionName = regionDisplayName(regionId, in: state.map)
-            return "\(destination.q),\(destination.r)（\(regionName)）"
+        guard let tile = state.map.tile(at: destination) else {
+            return "未知地格（\(destination.q),\(destination.r)）"
         }
-        return "\(destination.q),\(destination.r)"
+        let anchor = displayAnchor(for: tile, coord: destination, in: state.map)
+        let terrain = tile.hasRoad ? "官道" : tile.baseTerrain.displayName
+        return "\(anchor)\(terrain)（\(destination.q),\(destination.r)）"
+    }
+
+    private func displayAnchor(for tile: HexTile, coord: HexCoord, in map: MapState) -> String {
+        let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !cityName.isEmpty {
+            return cityName
+        }
+        let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !fortressName.isEmpty {
+            return fortressName
+        }
+        if let regionId = map.region(for: coord) {
+            let regionName = regionDisplayName(regionId, in: map)
+            if regionName != "未知郡县" {
+                return regionName
+            }
+        }
+        return "地格"
     }
 
     private func regionDisplayName(_ regionId: RegionId, in map: MapState) -> String {
