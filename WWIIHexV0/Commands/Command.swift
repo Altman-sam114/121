@@ -46,6 +46,29 @@ enum Command: Codable, Equatable {
         }
     }
 
+    var auditDisplayName: String {
+        switch self {
+        case .move:
+            return "进军命令"
+        case .attack:
+            return "交战命令"
+        case .hold:
+            return "固守命令"
+        case .allowRetreat:
+            return "机动撤退命令"
+        case .resupply:
+            return "补给休整命令"
+        case .queueProduction(let kind):
+            return "征发生产命令：\(kind.displayName)"
+        case .improveRoad:
+            return "修缮道路命令"
+        case .proposeDiplomacy(_, _, let proposal):
+            return "外交命令：\(proposal.displayName)"
+        case .endTurn:
+            return "结束回合命令"
+        }
+    }
+
     var actingDivisionId: String? {
         switch self {
         case .move(let divisionId, _),

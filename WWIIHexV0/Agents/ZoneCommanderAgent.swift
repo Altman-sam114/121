@@ -766,7 +766,7 @@ struct ZoneCommanderAgent: ZoneCommanderProviding {
         }
 
         return previous.commandResults.allSatisfy { summary in
-            summary.commandDisplayName?.hasPrefix("Hold") == true
+            summary.commandDisplayNameForDisplay == "固守命令"
         }
     }
 

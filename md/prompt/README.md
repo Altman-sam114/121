@@ -162,6 +162,7 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_supply_economy_road_log_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.4_agent_panel_theater_display_safety.md`
 - `md/prompt/v2.0-三国迁移/v2.4_hex_metadata_display_safety.md`
+- `md/prompt/v2.0-三国迁移/v2.4_command_audit_display_name_safety.md`
 - `md/prompt/v2.0-三国迁移/v2.4_economy_production_log_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.4_scenario_victory_condition_bridge.md`
 - `md/prompt/v2.0-三国迁移/v2.4_region_victory_scenario_conditions.md`

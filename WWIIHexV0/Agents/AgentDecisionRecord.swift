@@ -23,7 +23,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             orderIndex: orderIndex,
             divisionId: order.divisionId,
             orderType: order.type,
-            commandDisplayName: command.displayName,
+            commandDisplayName: command.auditDisplayName,
             mappingSucceeded: true,
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
@@ -57,7 +57,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             orderIndex: nil,
             divisionId: nil,
             orderType: nil,
-            commandDisplayName: Command.endTurn.displayName,
+            commandDisplayName: Command.endTurn.auditDisplayName,
             mappingSucceeded: true,
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
@@ -78,7 +78,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             orderIndex: commandIndex,
             divisionId: command.actingDivisionId,
             orderType: nil,
-            commandDisplayName: command.displayName,
+            commandDisplayName: command.auditDisplayName,
             mappingSucceeded: true,
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
@@ -96,7 +96,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             orderIndex: nil,
             divisionId: nil,
             orderType: nil,
-            commandDisplayName: result.command.displayName,
+            commandDisplayName: result.command.auditDisplayName,
             mappingSucceeded: true,
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
@@ -115,7 +115,7 @@ struct CommandResultSummary: Identifiable, Codable, Equatable {
             orderIndex: nil,
             divisionId: nil,
             orderType: nil,
-            commandDisplayName: result.command.displayName,
+            commandDisplayName: result.command.auditDisplayName,
             mappingSucceeded: true,
             validationSucceeded: result.validation.isValid,
             executed: result.succeeded,
@@ -132,31 +132,47 @@ extension CommandResultSummary {
             return orderType?.displayName ?? "军令"
         }
 
-        if commandDisplayName.hasPrefix("进军(") || commandDisplayName.lowercased().hasPrefix("move") {
+        if commandDisplayName == "进军命令"
+            || commandDisplayName.hasPrefix("进军(")
+            || commandDisplayName.lowercased().hasPrefix("move") {
             return "进军命令"
         }
-        if commandDisplayName.hasPrefix("攻击(") || commandDisplayName.lowercased().hasPrefix("attack") {
+        if commandDisplayName == "交战命令"
+            || commandDisplayName.hasPrefix("攻击(")
+            || commandDisplayName.lowercased().hasPrefix("attack") {
             return "交战命令"
         }
-        if commandDisplayName.hasPrefix("固守(") || commandDisplayName.lowercased().hasPrefix("hold") {
+        if commandDisplayName == "固守命令"
+            || commandDisplayName.hasPrefix("固守(")
+            || commandDisplayName.lowercased().hasPrefix("hold") {
             return "固守命令"
         }
-        if commandDisplayName.hasPrefix("准许撤退(") || commandDisplayName.lowercased().hasPrefix("allow") {
+        if commandDisplayName == "机动撤退命令"
+            || commandDisplayName.hasPrefix("准许撤退(")
+            || commandDisplayName.lowercased().hasPrefix("allow") {
             return "机动撤退命令"
         }
-        if commandDisplayName.hasPrefix("补给(") || commandDisplayName.lowercased().hasPrefix("resupply") {
+        if commandDisplayName == "补给休整命令"
+            || commandDisplayName.hasPrefix("补给(")
+            || commandDisplayName.lowercased().hasPrefix("resupply") {
             return "补给休整命令"
         }
-        if commandDisplayName.hasPrefix("募兵(") {
+        if commandDisplayName == "征发生产命令"
+            || commandDisplayName.hasPrefix("征发生产命令")
+            || commandDisplayName.hasPrefix("募兵(") {
             return "征发生产命令"
         }
-        if commandDisplayName.hasPrefix("修路(") {
+        if commandDisplayName == "修缮道路命令"
+            || commandDisplayName.hasPrefix("修路(") {
             return "修缮道路命令"
         }
-        if commandDisplayName.hasPrefix("外交(") {
+        if commandDisplayName == "外交命令"
+            || commandDisplayName.hasPrefix("外交命令")
+            || commandDisplayName.hasPrefix("外交(") {
             return "外交命令"
         }
-        if commandDisplayName == Command.endTurn.displayName {
+        if commandDisplayName == Command.endTurn.displayName
+            || commandDisplayName == Command.endTurn.auditDisplayName {
             return "结束回合命令"
         }
 

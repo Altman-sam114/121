@@ -6718,6 +6718,51 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做运行时 UI 烟测；地格文案在窄面板、地图短标签和战报中的真实换行仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
 - `Command.displayName` 本体仍保留 raw id / 坐标兼容输出，后续若有新 UI 复用该字段仍需通过 state-aware display formatter 收口。
 
+## v2.4 - Command 审计展示名安全收敛
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进武将、道路和交战相关玩家可见审计闭环，把 AI 命令结果记录中复用 `Command.displayName` 导致的 raw 军队 id、坐标、郡县 id、国家 id 暴露风险收敛为中文命令类别。
+
+完成内容：
+
+- `Command` 增加 `auditDisplayName`，新生成的 `CommandResultSummary.commandDisplayName` 只保存“进军命令 / 交战命令 / 固守命令 / 修缮道路命令 / 外交命令”等安全类别，生产和外交可附带安全展示名。
+- `CommandResultSummary.commandDisplayNameForDisplay` 兼容新安全类别、旧中文 raw 文案和旧英文命令前缀，AI 面板仍只展示命令类别。
+- `ZoneCommanderAgent` 最近静态防御判断改用 `commandDisplayNameForDisplay == "固守命令"`，不再只检查旧英文 `Hold`。
+- Legacy Agent D 的缺目标地格、目标郡县和目标军队错误文案不再插入 raw `divisionId`。
+- 本轮保留 `Command.displayName` raw id / 坐标兼容输出，不改变 `Command` case、Codable schema、移动、攻击、固守、撤退、补给、修路、生产、外交、道路、粮道或交战规则。
+
+关键文件：
+
+- `WWIIHexV0/Commands/Command.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Agents/ZoneCommanderAgent.swift`
+- `WWIIHexV0/Agents/AgentCommandMapper.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_command_audit_display_name_safety.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/Command.swift WWIIHexV0/Agents/AgentDecisionRecord.swift WWIIHexV0/Agents/ZoneCommanderAgent.swift WWIIHexV0/Agents/AgentCommandMapper.swift` 通过。
+- 定向残留扫描无命中：`commandDisplayName: command.displayName`、`commandDisplayName: result.command.displayName`、`hasPrefix("Hold")`、`军队 \(divisionId)`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核旧阿登胜利条件 / fallback 数据可见路径时未在本轮提交前返回结果；本轮不混入该范围。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做运行时 UI 烟测；旧存档或历史审计记录中的 raw `commandDisplayName` 依赖展示映射收口，真实历史记录覆盖率仍待后续 Agent C artifact 复判或人工授权检查。
+- `Command.displayName` 本体仍是兼容 raw 文案，后续新 UI 不应直接复用。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
