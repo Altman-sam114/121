@@ -6957,6 +6957,43 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮不做本机运行时 UI 检查；防区指令卡片窄宽度下的真实换行和长类别摘要仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.5 - MapEditor 兼容势力标签三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 发布级 UI / MapEditor 收口，把地图编辑器中兼容 `.germany/.allies` 的玩家可见标签从旧二战语义改成曹袁语义，并把势力选择标题从“阵营”收口为“势力”。
+
+完成内容：
+
+- `MapEditor/MapEditorView.swift` 中 `Faction.chineseName` 的 `.germany` 显示从“德军”改为“曹军”，`.allies` 显示从“盟军”改为“袁军”。
+- Hex 面板中的“补给阵营”改为“补给势力”，部队面板中的“阵营”改为“势力”。
+- 本轮只改 MapEditor 可见文案，不改变 `Faction` rawValue、Codable、JSON、DataLoader、MapEditorViewModel 导出逻辑、单位 id 前缀、规则、AI 或命令管线。
+
+关键文件：
+
+- `MapEditor/MapEditorView.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_mapeditor_faction_label_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse MapEditor/MapEditorView.swift` 通过。
+- 定向残留扫描无命中：`return "德军"`、`return "盟军"`、`补给阵营`、`Picker("阵营"`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认 MapEditor 势力标签和 Picker 标题适合本轮 display-only 改动；`MapEditorViewModel` 的 `ger/all` 单位 id 前缀、DataLoader 旧阿登 German / Allied 校验错误和 `guderian` 旧 Agent D 校验均不纳入本轮。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；MapEditor picker 在真实 macOS 目标里的宽度、菜单排序和导出结果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- `DataLoader.loadArdennesDataSet()` 的 German / Allied 英文校验错误、`guderian` 旧 Agent D 校验和旧阿登 fallback API 名仍保留兼容路径，后续如需玩家可见错误完全三国化应单独切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

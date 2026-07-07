@@ -185,3 +185,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.4_agent_context_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.5_ui_design_tokens_mapeditor_defaults.md`
 - `md/prompt/v2.0-三国迁移/v2.5_game_title_localization.md`
+- `md/prompt/v2.0-三国迁移/v2.5_mapeditor_faction_label_localization.md`

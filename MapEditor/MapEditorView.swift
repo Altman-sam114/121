@@ -78,7 +78,7 @@ struct MapEditorView: View {
             }
             Toggle("道路", isOn: $viewModel.paintRoad)
             Toggle("补给站", isOn: $viewModel.paintSupply)
-            Picker("补给阵营", selection: $viewModel.supplyFaction) {
+            Picker("补给势力", selection: $viewModel.supplyFaction) {
                 ForEach(Faction.scenarioCases, id: \.self) { faction in
                     Text(faction.chineseName).tag(faction)
                 }
@@ -143,7 +143,7 @@ struct MapEditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("部队模式")
                 .font(.headline)
-            Picker("阵营", selection: $viewModel.selectedUnitFaction) {
+            Picker("势力", selection: $viewModel.selectedUnitFaction) {
                 ForEach(Faction.scenarioCases, id: \.self) { faction in
                     Text(faction.chineseName).tag(faction)
                 }
@@ -450,9 +450,9 @@ private extension Faction {
     var chineseName: String {
         switch self {
         case .germany:
-            return "德军"
+            return "曹军"
         case .allies:
-            return "盟军"
+            return "袁军"
         case .cao:
             return "曹操"
         case .yuan:
