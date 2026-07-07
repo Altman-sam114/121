@@ -45,7 +45,7 @@ MapEditor / JSON 数据
 v2.4 迁移层当前完成显示语义、多势力数据基础、官渡默认剧本预览、三国兵种模板兼容层、战术审计显示三国化、围城/粮草最小规则、兵种克制最小规则和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战兼容层：
 
 - 源码兼容名暂不大规模重命名，避免一轮内破坏 Codable、旧测试、Xcode project 和规则链路。
-- v2.5 UI 收口当前只是视觉 token 和编辑器默认值起步：`SanguoDesignTokens` 提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入；MapEditor 新建军队模板默认使用 `infantry_camp`、`cavalry_wing`、`archer_camp`、`siege_engine_camp`、`garrison_camp`、`naval_fleet`，新建城池、粮仓和导出错误文案中文化。该切片不改变规则、JSON schema、旧 fallback 数据、Codable rawValue 或命令管线。
+- v2.5 UI 收口当前只是视觉 token、玩家标题和编辑器默认值起步：`SanguoDesignTokens` 提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入；`SanguoDisplayLexicon.gameTitle` 作为 HUD 和 SpriteKit 地图标题共享入口，玩家可见标题显示为纯中文“ 三国棋策 ”；MapEditor 新建军队模板默认使用 `infantry_camp`、`cavalry_wing`、`archer_camp`、`siege_engine_camp`、`garrison_camp`、`naval_fleet`，新建城池、粮仓和导出错误文案中文化。该切片不改变规则、JSON schema、旧 fallback 数据、Codable rawValue 或命令管线。
 - `Faction.displayName` 当前显示为曹操势力 / 袁绍势力，但 rawValue 仍是 `germany/allies`。
 - 默认 `DataLoader.loadInitialGameState()` 先尝试 `guandu_200_scenario` + `guandu_200_regions`，失败时再 fallback 到阿登兼容数据。
 - `DataLoader.loadUnitTemplates()` 先尝试 `sanguo_unit_templates.json`，缺文件时再 fallback 到旧 `unit_templates.json`；如果三国模板存在但解析失败，会暴露错误而不是静默退旧数据。

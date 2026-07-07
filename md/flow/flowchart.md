@@ -14,7 +14,7 @@
   -> 剧本 victoryConditions 进入 VictoryState，胜负判断仍读取 objective hex controller
   -> economy 是势力级钱粮总账，收入仍从真实控制的 hex/region 聚合
   -> v2.4 接入官渡默认剧本、三国兵种模板、战术显示、围城/粮草、兵种克制和君主/外交/太守/军师/武将指令编排、外交与太守生产命令、武将战术塑形、道路、粮道与交战
-  -> v2.5 起步接入共享三国视觉 token、HUD/战报/地图底色和 MapEditor 默认三国模板
+  -> v2.5 起步接入共享三国视觉 token、纯中文玩家标题、HUD/战报/地图底色和 MapEditor 默认三国模板
   -> 玩家和 AI 都必须把命令交给 RuleEngine
   -> 命令执行/拒绝原因中文化后再同步刷新战略层和 UI
 ```

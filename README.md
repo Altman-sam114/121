@@ -41,7 +41,7 @@
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
 
-**当前 v2.5 UI 收口边界：** `SanguoDesignTokens` 已作为共享视觉 token 起步，提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入这组 token。MapEditor 新建军队默认模板已切到 `sanguo_unit_templates.json` 的步卒营、骑军、弓弩营、器械营、守军和舟师，并把新建城池、粮仓和导出错误文案改为三国语义。该切片只改变显示和编辑器默认值，不改变规则、JSON schema、Codable rawValue、旧 fallback 数据或命令管线。
+**当前 v2.5 UI 收口边界：** `SanguoDesignTokens` 已作为共享视觉 token 起步，提供绢帛面板、墨色文字、朱印、玉色、铜色、河道蓝、8pt 面板圆角和 44pt 触控高度；HUD、战报、主覆盖层和 SpriteKit 地图底色已接入这组 token。玩家可见共享标题 `SanguoDisplayLexicon.gameTitle` 显示为纯中文“ 三国棋策 ”，HUD 和 SpriteKit 地图标题不再附带英文 `Agent`。MapEditor 新建军队默认模板已切到 `sanguo_unit_templates.json` 的步卒营、骑军、弓弩营、器械营、守军和舟师，并把新建城池、粮仓和导出错误文案改为三国语义。该切片只改变显示和编辑器默认值，不改变规则、JSON schema、Codable rawValue、旧 fallback 数据或命令管线。
 
 **当前检查器展示边界：** 军队详情和郡县详情由 `MapDisplayAdapter` 生成郡县、动态方面、防区、战线和要地状态的玩家可见展示名，优先读取 `RegionNode.name`、`TheaterNode.name`、`FrontZone.name`；空名、等于 raw id 或明显内部 id 时退回势力简称与郡县名摘要。底层 `RegionId`、`TheaterId`、`FrontZoneId`、`FrontLineId`、`GeneralAssignment.generalId`、Codable rawValue、动态方面/防区/战线规则不变。
 

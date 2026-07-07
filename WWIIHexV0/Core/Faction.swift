@@ -94,7 +94,7 @@ enum Faction: String, Codable, Equatable, CaseIterable {
 }
 
 enum SanguoDisplayLexicon {
-    static let gameTitle = "三国棋策 Agent"
+    static let gameTitle = "三国棋策"
     static let scenarioPreviewName = "官渡迁移预览"
 
     static func factionName(_ faction: Faction) -> String {
