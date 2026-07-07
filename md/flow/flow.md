@@ -286,6 +286,8 @@ calculateMetrics
 
 `formalizationThreshold` 当前默认 0.70。它用于 formalized / provisional 状态判断，不阻止前线按单个 hex 推进。
 
+固定方面的 `FixedTheaterKind.rawValue` 仍保留 `NorthWest/NorthEast/SouthWest/SouthEast` 作为 `TheaterId` / Codable 兼容值；`TheaterNode.name` 创建时使用“西北方面 / 东北方面 / 西南方面 / 东南方面”，临时方面缺节点时使用势力简称加“临时方面”，玩家可见层不应直接展示固定方面 rawValue。
+
 ### 1.5 FrontLine
 
 源码：`WWIIHexV0/Core/FrontLine.swift`、`WWIIHexV0/Core/FrontSegment.swift`、`WWIIHexV0/Core/FrontLineState.swift`、`WWIIHexV0/Rules/FrontLineManager.swift`
@@ -610,7 +612,7 @@ AppContainer.bootstrap()
 
 `GameAgent.guderian(...)` 是 Legacy Agent D 的兼容入口：方法名、agent id、`.germany` rawValue 和旧单位分配校验保持不变；默认 `general_agents.json` 和 fallback 显示名已改为张辽，personality 文案使用骑军突击、官道机动、快速合围和攻城支援语义。MockAI 启发式仍按旧回归路径另行迁移，不在这里改变决策算法。
 
-`AgentDecisionRecord` 继续存储 raw `agentId`、`provider` 和 `rawJSON` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和 `debugJSONDisplay` 映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要从 `RootGameView` 接收只读展示名映射：国家优先使用 `CountryProfile.name`，郡县优先使用 `RegionNode.name`，防区优先使用 `FrontZone.name`，防区名缺失或仍等于 raw id 时用势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类 fallback；记录、schema 和调试 JSON 原始字段不变。
+`AgentDecisionRecord` 继续存储 raw `agentId`、`provider`、`rawJSON` 和 `debugJSONDisplay` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和面板级安全过滤映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要从 `RootGameView` 接收只读展示名映射：国家优先使用 `CountryProfile.name`，郡县优先使用 `RegionNode.name`，防区优先使用 `FrontZone.name`，防区名缺失或仍等于 raw id 时用势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类 fallback；意图、摘要、命令结果、错误和诊断遇到 raw JSON、英文兼容 id、旧二战词、`NorthWest` 这类内部方面 rawValue 或明显机器字段时显示中文兜底，面板底部显示中文审计摘要而不默认展开原始 JSON；记录、schema、调试 JSON 原始字段和规则行为不变。
 
 `MockAIClient` 仍是 Legacy Agent D 兼容 provider；本轮只把 intent / reason 文案改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分保持旧兼容算法，不在可见文本切片里迁移行为。
 
@@ -2075,7 +2077,7 @@ v1.0 分支名：`v1.0-ui-ai-playtest`。
 GameState / WarDirectiveRecord / EventLog
   -> RootGameView
   -> HUD + Info tabs
-  -> AgentPanelView 展示调试 JSON / 命令结果 / 防区指令展示名
+  -> AgentPanelView 展示审计摘要 / 命令结果 / 防区指令展示名
   -> EventLogView 展示最近 60 条分类日志
 
 BoardScene

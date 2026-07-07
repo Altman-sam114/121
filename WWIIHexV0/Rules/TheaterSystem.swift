@@ -31,7 +31,7 @@ struct TheaterSystem {
             let regionIds = (groupedRegions[theaterId] ?? []).sorted { $0.rawValue < $1.rawValue }
             theaters[theaterId] = TheaterNode(
                 id: theaterId,
-                name: kind.rawValue,
+                name: kind.displayName,
                 status: .active,
                 regionIds: regionIds
             )
@@ -78,7 +78,7 @@ struct TheaterSystem {
         if next.theaters[targetTheaterId] == nil {
             next.theaters[targetTheaterId] = TheaterNode(
                 id: targetTheaterId,
-                name: targetTheaterId.rawValue,
+                name: displayName(for: targetTheaterId, faction: faction),
                 status: .provisional
             )
         }
@@ -299,6 +299,13 @@ struct TheaterSystem {
         case (false, false):
             return FixedTheaterKind.southEast.id
         }
+    }
+
+    private func displayName(for theaterId: TheaterId, faction: Faction) -> String {
+        if let fixedKind = FixedTheaterKind(rawValue: theaterId.rawValue) {
+            return fixedKind.displayName
+        }
+        return "\(faction.shortDisplayName)临时方面"
     }
 
     private func refreshDerivedFields(state: inout TheaterState, map: MapState, divisions: [Division]) {

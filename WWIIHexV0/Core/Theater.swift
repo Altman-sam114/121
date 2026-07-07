@@ -41,6 +41,19 @@ enum FixedTheaterKind: String, Codable, Equatable, CaseIterable {
     var id: TheaterId {
         TheaterId(rawValue)
     }
+
+    var displayName: String {
+        switch self {
+        case .northWest:
+            return "西北方面"
+        case .northEast:
+            return "东北方面"
+        case .southWest:
+            return "西南方面"
+        case .southEast:
+            return "东南方面"
+        }
+    }
 }
 
 enum SpilloverPolicy: String, Codable, Equatable {

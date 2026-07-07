@@ -10,16 +10,16 @@ enum AgentDecisionParserError: Error, Equatable, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .malformedJSON(let detail):
-            return "军机决策 JSON 格式错误：\(detail)"
-        case .unsupportedSchemaVersion(let version):
-            return "不支持的军机决策 schemaVersion：\(version)。"
-        case .agentMismatch(let expected, let actual):
-            return "军机决策执行者不匹配：期望 \(expected)，实际 \(actual)。"
-        case .turnMismatch(let expected, let actual):
-            return "军机决策回合不匹配：期望 \(expected)，实际 \(actual)。"
-        case .missingRegionDestination(let divisionId):
-            return "军队 \(divisionId) 的行军军令缺少目标郡县。"
+        case .malformedJSON:
+            return "军机决策格式错误。"
+        case .unsupportedSchemaVersion:
+            return "军机决策编排版本不支持。"
+        case .agentMismatch:
+            return "军机决策执行者不匹配。"
+        case .turnMismatch:
+            return "军机决策回合不匹配。"
+        case .missingRegionDestination:
+            return "行军军令缺少目标郡县。"
         }
     }
 }

@@ -50,13 +50,13 @@ struct AgentPanelView: View {
             }
 
             LabeledContent("意图") {
-                Text(record?.parsedIntent ?? "暂无决策")
+                Text(displaySafePanelText(record?.parsedIntent, fallback: record == nil ? "暂无决策" : "军令意图已记录"))
                     .multilineTextAlignment(.trailing)
             }
 
             if let contextSummary = record?.contextSummary {
                 LabeledContent("摘要") {
-                    Text(contextSummary)
+                    Text(displaySafePanelText(contextSummary, fallback: "军情摘要已记录"))
                         .multilineTextAlignment(.trailing)
                 }
             }
@@ -95,7 +95,7 @@ struct AgentPanelView: View {
                             .multilineTextAlignment(.trailing)
                     }
                 }
-                Text(diplomatRecord.rationale)
+                Text(displaySafePanelText(diplomatRecord.rationale, fallback: "外交理由已写入审计记录"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -119,7 +119,7 @@ struct AgentPanelView: View {
                             .multilineTextAlignment(.trailing)
                     }
                 }
-                Text(governorRecord.rationale)
+                Text(displaySafePanelText(governorRecord.rationale, fallback: "内政理由已写入审计记录"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -140,7 +140,7 @@ struct AgentPanelView: View {
                             .multilineTextAlignment(.trailing)
                     }
                 }
-                Text(strategistRecord.rationale)
+                Text(displaySafePanelText(strategistRecord.rationale, fallback: "军师理由已写入审计记录"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -165,7 +165,7 @@ struct AgentPanelView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
-                            Text(generalRecord.rationale)
+                            Text(displaySafePanelText(generalRecord.rationale, fallback: "武将复核理由已写入审计记录"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(3)
@@ -217,8 +217,9 @@ struct AgentPanelView: View {
                                     .minimumScaleFactor(0.75)
                             }
 
-                            if !directive.diagnostics.isEmpty {
-                                Text(directive.diagnostics.joined(separator: " / "))
+                            let diagnostics = displaySafeDiagnostics(directive.diagnostics)
+                            if !diagnostics.isEmpty {
+                                Text(diagnostics.joined(separator: "；"))
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
@@ -238,19 +239,19 @@ struct AgentPanelView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(record.errors, id: \.self) { error in
-                        Text(error)
+                        Text(displaySafeError(error))
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
                 }
             }
 
-            Text("调试 JSON")
+            Text("审计摘要")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(record?.debugJSONDisplay ?? rawJSONPlaceholder)
-                .font(.system(.caption, design: .monospaced))
+            Text(auditSummary(for: record))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -317,28 +318,73 @@ struct AgentPanelView: View {
     }
 
     private func resultLine(_ result: CommandResultSummary) -> String {
+        let errors = result.errors.map(displaySafeError)
+
         if !result.mappingSucceeded {
-            return "映射失败：\(result.errors.joined(separator: ", "))"
+            return "映射失败：\(errors.joined(separator: "；"))"
         }
 
         if result.executed {
-            return result.message
+            return displaySafePanelText(result.message, fallback: "命令已执行，详情已写入审计记录")
         }
 
-        if !result.errors.isEmpty {
-            return "被拒绝：\(result.errors.joined(separator: ", "))"
+        if !errors.isEmpty {
+            return "被拒绝：\(errors.joined(separator: "；"))"
         }
 
-        return result.message
+        return displaySafePanelText(result.message, fallback: "命令未能执行，详情已写入审计记录")
     }
 
-    private var rawJSONPlaceholder: String {
-        """
-        {
-          "agentDisplayName": "军机武将",
-          "status": "暂无记录",
-          "orders": []
+    private func displaySafeDiagnostics(_ diagnostics: [String]) -> [String] {
+        diagnostics.map {
+            displaySafePanelText($0, fallback: "军令诊断已记录")
         }
-        """
+    }
+
+    private func displaySafeError(_ error: String) -> String {
+        displaySafePanelText(error, fallback: "军令解析或执行失败，详情已写入审计记录")
+    }
+
+    private func displaySafePanelText(_ value: String?, fallback: String) -> String {
+        let text = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !text.isEmpty else {
+            return fallback
+        }
+        if isRawDebugText(text) {
+            return fallback
+        }
+        return text
+    }
+
+    private func isRawDebugText(_ text: String) -> Bool {
+        let rawMarkers = [
+            "{", "}", "[", "]", "\"",
+            "debugJSONDisplay", "rawValue", "agentId", "frontZoneId", "regionId", "theaterId",
+            "targetDivisionId", "toRegionId", "schemaVersion",
+            "JSON", "UTF-8", "decoder", "DecodingError",
+            "NorthWest", "NorthEast", "SouthWest", "SouthEast",
+            "germany", "allies", "panzer", "division"
+        ]
+        if rawMarkers.contains(where: { text.localizedCaseInsensitiveContains($0) }) {
+            return true
+        }
+
+        let hasChinese = text.range(of: "\\p{Han}", options: .regularExpression) != nil
+        if !hasChinese {
+            return true
+        }
+
+        let rawIdentifierPattern = #"\b[a-zA-Z]+_[a-zA-Z0-9_]+\b|\b[a-z]+[A-Z][A-Za-z0-9]*\b"#
+        return text.range(of: rawIdentifierPattern, options: .regularExpression) != nil
+    }
+
+    private func auditSummary(for record: AgentDecisionRecord?) -> String {
+        guard let record else {
+            return "暂无军机审计记录。"
+        }
+        let executed = record.commandResults.filter(\.executed).count
+        let rejected = record.commandResults.count - executed
+        let errors = record.errors.count
+        return "军机审计已记录：\(record.commandResults.count) 条命令，\(executed) 条执行，\(rejected) 条拒绝，\(errors) 条错误。原始记录保留在兼容审计字段中。"
     }
 }

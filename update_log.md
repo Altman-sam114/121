@@ -6622,6 +6622,52 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮未做运行时 UI 截图或点击烟测；绢帛面板、按钮高度、地图底色和 MapEditor 文案的真实视觉效果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - v2.5 发布级 UI 仍未完成真实头像、旗帜、城池/关隘/渡口/粮仓图标、完整视觉资产和新手体验。
 
+## v2.4 - 军机面板与方面展示安全收敛
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移中武将、道路和交战相关的可见审计闭环，把军机面板 raw JSON / raw id / 英文兼容诊断直出风险和固定方面英文名收敛为中文三国语义。
+
+完成内容：
+
+- `AgentPanelView` 对意图、摘要、命令结果、错误和防区指令诊断增加面板级安全过滤；遇到 raw JSON、明显机器字段、英文兼容 id、旧二战词和固定方面 rawValue 时显示中文兜底。
+- 军机面板底部从默认展示“调试 JSON”改为中文审计摘要，仍保留 `AgentDecisionRecord.debugJSONDisplay` / raw JSON 字段供兼容审计。
+- `FixedTheaterKind` 增加中文展示名；`TheaterSystem` 初始固定方面节点显示“西北方面 / 东北方面 / 西南方面 / 东南方面”，缺失临时方面显示为势力简称加“临时方面”。
+- 本轮不改变 `TheaterId`、`FixedTheaterKind.rawValue`、`WarDirectiveRecord`、`AgentDecisionRecord`、Codable schema、动态方面推进、道路、粮道、交战、武将塑形或命令执行规则。
+
+关键文件：
+
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/Agents/AgentDecisionRecord.swift`
+- `WWIIHexV0/Agents/AgentDecisionParser.swift`
+- `WWIIHexV0/Commands/WarDirective.swift`
+- `WWIIHexV0/Core/Theater.swift`
+- `WWIIHexV0/Rules/TheaterSystem.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_panel_theater_display_safety.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Core/Theater.swift WWIIHexV0/Rules/TheaterSystem.swift WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/Agents/AgentDecisionRecord.swift WWIIHexV0/Agents/AgentDecisionParser.swift WWIIHexV0/Commands/WarDirective.swift` 通过。
+- `AgentPanelView` / `TheaterSystem` 定向扫描确认玩家可见“调试 JSON”标题、`debugJSONDisplay` 直出、`joined(separator: " / ")` 诊断拼接和 `NorthWest/NorthEast/SouthWest/SouthEast` 方面名直出已移除；剩余命中仅为兼容 rawValue、过滤器关键词或文档说明。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复查发现多个裸坐标显示候选、战报 metadata raw id 和外交面板英文 Agent 标签，但属于下一切片范围；本轮只收束军机面板、方面名、军师 decoder 与 Legacy parser 可见错误文案。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做运行时 UI 烟测；审计摘要的实际布局、过滤兜底覆盖率和方面名在不同面板里的真实呈现仍待云端 CI、后续 Agent C artifact 复判或人工授权检查。
+- 子 Agent 标记的裸坐标显示仍待后续切片处理，重点包括 `UnitInspectorView`、`AppContainer` 点击日志、`RuleEngine` / `CommandExecutor` 行军日志和 `WarCommandExecutor` 动态方面事件。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

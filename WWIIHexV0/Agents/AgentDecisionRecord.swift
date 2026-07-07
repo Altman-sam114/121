@@ -210,7 +210,7 @@ extension AgentDecisionRecord {
             if agentId.hasPrefix("marshal_") {
                 return "军师"
             }
-            return agentId
+            return "未知执行者"
         }
     }
 
@@ -232,7 +232,7 @@ extension AgentDecisionRecord {
         case "RulerDiplomatGovernorStrategistGeneralMarshalDirective":
             return "君主/外交/太守/军师/武将/军师指令"
         default:
-            return provider
+            return "外部军机"
         }
     }
 

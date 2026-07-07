@@ -33,6 +33,8 @@
 
 **当前指令诊断展示边界：** 旧 `RegionCommand.displayName` 兼容层已收口为“郡县进军 / 郡县交战 / 郡县固守 / 郡县补给”等安全类别；`CommandIntentAdapterError` 和 `TheaterDirectiveDecoderError` 的可见说明已改为中文军师/郡县语义，缺失防区、方面或郡县时不把 raw id 当作玩家文案；`TurnManager` 的外交和太守命令成功诊断复用 `CommandResult.message`。底层 region 命令、军师指令 JSON、Codable schema、rawValue、命令校验和规则执行不变。
 
+**当前军机面板与方面展示安全边界：** `AgentPanelView` 的意图、摘要、命令结果、错误和防区指令诊断会过滤 raw JSON、英文兼容 id、`NorthWest` 等内部方面 rawValue、旧 `germany/allies` / `division` 文案和明显机器字段；面板底部显示中文审计摘要，不再默认展开原始 JSON。`FixedTheaterKind` 仍保留 `NorthWest/NorthEast/SouthWest/SouthEast` 作为 Codable / id 兼容值，但 `TheaterNode.name` 创建时显示为“西北方面 / 东北方面 / 西南方面 / 东南方面”，缺失的临时方面显示为势力简称加“临时方面”。底层 `TheaterId`、`WarDirectiveRecord`、`AgentDecisionRecord.debugJSONDisplay`、Codable/rawValue、动态方面推进、道路和交战规则不变。
+
 **当前剧本胜负条件边界：** `DataLoader` 会把 `ScenarioDefinition.victoryConditions` 中 active 的 `controlObjective` 条件注入 `VictoryState.scenarioConditions`；`VictoryRules` 优先按 objective id 和 hex controller 判断官渡剧本目标，例如袁绍控制许昌或曹操控制邺城，并在 HUD 的“胜负”中显示中文胜利原因。`RegionVictoryRules` / `RegionRuleSystem` 的只读战略分析也会先按同一剧本条件评估，避免 region 层分析继续只看旧阿登城市名。旧 `VictoryReason` rawValue、阿登目标名和歼灭/断粮 fallback 规则保留作历史兼容；本轮不实现多目标计分、限回合条件、歼灭模板条件或完整胜利面板。
 
 **当前地图兵牌边界：** `UnitNode` 的地图兵牌中心显示三国兵种 glyph，姿态短标记使用 `退/守`；底层 `Division`、`ComponentType`、`RetreatMode` rawValue、移动/交战/撤退规则和 `BoardScene` 创建流程不变。
@@ -145,8 +147,8 @@ WWIIHexV0/
 - **v2.4 非敌对借道占领边界**：`OccupationRules.canOccupy` 只允许移动后自动占领无控制者或外交 hostile / atWar 控制格；allied、coBelligerent、neutral 控制格不会因道路经过或武将宏观军令移动被自动翻转 controller，`WarCommandExecutor` 也只把执行前真实可占领的移动作为动态方面突破依据，避免非敌对借道推进 `hexToTheater` / `hexToFrontZone`。
 - **v2.4 上游 Agent fallback 显示名**：`RulerAgent.automatic`、`MarshalAgentConfig.automatic`、`TheaterCommanderPool.automatic` 和 `AppContainer.buildCommanderPool` 的缺省显示名使用 `Faction.displayName` / `shortDisplayName` 输出曹军/袁军等三国语义；`AgentRole.displayName` 显示为君主、军师、武将，减少 AI 面板和审计记录中的 German / Allied / Rundstedt / Eisenhower 题材残留。
 - **v2.4 兼容武将 Agent 身份**：Legacy Agent D 的 `general_agents.json` 和 `GameAgent.guderianFallback` 继续保留 `guderian` 兼容 id、德军 rawValue 与旧单位分配校验，但默认展示武将改为张辽，personality 文案改成骑军突击、官道机动、兵力集中、快速合围和攻城支援语义；MockAI 启发式本身仍作为旧回归参考另行迁移。
-- **v2.4 Agent 记录展示名兼容层**：`AgentDecisionRecord` 保留 raw `agentId`、`provider` 和原始 `rawJSON` 用于 Codable、parser 和回归审计，同时提供 `agentDisplayName`、`providerDisplayName` 与展示用调试 JSON；`TurnManager.contextSummary`、`AgentPanelView` 的 Agent/来源/子 Agent 字段、`AppContainer` AI 回合消息和交互日志使用张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文展示名，不再把 `guderian` / `MockAI` 当作主 UI 文案。
-- **v2.4 Agent 面板战略锚点展示名**：`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要优先显示 `CountryProfile.name`、`RegionNode.name` 与 `FrontZone.name`；防区名缺失或仍等于 raw id 时，由 `RootGameView` 按势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类只读展示名。底层 `CountryId`、`RegionId`、`FrontZoneId`、记录 Codable 和调试 JSON 不变。
+- **v2.4 Agent 记录展示名兼容层**：`AgentDecisionRecord` 保留 raw `agentId`、`provider` 和原始 `rawJSON` 用于 Codable、parser 和回归审计，同时提供 `agentDisplayName`、`providerDisplayName` 与兼容调试字段；`TurnManager.contextSummary`、`AgentPanelView` 的 Agent/来源/子 Agent 字段、`AppContainer` AI 回合消息和交互日志使用张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文展示名，不再把 `guderian` / `MockAI` 当作主 UI 文案。
+- **v2.4 Agent 面板战略锚点展示名**：`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要优先显示 `CountryProfile.name`、`RegionNode.name` 与 `FrontZone.name`；防区名缺失或仍等于 raw id 时，由 `RootGameView` 按势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类只读展示名；意图、摘要、命令结果、错误和诊断会过滤明显 raw/debug 文本，面板底部显示审计摘要。底层 `CountryId`、`RegionId`、`FrontZoneId`、记录 Codable 和调试 JSON 字段不变。
 - **v2.4 HUD、菜单与军机面板三国化**：主 HUD 新局按钮、macOS 战局菜单、信息面板开关、紧凑面板 tab、`AgentPanelView` 标题/执行者字段、命令 fallback、`AppContainer` 军机回合消息、本地 mock / no-op 来源、兼容 fallback 指挥者名称和军队/郡县选择日志已改为中文三国语义；军队选择日志优先使用 `Division.thematicDisplayName`，底层记录、调试 JSON、命令管线和规则行为不变。
 - **v2.4 Local LLM 提示词三国语义**：Legacy `LocalLLMDecisionProvider` 仍默认不启用，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`schemaVersion`、JSON keys、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
 - **v2.4 AppContainer 玩家交互日志三国化**：`AppContainer` 的 `interactionLog` 已将基础命令执行/拒绝、武将军令提交/拒绝、规则拒绝摘要、命令条数、手动指挥军队排除、查看/选择军队和选择地格/郡县等玩家可见文案改为中文三国语义；底层 `Command`、`ZoneDirective`、`WarDirectiveRecord`、Codable/rawValue 和执行管线不变。
@@ -171,7 +173,7 @@ WWIIHexV0/
 | `Agents/AgentPromptBuilder.swift` | prompt 构造 | system + user prompt 三国语义，强制兼容 JSON 输出 |
 | `Turn/TurnManager.swift` | 德军 AI 回合编排 | `runGermanAITurn(state:) async -> AgentTurnOutcome`（含 endTurn 推进） |
 | `App/AppContainer.swift` | AI 接线 | `runAIIfNeeded()`（guard germany+germanAI → Task → 写 state/record），`lastAgentDecisionRecord` |
-| `UI/AgentPanelView.swift` | 决策展示 | 读 `record` 与展示名映射（Agent/来源、国家/郡县/防区、intent、context、command results、errors、调试 JSON） |
+| `UI/AgentPanelView.swift` | 决策展示 | 读 `record` 与展示名映射（Agent/来源、国家/郡县/防区、intent、context、command results、errors、审计摘要） |
 | `UI/RootGameView.swift` | 启动触发 | `.task { container.runAIIfNeeded() }` |
 
 **MockAI 行为（兼容 id `guderian`，三国显示名张辽，旧启发式仍待迁移）：**

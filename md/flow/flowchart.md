@@ -43,7 +43,7 @@ v2.4 命名边界：
 - 武将统军风格通过 `ZoneCommanderAgentConfig.CommandStyle.displayName` 和 `GeneralAssignment.commandStyleDisplayName` 共享展示；assignment 快照缺失或坏值时按忠诚/满意推断，保持军队详情与 `GeneralAgent` 实际执行口径一致。军机面板可见的防区/方面指令摘要和 fallback diagnostics 使用中文文案；武将道路/交战日志、计划军令摘要、武将层复核事件和军机面板记录缺少展示名时使用“未命名武将 / 未知郡县 / 未知防区”等中文占位，不把 raw `generalId`、`RegionId` 或 `FrontZoneId` 当作玩家文案 fallback；directive schema、记录 id 和执行规则不变。
 - `UnitNode` 地图兵牌使用三国兵种 glyph 和 `退/守` 姿态短标记；`Division` / `ComponentType` / `RetreatMode` rawValue 与规则行为不变。
 - 军队详情和郡县详情的郡县、动态方面、防区、战线和要地状态由 `MapDisplayAdapter` 生成玩家可见展示名，不再直接显示战略 raw id 或 `None/controlled` 英文 fallback；typed id、Codable rawValue、动态方面/防区/战线规则行为不变。
-- `AgentPanelView` 的主审计字段、君主/外交官/太守/军师/武将记录和防区指令摘要优先使用展示名；标题、执行者和命令 fallback 已显示为军机谋议、执行者和军令，外交对象来自 `CountryProfile.name`，郡县来自 `RegionNode.name`，防区来自 `FrontZone.name` 或 `曹军防区：官渡、许昌` 这类只读 fallback，调试 JSON 和 Codable raw id 保持原样。
+- `AgentPanelView` 的主审计字段、君主/外交官/太守/军师/武将记录和防区指令摘要优先使用展示名；标题、执行者和命令 fallback 已显示为军机谋议、执行者和军令，外交对象来自 `CountryProfile.name`，郡县来自 `RegionNode.name`，防区来自 `FrontZone.name` 或 `曹军防区：官渡、许昌` 这类只读 fallback；意图、摘要、命令结果、错误和诊断会过滤 raw JSON、英文兼容 id、旧二战词、内部方面 rawValue 和明显机器字段，面板底部显示中文审计摘要而不默认展开原始 JSON；调试 JSON 和 Codable raw id 仍保留在记录结构中。
 - `DiplomacyPanelView` 只读展示国家、集团、关系双方、君主重点防区和外交对象，优先使用国家名、集团名、势力名和 `RootGameView` 生成的防区展示名；缺展示名时显示中文占位，不把 `CountryId`、`DiplomaticBlocId` 或 `FrontZoneId` rawValue 当作玩家文案 fallback；外交规则、道路、粮道和交战规则不变。
 - `DirectiveEnvelope.theaterContext`、君主/外交/太守/军师 rationale 和 `DiplomacyState.summary` 当前也使用同一展示名边界：防区、郡县和外交对象优先显示名称，缺资料时用中文占位；legacy `.germany/.allies` 外交 profile 可见名称按曹操/袁绍语义显示，原 id、bloc id、Codable 和调试 JSON 不变。
 - Legacy Agent D 的 parser / mapper 可见错误说明已改为中文军机、军令、军队和目标郡县语义；JSON 机器字段、schema 和命令管线不变，默认战争 AI 主路径不退回 Legacy Agent D。
@@ -53,6 +53,7 @@ v2.4 命名边界：
 - `RegionSupplyRules` 的战略郡县粮道控制区通行和撤退安全郡县也使用同一 `DiplomacyState` hostile / atWar 口径；中立、停战、同盟或共同作战 controller 不会仅因旧二元阵营关系阻断战略郡县粮道或战略撤退安全郡县。
 - `TurnManager` 在 `.marshalDirective` 和显式 `.zoneDirective` 执行前调用 `RulerAgent.adjust`、`DiplomatAgent.plan`、`GovernorAgent.plan`、`StrategistAgent.plan` 与 `GeneralAgent.plan`；外交提案可转换为 `Command.proposeDiplomacy` 经规则层最小更新关系，太守修路焦点可转换为 `Command.improveRoad` 经规则层连通优先修缮道路，太守生产建议可转换为 `Command.queueProduction` 经规则层排产，武将层会把军令 tactic 收束为合法攻守战术。玩家武将面板宏观命令也会先经 `GeneralAgent.plan` 塑形 tactic，再进入 `WarCommandExecutor -> RuleEngine`，但不会自动结束玩家回合。
 - `Region` 显示为郡县，`Theater` 显示为方面，`FrontZone` 显示为防区。
+- 固定方面 rawValue 仍保留 `NorthWest/NorthEast/SouthWest/SouthEast` 作为 `TheaterId` / Codable 兼容值；`TheaterNode.name` 创建时显示为“西北方面 / 东北方面 / 西南方面 / 东南方面”，临时方面显示为势力简称加“临时方面”。
 - 正式三国大地图、完整多势力 turn order、真实借道/贡赋/臣属制度和发布级 UI 后续分阶段实现。
 
 图里颜色含义：
@@ -493,7 +494,7 @@ flowchart TD
     STATE["运行时状态<br/>GameState + EventLog + WarDirectiveRecord"]:::state
     ROOT["主界面<br/>RootGameView<br/>HUD + Info tabs"]:::ui
     LOG["日志面板<br/>EventLogView<br/>最近 60 条 LogDisplayEntry"]:::ui
-    AIUI["军机面板<br/>AgentPanelView<br/>执行者/国家/郡县/防区展示名 + 调试 JSON + 命令结果 + 防区指令"]:::ui
+    AIUI["军机面板<br/>AgentPanelView<br/>执行者/国家/郡县/防区展示名 + 审计摘要 + 命令结果 + 防区指令"]:::ui
     BOARD["地图场景<br/>BoardScene<br/>缓存 unit display hex 后排序绘制"]:::ui
     MARSHAL["模拟元帅 / MockAI<br/>MarshalAgent + SimulatedMarshalLLMClient"]:::ai
     ZD["战区指令<br/>ZoneDirective<br/>tactic / focus / intensity"]:::command

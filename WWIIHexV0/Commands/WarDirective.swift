@@ -535,21 +535,21 @@ enum TheaterDirectiveDecoderError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidUTF8:
-            return "军师指令 JSON 不是有效 UTF-8。"
-        case .malformedJSON(let detail):
-            return "军师指令 JSON 格式错误：\(detail)"
-        case .unsupportedSchemaVersion(let version):
-            return "不支持的军师指令 schemaVersion：\(version)。"
+            return "军师指令格式错误。"
+        case .malformedJSON:
+            return "军师指令格式错误。"
+        case .unsupportedSchemaVersion:
+            return "军师指令编排版本不支持。"
         case .issuerMismatch:
             return "军师指令签发者不一致。"
         case .turnMismatch:
             return "军师指令回合不一致。"
-        case .factionMismatch(let expected, let actual):
-            return "军师指令势力不一致：期望 \(expected.displayName)，实际 \(actual.displayName)。"
+        case .factionMismatch:
+            return "军师指令势力不一致。"
         case .missingZone:
             return "军师指令引用了不存在的防区。"
-        case .zoneFactionMismatch(_, let expected, let actual):
-            return "军师指令防区归属不一致：期望 \(expected.displayName)，实际 \(actual.displayName)。"
+        case .zoneFactionMismatch:
+            return "军师指令防区归属不一致。"
         case .missingTargetTheater:
             return "军师指令引用了不存在的目标方面。"
         case .missingRegion:
