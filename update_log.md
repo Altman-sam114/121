@@ -6845,6 +6845,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；若默认官渡加载失败并落入旧阿登 fallback，`AgentContext.objectives` 仍可能携带旧城市名。
 - `MockAIClient` 的 stance、旧兵种排序和攻击评分仍是兼容算法，后续若迁移行为需单独切片。
 
+## v2.4 - 郡县检查器当前官道受压显示
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进武将、道路和交战可见审计闭环，让郡县检查器选中地格时能显示当前官道是否受可见敌军压迫，并收口同一摘要里的武将展示名 fallback。
+
+完成内容：
+
+- `RegionInspectorState` 新增 `selectedHexRoadStatusSummary`，由 `MapDisplayAdapter.inspectorState(...)` 只读派生。
+- “当前官道”从简单是/否改为“离官道 / 据官道，未受可见敌军压迫 / 据官道，受某敌军压迫，距 N”等玩家可见摘要。
+- 压迫来源只使用当前玩家视角可见、且外交 hostile / atWar 的敌军；不泄漏隐藏敌军，不把非敌对军队算作道路压迫。
+- `MapDisplayAdapter.generalDisplayName(for:)` 不再 fallback 到 raw `generalId`；缺少姓名快照时显示“未命名武将”，覆盖郡县检查器的本郡武将、敌军接战、官道压迫和非敌对关系摘要。
+- 本轮只改 UI 只读派生和展示文本，不改变道路修缮、移动、粮道、补给、攻击合法性、AI 军令落点、JSON schema 或命令执行规则。
+
+关键文件：
+
+- `WWIIHexV0/SpriteKit/MapDisplayAdapter.swift`
+- `WWIIHexV0/UI/RegionInspectorView.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_region_inspector_selected_road_pressure.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/SpriteKit/MapDisplayAdapter.swift WWIIHexV0/UI/RegionInspectorView.swift` 通过。
+- 定向残留扫描无命中：`generalDisplayName ?? assignment.generalId`、`return assignment.generalId`、`selectedHexHasRoad == true ? "是"`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片只涉及郡县检查器 UI 派生和展示名 fallback；本轮不混入道路、粮道、交战规则或 DataLoader fallback。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；郡县检查器窄面板下的换行、截断和真实选中态仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

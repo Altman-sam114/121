@@ -44,7 +44,8 @@ struct RegionInspectorView: View {
                 }
 
                 LabeledContent("当前官道") {
-                    Text(state.selectedHexHasRoad == true ? "是" : "否")
+                    Text(state.selectedHexRoadStatusSummary ?? (state.selectedHexHasRoad == true ? "据官道" : "离官道"))
+                        .multilineTextAlignment(.trailing)
                 }
             }
 

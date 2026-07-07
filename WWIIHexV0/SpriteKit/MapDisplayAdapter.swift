@@ -47,6 +47,7 @@ struct RegionInspectorState: Equatable {
     let selectedHexFrontZoneId: FrontZoneId?
     let selectedHexFrontZoneDisplayName: String?
     let selectedHexHasRoad: Bool?
+    let selectedHexRoadStatusSummary: String?
     let theaterId: TheaterId?
     let theaterDisplayName: String?
     let frontZoneId: FrontZoneId?
@@ -250,6 +251,9 @@ struct MapDisplayAdapter {
             hostileDivisions: visibleHostileDivisions,
             anchor: engagementAnchor
         )
+        let selectedHexRoadStatusSummary = selectedHex.flatMap {
+            selectedHexRoadStatusSummary(for: $0, hostileDivisions: visibleHostileDivisions)
+        }
         let friendlyGeneralSummaries = friendly.compactMap { division -> String? in
             guard let generalName = generalDisplayName(for: division) else {
                 return nil
@@ -301,6 +305,7 @@ struct MapDisplayAdapter {
             selectedHexFrontZoneId: selectedHexFrontZoneId,
             selectedHexFrontZoneDisplayName: frontZoneDisplayName(for: selectedHexFrontZoneId),
             selectedHexHasRoad: selectedHex.flatMap { state.map.tile(at: $0)?.hasRoad },
+            selectedHexRoadStatusSummary: selectedHexRoadStatusSummary,
             theaterId: theaterId,
             theaterDisplayName: theaterDisplayName(for: theaterId),
             frontZoneId: frontZoneId,
@@ -466,7 +471,8 @@ struct MapDisplayAdapter {
         guard let assignment = generalAssignment(for: division, fallbackZoneId: zoneId) else {
             return nil
         }
-        return assignment.generalDisplayName ?? assignment.generalId
+        let displayName = assignment.generalDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return displayName.isEmpty ? "未命名武将" : displayName
     }
 
     private func enemyEngagementSummary(for division: Division, anchor: HexCoord) -> String {
@@ -532,6 +538,35 @@ struct MapDisplayAdapter {
                 let generalSummary = generalDisplayName(for: item.enemy).map { "，敌将 \($0)" } ?? ""
                 return "\(item.enemy.thematicDisplayName)：压迫官道 \(item.road.q),\(item.road.r)，距官道 \(item.roadDistance)，距锚点 \(item.anchorDistance)\(generalSummary)"
             }
+    }
+
+    private func selectedHexRoadStatusSummary(for hex: HexCoord, hostileDivisions: [Division]) -> String {
+        guard state.map.tile(at: hex)?.hasRoad == true else {
+            return "离官道"
+        }
+
+        let pressureSource = hostileDivisions
+            .filter { $0.coord.distance(to: hex) <= 1 }
+            .sorted { lhs, rhs in
+                let lhsDistance = lhs.coord.distance(to: hex)
+                let rhsDistance = rhs.coord.distance(to: hex)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance < rhsDistance
+                }
+                if lhs.thematicDisplayName != rhs.thematicDisplayName {
+                    return lhs.thematicDisplayName < rhs.thematicDisplayName
+                }
+                return lhs.id < rhs.id
+            }
+            .first
+
+        guard let pressureSource else {
+            return "据官道，未受可见敌军压迫"
+        }
+
+        let distance = pressureSource.coord.distance(to: hex)
+        let generalSummary = generalDisplayName(for: pressureSource).map { "，敌将 \($0)" } ?? ""
+        return "据官道，受 \(pressureSource.thematicDisplayName) 压迫，距 \(distance)\(generalSummary)"
     }
 
     private func nonHostileRelationSummary(for division: Division, viewerFaction: Faction) -> String {
