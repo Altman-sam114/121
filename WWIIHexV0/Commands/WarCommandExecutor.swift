@@ -16,6 +16,7 @@ struct WarCommandExecutor {
     let commandHandler: GameCommandHandling
     private let occupationRules = OccupationRules()
     private let movementRules = MovementRules()
+    private let combatRules = CombatRules()
 
     private struct AttackTacticProfile {
         let includeDepthUnits: Bool
@@ -219,7 +220,8 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
-        var diagnostics: [String] = []
+        var roadDiagnostics: [String] = []
+        var combatDiagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
         var segmentLoads = Dictionary(
             uniqueKeysWithValues: zone.frontSegments.map {
@@ -264,7 +266,10 @@ struct WarCommandExecutor {
                     : .allowRetreat(divisionId: division.id)
             }
 
-            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
+            roadDiagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
+            if let combatDiagnostic = combatSelectionDiagnostic(for: command, in: nextState) {
+                combatDiagnostics.append(combatDiagnostic)
+            }
             run(
                 command,
                 fallback: .hold(divisionId: division.id),
@@ -280,7 +285,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
-            diagnostics: compactRoadDiagnostics(diagnostics),
+            diagnostics: compactRoadDiagnostics(roadDiagnostics) + compactCombatDiagnostics(combatDiagnostics),
             finalState: nextState
         )
     }
@@ -322,7 +327,8 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
-        var diagnostics: [String] = []
+        var roadDiagnostics: [String] = []
+        var combatDiagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
 
         for unitId in attackingUnitIds {
@@ -366,7 +372,10 @@ struct WarCommandExecutor {
                 command = .hold(divisionId: division.id)
             }
 
-            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
+            roadDiagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
+            if let combatDiagnostic = combatSelectionDiagnostic(for: command, in: nextState) {
+                combatDiagnostics.append(combatDiagnostic)
+            }
             run(
                 command,
                 fallback: .hold(divisionId: division.id),
@@ -388,7 +397,10 @@ struct WarCommandExecutor {
                     continue
                 }
                 let command = Command.hold(divisionId: division.id)
-                diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
+                roadDiagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
+                if let combatDiagnostic = combatSelectionDiagnostic(for: command, in: nextState) {
+                    combatDiagnostics.append(combatDiagnostic)
+                }
                 run(
                     command,
                     fallback: .hold(divisionId: division.id),
@@ -404,7 +416,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
-            diagnostics: compactRoadDiagnostics(diagnostics),
+            diagnostics: compactRoadDiagnostics(roadDiagnostics) + compactCombatDiagnostics(combatDiagnostics),
             finalState: nextState
         )
     }
@@ -419,7 +431,8 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
-        var diagnostics: [String] = []
+        var roadDiagnostics: [String] = []
+        var combatDiagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
         let frontUnitIds = limitedFrontUnits(
             zone.unitsFront.filter { !excludedDivisionIds.contains($0) },
@@ -466,7 +479,10 @@ struct WarCommandExecutor {
                 command = .hold(divisionId: division.id)
             }
 
-            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
+            roadDiagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
+            if let combatDiagnostic = combatSelectionDiagnostic(for: command, in: nextState) {
+                combatDiagnostics.append(combatDiagnostic)
+            }
             run(
                 command,
                 fallback: .allowRetreat(divisionId: division.id),
@@ -481,7 +497,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
-            diagnostics: compactRoadDiagnostics(diagnostics),
+            diagnostics: compactRoadDiagnostics(roadDiagnostics) + compactCombatDiagnostics(combatDiagnostics),
             finalState: nextState
         )
     }
@@ -926,6 +942,36 @@ struct WarCommandExecutor {
             return diagnostics
         }
         return Array(diagnostics.prefix(limit)) + ["另 \(diagnostics.count - limit) 条道路审计已记录。"]
+    }
+
+    private func combatSelectionDiagnostic(for command: Command, in state: GameState) -> String? {
+        guard case .attack(let attackerId, let targetId) = command,
+              let attacker = state.division(id: attackerId),
+              let defender = state.division(id: targetId) else {
+            return nil
+        }
+
+        let damage = combatRules.attackDamage(attacker: attacker, defender: defender, in: state)
+        let audit = combatRules.combatAuditSummary(attacker: attacker, defender: defender, in: state)
+        let auditText = audit.logFragment?
+            .replacingOccurrences(of: "交战审计：", with: "")
+            .replacingOccurrences(of: "->", with: "至") ?? "攻防无额外修正"
+        let counterText: String
+        if combatRules.canCounterAttack(defender: defender, attacker: attacker) {
+            let counterDamage = combatRules.counterAttackDamage(defender: defender, attacker: attacker, in: state)
+            counterText = "反击 \(counterDamage.strengthDamage)"
+        } else {
+            counterText = "无反击"
+        }
+        return "交战审计：\(attacker.thematicDisplayName) 攻 \(defender.thematicDisplayName)，距 \(attacker.coord.distance(to: defender.coord))，预计伤 \(damage.strengthDamage)，\(counterText)，\(auditText)"
+    }
+
+    private func compactCombatDiagnostics(_ diagnostics: [String]) -> [String] {
+        let limit = 3
+        guard diagnostics.count > limit else {
+            return diagnostics
+        }
+        return Array(diagnostics.prefix(limit)) + ["另 \(diagnostics.count - limit) 条交战审计已记录。"]
     }
 
     private func enemyRegions(

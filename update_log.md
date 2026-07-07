@@ -7405,6 +7405,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；道路审计需要在 AI 回合或玩家武将宏观军令生成具体命令后才能在 Agent 面板中确认观感。
 - 本轮不跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；功能正确性等待云端 CI artifact、后续 Agent C 复判或人工授权专项检查。
 
+## v2.5 - 宏观军令交战审计
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把宏观防区军令生成 `.attack` 命令时可取得的交战目标、预计伤害、反击风险和攻防因素写入战争指令审计，让 AI 防区指令和玩家武将宏观军令都能解释交战选择。
+
+完成内容：
+
+- `WarCommandExecutor` 新增只读 `CombatRules` 引用，用于执行前生成交战诊断。
+- 宏观命令生成后、`run(...)` 执行前，若命令是 `.attack`，生成中文交战审计，包含攻击方、目标、距离、预计伤害、反击伤害或无反击，以及 `CombatRules.combatAuditSummary` 复用的攻防/武将/地形/围城/侧击因素。
+- 道路审计和交战审计分开收集并分别压缩，单条防区指令最多展示前三条交战审计，更多命令以“另 N 条交战审计已记录。”收束。
+- `TurnManager` 与 `AppContainer` 不需要再改；上一轮已统一把 `WarCommandExecutionResult.diagnostics` 合并进 AI 与玩家 `WarDirectiveRecord.diagnostics`。
+- `md/flow/flow.md` 和 `md/flow/flowchart.md` 同步记录执行器道路/交战审计流向。
+- 本轮只增加审计解释，不改变目标筛选、排序、fallback、攻击、反击、撤退、占领、战略同步、JSON schema 或 SwiftUI 布局。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_combat_diagnostics.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 已包含 `combatSelectionDiagnostic`、`compactCombatDiagnostics` 和“交战审计”，`TurnManager.swift` 与 `AppContainer.swift` 仍通过 `execution.diagnostics` 合并 AI / 玩家战争指令记录。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片可直接复用 `CombatRules.combatAuditSummary`，无需改 `WarDirectiveRecord` schema、`TurnManager` 或 `AppContainer`；提示后已将道路/交战诊断分开压缩，避免超限文案混淆。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；交战审计需要在 AI 回合或玩家武将宏观军令实际生成攻击命令后才能在 Agent 面板中确认观感。
+- 本轮不跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；功能正确性等待云端 CI artifact、后续 Agent C 复判或人工授权专项检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

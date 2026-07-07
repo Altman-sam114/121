@@ -108,7 +108,7 @@ flowchart TD
     RRP["郡县态势摘要<br/>RegionInspectorState / RegionInspectorView<br/>官道覆盖/受压/近敌来源 + 本郡武将 + 敌军距离/射程/兵力/敌将 + 非敌对关系"]:::ui
     POM["计划军令反馈<br/>BoardScene 地图短标签 + GeneralCommandPanelView 面板摘要<br/>源/目标点 + 箭头/固守环 + 官道可见受压 + 地图/面板近敌对象距离"]:::ui
     ZD["战争指令<br/>ZoneDirective<br/>战区级 attack/defend 意图"]:::command
-    WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令<br/>生成道路审计诊断"]:::command
+    WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令<br/>生成道路/交战审计诊断"]:::command
     CMD["底层命令<br/>Command<br/>move / attack / hold / resupply / queueProduction / proposeDiplomacy / endTurn"]:::command
     RE["规则引擎<br/>RuleEngine<br/>先校验，再真正修改 GameState"]:::rules
     SYNC["战略同步器<br/>StrategicStateSynchronizer<br/>占领后刷新省份、战区、前线、部署"]:::rules
@@ -119,7 +119,7 @@ flowchart TD
     GREC["武将审计<br/>GameState.generalRecords<br/>保存防区武将动作、战术和理由"]:::state
 
     UI["地图和面板显示<br/>SpriteKit / SwiftUI Overlay<br/>显示 hex、省份、初始战区、动态战区、前线、部署"]:::ui
-    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路审计、道路机动、粮草撤退、围城损耗、交战审计、余兵、攻防修正和中文展示兜底"]:::ui
+    LOG["日志和复盘记录<br/>EventLog / interactionLog / WarDirectiveRecord / AgentDecisionRecord / RulerDecisionRecord<br/>核心行动、玩家交互和命令结果中文化，含武将军令、军队选择、道路审计、交战审计、道路机动、粮草撤退、围城损耗、余兵、攻防修正和中文展示兜底"]:::ui
 
     ME --> JSON --> DL --> GS
     GS --> HEX
@@ -357,10 +357,10 @@ flowchart TD
     GREC["武将审计<br/>GeneralDecisionRecord + EventLog<br/>记录武将动作、战术、风格和理由"]:::ui
     GINF["武将战场影响与交战审计<br/>GeneralInfluence / CombatAuditSummary<br/>道路机动、攻击、防御与交战因素摘要"]:::rules
     TACTIC["高级战术路由<br/>TacticName<br/>正攻 / 疾袭 / 突击 / 破阵 / 合围 / 箭雨 / 固守 / 死守"]:::command
-    WCE["指令执行器<br/>WarCommandExecutor.execute<br/>按战术 profile 选择单位、目标和 fallback<br/>返回道路审计 diagnostics"]:::command
+    WCE["指令执行器<br/>WarCommandExecutor.execute<br/>按战术 profile 选择单位、目标和 fallback<br/>返回道路/交战审计 diagnostics"]:::command
     BOTTOM["具体单位命令<br/>Command<br/>attack / move / hold / allowRetreat"]:::command
     RE["统一规则校验执行<br/>RuleEngine<br/>AI 和玩家共用同一套规则"]:::rules
-    RECORD["指令复盘记录<br/>WarDirectiveRecord<br/>记录 tactic、target、道路审计、中文结果和拒绝原因"]:::ui
+    RECORD["指令复盘记录<br/>WarDirectiveRecord<br/>记录 tactic、target、道路审计、交战审计、中文结果和拒绝原因"]:::ui
     END["AI 自动结束回合<br/>RuleEngine.execute(.endTurn)<br/>切换 activeFaction / phase"]:::rules
 
     START --> CHECK
@@ -545,9 +545,9 @@ flowchart TD
     GENUI["武将面板<br/>GeneralCommandPanelView<br/>固守战线 / 进攻郡县"]:::ui
     ZD["玩家战区指令<br/>ZoneDirective<br/>defense holdLine 或 attack selected region"]:::command
     GENA["武将战术塑形<br/>GeneralAgent.plan<br/>按防区武将生成最终 tactic"]:::ai
-    WCE["执行器<br/>WarCommandExecutor.execute(excluding lockedIds)<br/>跳过已微操单位<br/>返回道路审计 diagnostics"]:::command
+    WCE["执行器<br/>WarCommandExecutor.execute(excluding lockedIds)<br/>跳过已微操单位<br/>返回道路/交战审计 diagnostics"]:::command
     RE["规则权威<br/>RuleEngine<br/>校验并修改 GameState"]:::rules
-    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation(tactic)<br/>AI 面板、日志、道路审计和计划线共用"]:::ui
+    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation(tactic)<br/>AI 面板、日志、道路/交战审计和计划线共用"]:::ui
     BOARD["视觉反馈<br/>BoardScene 地图短标签 + GeneralCommandPanelView 面板摘要<br/>进攻箭头、防御圆环、武将战术/官道受压短标签、面板近敌对象距离、微操单位金色圈"]:::ui
     PROFILE["武将档案<br/>GeneralProfileView<br/>履历、技能、忠诚、满意度、辖下部队"]:::ui
 
