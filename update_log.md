@@ -7280,6 +7280,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机 XCTest 或运行时 fallback 加载 UI 检查；真实 fallback 加载日志显示仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - `City ...`、`Supply ...`、region name、keyLocations、tile cityName、objectives name 和 supply source 名称仍保留旧兼容口径，涉及更多数据消费面，后续应单独切片处理。
 
+## v2.5 - 武将交战审计姓名
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把交战审计 factors 中的武将攻防修正从“攻方武将 +N / 守方武将 +N”细化为带武将展示名的审计文本，让玩家和 Agent C 能直接复判哪个武将影响了本次攻防。
+
+完成内容：
+
+- `CombatRules.combatAuditSummary` 先生成一次 `GeneralCombatInfluenceSummary`，并把同一份武将姓名/修正传给攻击和防御 profile。
+- 攻方非零武将修正显示为“攻方武将 <姓名> +N/-N”。
+- 守方非零武将修正显示为“守方武将 <姓名> +N/-N”。
+- 缺展示名时仍使用中文兜底，不把 raw `generalId` 写入交战审计。
+- 本轮只改变审计展示文本，不改变武将加成数值、伤害、反击、撤退、围城、道路、粮道、命令管线、JSON schema 或 UI 布局。
+
+关键文件：
+
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_general_combat_audit_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/CombatRules.swift` 通过。
+- 定向扫描确认 `CombatRules.swift` 中 `generalFactorText`、`role: "攻方"`、`role: "守方"` 和“未命名武将”兜底存在。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 两个并发只读子 Agent 确认交战审计是执行日志和军队详情接战预判共享解释入口；道路/机动和交战规则已走 `GeneralInfluence -> MovementRules / CombatRules`，本轮不扩大到规则数值或 UI 结构。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；交战审计姓名需要在有非零武将攻防修正的接战场景中才能可见。
+- 目前军队详情仍可能同时显示“交战武将”“武将影响”和带姓名的交战审计 factors，属于解释性重复，后续如压缩面板文案可单独切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

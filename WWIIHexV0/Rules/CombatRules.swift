@@ -147,8 +147,19 @@ struct CombatRules {
         defender: Division,
         in state: GameState
     ) -> CombatAuditSummary {
-        let attackProfile = attackProfile(attacker: attacker, defender: defender, in: state)
-        let defenseProfile = defenseProfile(defender: defender, attackedBy: attacker, in: state)
+        let generalSummary = generalInfluence.combatSummary(attacker: attacker, defender: defender, in: state)
+        let attackProfile = attackProfile(
+            attacker: attacker,
+            defender: defender,
+            in: state,
+            generalSummary: generalSummary
+        )
+        let defenseProfile = defenseProfile(
+            defender: defender,
+            attackedBy: attacker,
+            in: state,
+            generalSummary: generalSummary
+        )
         return CombatAuditSummary(
             baseAttack: attackProfile.baseAttack,
             effectiveAttack: attackProfile.effectiveAttack,
@@ -193,7 +204,18 @@ struct CombatRules {
         value > 0 ? "+\(value)" : "\(value)"
     }
 
-    private func attackProfile(attacker: Division, defender: Division, in state: GameState) -> AttackProfile {
+    private func generalFactorText(role: String, displayName: String?, bonus: Int) -> String {
+        let trimmedName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let namePart = trimmedName.isEmpty ? " 未命名武将" : " \(trimmedName)"
+        return "\(role)武将\(namePart) \(signedBonus(bonus))"
+    }
+
+    private func attackProfile(
+        attacker: Division,
+        defender: Division,
+        in state: GameState,
+        generalSummary: GeneralCombatInfluenceSummary? = nil
+    ) -> AttackProfile {
         guard let defenderTile = state.map.tile(at: defender.coord) else {
             return AttackProfile(baseAttack: attacker.attack, effectiveAttack: attacker.attack, factors: [])
         }
@@ -213,9 +235,16 @@ struct CombatRules {
             factors.append("攻方器械攻城 +25%")
         }
 
-        let generalAttackBonus = generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
+        let generalAttackBonus = generalSummary?.attackBonus ??
+            generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
         if generalAttackBonus != 0 {
-            factors.append("攻方武将 \(signedBonus(generalAttackBonus))")
+            factors.append(
+                generalFactorText(
+                    role: "攻方",
+                    displayName: generalSummary?.attackerDisplayName,
+                    bonus: generalAttackBonus
+                )
+            )
         }
 
         let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) + generalAttackBonus
@@ -226,7 +255,12 @@ struct CombatRules {
         )
     }
 
-    private func defenseProfile(defender: Division, attackedBy attacker: Division, in state: GameState) -> DefenseProfile {
+    private func defenseProfile(
+        defender: Division,
+        attackedBy attacker: Division,
+        in state: GameState,
+        generalSummary: GeneralCombatInfluenceSummary? = nil
+    ) -> DefenseProfile {
         var effectiveDefense = defender.defense
         var factors: [String] = []
 
@@ -242,9 +276,16 @@ struct CombatRules {
                 factors.append("守方隔河 +2")
             }
 
-            let generalDefenseBonus = generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            let generalDefenseBonus = generalSummary?.defenseBonus ??
+                generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
             if generalDefenseBonus != 0 {
-                factors.append("守方武将 \(signedBonus(generalDefenseBonus))")
+                factors.append(
+                    generalFactorText(
+                        role: "守方",
+                        displayName: generalSummary?.defenderDisplayName,
+                        bonus: generalDefenseBonus
+                    )
+                )
             }
             effectiveDefense += generalDefenseBonus
 
@@ -254,9 +295,16 @@ struct CombatRules {
                 factors.append("守方步卒据险 x1.3")
             }
         } else {
-            let generalDefenseBonus = generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            let generalDefenseBonus = generalSummary?.defenseBonus ??
+                generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
             if generalDefenseBonus != 0 {
-                factors.append("守方武将 \(signedBonus(generalDefenseBonus))")
+                factors.append(
+                    generalFactorText(
+                        role: "守方",
+                        displayName: generalSummary?.defenderDisplayName,
+                        bonus: generalDefenseBonus
+                    )
+                )
             }
             effectiveDefense += generalDefenseBonus
         }
