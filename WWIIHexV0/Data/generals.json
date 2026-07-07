@@ -3,9 +3,9 @@
   "generals": [
     {
       "id": "general_montgomery",
-      "name": "Bernard Montgomery",
-      "localizedName": "蒙哥马利",
-      "rank": "Field Marshal",
+      "name": "Yuan Shao",
+      "localizedName": "袁绍",
+      "rank": "大将军",
       "faction": "allies",
       "commandStyle": "balanced",
       "skills": [
@@ -13,8 +13,8 @@
         "logistics",
         "coalition_coordination"
       ],
-      "portrait": "portrait_montgomery",
-      "biography": "A methodical British field marshal who favors preparation, reserves, and overwhelming force before a major attack.",
+      "portrait": "portrait_yuan_shao",
+      "biography": "兵多势众，适合统筹大规模攻势、预备队和正面压迫。",
       "preferredTheaterIds": [
         "theater_1"
       ],
@@ -28,9 +28,9 @@
     },
     {
       "id": "general_weygand",
-      "name": "Maxime Weygand",
-      "localizedName": "魏刚",
-      "rank": "General",
+      "name": "Ju Shou",
+      "localizedName": "沮授",
+      "rank": "监军",
       "faction": "allies",
       "commandStyle": "cautious",
       "skills": [
@@ -38,8 +38,8 @@
         "staff_coordination",
         "reserve_control"
       ],
-      "portrait": "portrait_weygand",
-      "biography": "A conservative staff-minded commander best suited to stabilizing strained defensive sectors and preserving reserves.",
+      "portrait": "portrait_ju_shou",
+      "biography": "善守成与粮道约束，适合稳住渡口、据点和后方补给。",
       "preferredTheaterIds": [
         "theater_2"
       ],
@@ -52,9 +52,9 @@
     },
     {
       "id": "general_de_gaulle",
-      "name": "Charles de Gaulle",
-      "localizedName": "戴高乐",
-      "rank": "Brigadier General",
+      "name": "Zhang He",
+      "localizedName": "张郃",
+      "rank": "校尉",
       "faction": "allies",
       "commandStyle": "aggressive",
       "skills": [
@@ -62,8 +62,8 @@
         "counterattack",
         "political_will"
       ],
-      "portrait": "portrait_de_gaulle",
-      "biography": "An ambitious armored warfare advocate who accepts operational risk for mobile counterattacks and decisive initiative.",
+      "portrait": "portrait_zhang_he",
+      "biography": "用兵稳健，能在道路与侧翼上寻找反击机会。",
       "preferredTheaterIds": [
         "theater_4"
       ],
@@ -76,9 +76,9 @@
     },
     {
       "id": "general_guderian",
-      "name": "Heinz Guderian",
-      "localizedName": "古德里安",
-      "rank": "Generaloberst",
+      "name": "Zhang Liao",
+      "localizedName": "张辽",
+      "rank": "偏将军",
       "faction": "germany",
       "commandStyle": "aggressive",
       "skills": [
@@ -86,8 +86,8 @@
         "breakthrough",
         "rapid_exploitation"
       ],
-      "portrait": "portrait_guderian",
-      "biography": "A fast-moving armored commander focused on concentration, breakthrough, and exploitation before the enemy can stabilize.",
+      "portrait": "portrait_zhang_liao",
+      "biography": "善骑战，长于沿道路突进、追击和整肃军阵。",
       "preferredTheaterIds": [
         "theater_3"
       ],
@@ -101,9 +101,9 @@
     },
     {
       "id": "general_leeb",
-      "name": "Wilhelm Ritter von Leeb",
-      "localizedName": "里布",
-      "rank": "Field Marshal",
+      "name": "Xun You",
+      "localizedName": "荀攸",
+      "rank": "军师",
       "faction": "germany",
       "commandStyle": "cautious",
       "skills": [
@@ -111,8 +111,8 @@
         "fortress_operations",
         "disciplined_retreat"
       ],
-      "portrait": "portrait_leeb",
-      "biography": "A disciplined and cautious commander who favors prepared positions, strongpoints, and deliberate defensive control.",
+      "portrait": "portrait_xun_you",
+      "biography": "长于谋划与粮道调度，适合组织一线稳健攻防。",
       "preferredTheaterIds": [
         "theater_4"
       ],
@@ -125,9 +125,9 @@
     },
     {
       "id": "general_bock",
-      "name": "Fedor von Bock",
-      "localizedName": "博客",
-      "rank": "Field Marshal",
+      "name": "Cao Cao",
+      "localizedName": "曹操",
+      "rank": "司空",
       "faction": "germany",
       "commandStyle": "balanced",
       "skills": [
@@ -135,8 +135,8 @@
         "offensive_planning",
         "pressure_management"
       ],
-      "portrait": "portrait_bock",
-      "biography": "A forceful army group commander who balances offensive pressure with orderly front management and reserves.",
+      "portrait": "portrait_cao_cao",
+      "biography": "善用兵势与粮道，重视集中优势、道路机动和持续压迫。",
       "preferredTheaterIds": [
         "theater_3"
       ],

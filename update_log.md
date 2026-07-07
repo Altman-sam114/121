@@ -7115,6 +7115,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 fallback 加载 UI 检查；只有当 `sanguo_unit_templates.json` 缺失并回退到旧模板时，才能在运行时看到这些展示名。
 - 历史 prompt、旧记录和测试样例中的 Panzer / Division 文本仍作为历史资料或兼容测试实例名保留，不纳入本轮清理。
 
+## v2.5 - fallback 武将 registry 展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 武将数据和玩家可见文案收口，把旧 fallback `generals.json` 中的二战将领姓名、头像名、军衔和传记替换为三国兼容武将展示资料。
+
+完成内容：
+
+- `general_montgomery` 的展示资料改为袁绍。
+- `general_weygand` 的展示资料改为沮授。
+- `general_de_gaulle` 的展示资料改为张郃。
+- `general_guderian` 的展示资料改为张辽。
+- `general_leeb` 的展示资料改为荀攸。
+- `general_bock` 的展示资料改为曹操。
+- 本轮只改 fallback 武将 registry 的 `name`、`localizedName`、`rank`、`portrait`、`biography`，不改变 `id`、`faction`、`commandStyle`、`skills`、preferred region/theater、忠诚/满意数值、默认 `sanguo_generals.json`、武将分配、规则、AI 或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Data/generals.json`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_fallback_general_registry_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `jq empty WWIIHexV0/Data/generals.json` 通过。
+- `generals.json` 中旧二战将领姓名和旧中文译名定向扫描无命中：`Bernard Montgomery`、`Maxime Weygand`、`Charles de Gaulle`、`Heinz Guderian`、`Wilhelm Ritter von Leeb`、`Fedor von Bock`、`蒙哥马利`、`魏刚`、`戴高乐`、`古德里安`、`里布`、`博客`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 主线程核对确认默认主路径优先读取 `sanguo_generals.json`；旧 `generals.json` 只在缺资源时作为兼容 fallback，低风险展示字段适合独立切片处理。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 fallback 加载 UI 检查；只有当 `sanguo_generals.json` 缺失并回退到旧 registry 时，才能在运行时看到这些展示名。
+- `generals.json` 仍保留旧兼容 id、旧 preferred region/theater 和旧技能 raw id；这些是兼容字段，不作为本轮玩家文案清理目标。
+- 历史 prompt、旧记录和测试样例中的旧二战将领名称仍作为历史资料或兼容测试语境保留，不纳入本轮清理。
+- 并发只读 Swift 残留扫描另标出 `MapState.ardennesV0()` 中 Bastogne / St. Vith / Bastogne Fortress 旧 fallback 地图名，建议后续作为独立静态 fallback 地图展示名切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
