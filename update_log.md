@@ -6994,6 +6994,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；MapEditor picker 在真实 macOS 目标里的宽度、菜单排序和导出结果仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - `DataLoader.loadArdennesDataSet()` 的 German / Allied 英文校验错误、`guderian` 旧 Agent D 校验和旧阿登 fallback API 名仍保留兼容路径，后续如需玩家可见错误完全三国化应单独切片处理。
 
+## v2.5 - DataLoader 验证错误文案三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 玩家/编辑器可见文案收口，把 `DataLoader` 旧阿登兼容校验中可能透出的 German / Allied / guderian 英文错误说明改为中文三国语义。
+
+完成内容：
+
+- 缺少 `germany` supply source 的错误文案改为“剧本缺少曹军补给源。”。
+- 缺少 `allies` supply source 的错误文案改为“剧本缺少袁军补给源。”。
+- 兼容 agent 引用未知 division 的错误文案改为“兼容武将配置引用了未知军队：...。”。
+- 旧阿登 `guderian.assignedDivisionIds` 覆盖校验错误改为“兼容武将配置必须完整覆盖曹军初始军队。”。
+- 缺少 `guderian` agent 配置错误改为“剧本缺少兼容武将配置。”。
+- 本轮只改 `DataValidationError.message` 展示文本，不改变 `DataLoader` 校验条件、旧阿登 fallback、`germany/allies` raw id、`guderian` 兼容 id、JSON、schema、规则、AI 或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Data/DataLoader.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_dataloader_validation_error_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Data/DataLoader.swift` 通过。
+- 定向旧英文错误文案扫描无命中：`Scenario is missing a German supply source`、`Scenario is missing an Allied supply source`、`Agent .* references unknown division`、`guderian.assignedDivisionIds must exactly cover German initial units`、`Scenario is missing guderian agent configuration`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片只改 `DataValidationError.message`，不应修改 `loadArdennes*` API、`ardennes_*` 资源名、`germany/allies` rawValue、`guderian` 兼容 id、JSON、规则或命令管线。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时加载失败 UI 检查；真实错误弹出/日志路径的可见性仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- `loadArdennesDataSet()`、`loadArdennesV02Regions()`、旧阿登数据文件名和通用 missing resource 错误仍可能暴露 raw 资源名，后续如需完全隐藏旧阿登路径应单独切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

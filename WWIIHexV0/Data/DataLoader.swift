@@ -313,10 +313,10 @@ struct DataLoader {
             $0.isSupplySource && $0.supplyFaction == "allies"
         }
         if germanSupplySources.isEmpty {
-            errors.append(DataValidationError(message: "Scenario is missing a German supply source."))
+            errors.append(DataValidationError(message: "剧本缺少曹军补给源。"))
         }
         if alliedSupplySources.isEmpty {
-            errors.append(DataValidationError(message: "Scenario is missing an Allied supply source."))
+            errors.append(DataValidationError(message: "剧本缺少袁军补给源。"))
         }
 
         let objectiveIds = scenario.objectives.map(\.id)
@@ -360,7 +360,7 @@ struct DataLoader {
                 for divisionId in agent.assignedDivisionIds where !unitIdSet.contains(divisionId) {
                     errors.append(
                         DataValidationError(
-                            message: "Agent \(agent.id) references unknown division \(divisionId)."
+                            message: "兼容武将配置引用了未知军队：\(divisionId)。"
                         )
                     )
                 }
@@ -372,12 +372,12 @@ struct DataLoader {
                 if assignedDivisionIds != germanUnitIds {
                     errors.append(
                         DataValidationError(
-                            message: "guderian.assignedDivisionIds must exactly cover German initial units."
+                            message: "兼容武将配置必须完整覆盖曹军初始军队。"
                         )
                     )
                 }
             } else {
-                errors.append(DataValidationError(message: "Scenario is missing guderian agent configuration."))
+                errors.append(DataValidationError(message: "剧本缺少兼容武将配置。"))
             }
         }
 
