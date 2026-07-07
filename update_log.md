@@ -7489,6 +7489,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；战术审计分组需要在 AI 回合或玩家武将宏观军令实际生成道路/交战诊断后，才能确认窄屏、长军队名和长审计文本下的真实观感。
 - 该分组仍依赖执行器诊断保留“道路审计 / 交战审计”中文 marker；若后续执行器改文案，需要同步更新 `AgentPanelView` 分类 helper 或改为结构化诊断。
 
+## v2.5 - 宏观交战目标态势审计
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把宏观 `.attack` 命令的交战审计从“谁打谁、预计伤害、反击和攻防因素”扩展到目标态势，让 AI 防区指令和玩家武将宏观军令也能显示目标兵力、地形、城关/官道、粮草和姿态。
+
+完成内容：
+
+- `WarCommandExecutor.combatSelectionDiagnostic` 在交战审计中追加目标态势摘要。
+- 新增私有 `combatTargetSituationText(for:in:)`，只读 `Division` 和 `HexTile`，输出目标兵力、地形、据城/据关、临官道、粮草短码和退守姿态短码。
+- 交战审计仍复用 `CombatRules.combatAuditSummary` 输出攻防/武将/地形/围城/侧击因素。
+- 本轮只改变诊断文案，不改变目标筛选、排序、fallback、伤害、反击、撤退、占领、战略同步、JSON schema、UI 结构或 SpriteKit 绘制。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_combat_target_situation.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 包含 `combatTargetSituationText`、“目标兵”、“临官道”、“粮”和“令”。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 本轮尝试并发只读子 Agent 侦查执行器和 UI 缺口，但两个子 Agent 分别因并发限制和 429 限流失败，未产出可用复核；主线程基于当前源码和文档完成实现与轻量检查。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；更长的交战审计文案需要在实际 AI 回合或玩家武将宏观军令生成攻击命令后确认 Agent 面板观感。
+- 目标态势使用短码“粮足/缺/断、令退/守”，与军队详情预判保持紧凑口径；后续如做发布级文案压缩或结构化诊断，可再统一调整。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

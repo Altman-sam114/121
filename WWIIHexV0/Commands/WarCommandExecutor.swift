@@ -963,7 +963,27 @@ struct WarCommandExecutor {
         } else {
             counterText = "无反击"
         }
-        return "交战审计：\(attacker.thematicDisplayName) 攻 \(defender.thematicDisplayName)，距 \(attacker.coord.distance(to: defender.coord))，预计伤 \(damage.strengthDamage)，\(counterText)，\(auditText)"
+        return "交战审计：\(attacker.thematicDisplayName) 攻 \(defender.thematicDisplayName)，距 \(attacker.coord.distance(to: defender.coord))，预计伤 \(damage.strengthDamage)，\(counterText)，\(combatTargetSituationText(for: defender, in: state))，\(auditText)"
+    }
+
+    private func combatTargetSituationText(for defender: Division, in state: GameState) -> String {
+        var parts = ["目标兵 \(defender.strength)/\(defender.maxStrength)"]
+        if let tile = state.map.tile(at: defender.coord) {
+            parts.append(tile.baseTerrain.displayName)
+            let cityName = tile.cityName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let fortressName = tile.fortressName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !cityName.isEmpty {
+                parts.append("据城")
+            } else if !fortressName.isEmpty {
+                parts.append("据关")
+            }
+            if tile.hasRoad {
+                parts.append("临官道")
+            }
+        }
+        parts.append("粮\(defender.supplyState.shortDisplayName)")
+        parts.append("令\(defender.retreatMode.shortDisplayCode)")
+        return parts.joined(separator: "，")
     }
 
     private func compactCombatDiagnostics(_ diagnostics: [String]) -> [String] {
