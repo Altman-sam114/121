@@ -251,8 +251,14 @@ struct MapDisplayAdapter {
             hostileDivisions: visibleHostileDivisions,
             anchor: engagementAnchor
         )
-        let selectedHexRoadStatusSummary = selectedHex.flatMap {
-            selectedHexRoadStatusSummary(for: $0, hostileDivisions: visibleHostileDivisions)
+        let selectedHexRoadStatusSummary: String?
+        if let selectedHex {
+            selectedHexRoadStatusSummary = selectedRoadStatusSummary(
+                for: selectedHex,
+                hostileDivisions: visibleHostileDivisions
+            )
+        } else {
+            selectedHexRoadStatusSummary = nil
         }
         let friendlyGeneralSummaries = friendly.compactMap { division -> String? in
             guard let generalName = generalDisplayName(for: division) else {
@@ -540,7 +546,7 @@ struct MapDisplayAdapter {
             }
     }
 
-    private func selectedHexRoadStatusSummary(for hex: HexCoord, hostileDivisions: [Division]) -> String {
+    private func selectedRoadStatusSummary(for hex: HexCoord, hostileDivisions: [Division]) -> String {
         guard state.map.tile(at: hex)?.hasRoad == true else {
             return "离官道"
         }
