@@ -804,7 +804,7 @@ final class AppContainer: ObservableObject {
             return nil
         }
 
-        return "接敌配对：\(selected.attacker.thematicDisplayName) -> \(selected.defender.thematicDisplayName)，\(selected.perspective.modifierText(for: selected.bonus))，距 \(selected.distance) 格"
+        return "接敌配对：\(selected.attacker.thematicDisplayName) → \(selected.defender.thematicDisplayName)，\(selected.perspective.modifierText(for: selected.bonus))，距 \(selected.distance) 格"
     }
 
     private func nearestEnemyText(for divisions: [Division], enemyDivisions: [Division]) -> String? {

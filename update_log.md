@@ -6884,6 +6884,42 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮不做本机运行时 UI 检查；郡县检查器窄面板下的换行、截断和真实选中态仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 武将接敌配对箭头中文化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进武将、道路和交战可见审计闭环，把武将军令面板“道路与交战”摘要中的接敌配对箭头从 ASCII `->` 收口为中文 UI 已使用的 `→`。
+
+完成内容：
+
+- `AppContainer.engagementPairingText(...)` 的接敌配对摘要从“军队 -> 敌军”改为“军队 → 敌军”。
+- 保留接敌候选筛选、排序、攻击/防御视角、武将攻防修正、距离计算、可见性、道路、粮道、交战和命令执行规则不变。
+- 同步阶段 prompt 索引和本轮记录。
+
+关键文件：
+
+- `WWIIHexV0/App/AppContainer.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_general_engagement_pairing_arrow_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/App/AppContainer.swift` 通过。
+- 定向残留扫描无命中：`接敌配对：.*->`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片只改武将面板可见字符串，不涉及道路、交战计算、外交敌对判断、Codable/rawValue、JSON 或命令管线。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；武将军令面板窄宽度下的真实换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
