@@ -97,6 +97,13 @@ struct MapState: Codable, Equatable {
         return tile(at: coord)?.controller
     }
 
+    func controllerOfObjective(id: String) -> Faction? {
+        guard let coord = objective(id: id)?.coord else {
+            return nil
+        }
+        return tile(at: coord)?.controller
+    }
+
     // MARK: - v0.2 Province 查询（战略层叠加）
     // 所有查询委托给 regionGraph 视图。province 默认空时不影响现有 hex 规则。
 
@@ -222,25 +229,25 @@ struct MapState: Codable, Equatable {
             $0.baseTerrain = .fortress
             $0.controller = .allies
             $0.hasRoad = true
-            $0.fortressName = "Bastogne Fortress"
+            $0.fortressName = "乌巢粮屯"
         }
         update(bastogne) {
             $0.baseTerrain = .city
             $0.controller = .allies
             $0.hasRoad = true
-            $0.cityName = "Bastogne"
+            $0.cityName = "白马津"
         }
         update(houffalize) {
             $0.baseTerrain = .city
             $0.controller = nil
             $0.hasRoad = true
-            $0.cityName = "Houffalize"
+            $0.cityName = "官渡"
         }
         update(stVith) {
             $0.baseTerrain = .city
             $0.controller = .allies
             $0.hasRoad = true
-            $0.cityName = "St. Vith"
+            $0.cityName = "延津"
         }
 
         let riverWestOfBastogne = HexCoord(q: 5, r: 4)
@@ -257,9 +264,9 @@ struct MapState: Codable, Equatable {
                 SupplySource(id: "german_supply", faction: .germany, coord: germanSupply)
             ],
             objectives: [
-                Objective(id: "bastogne", name: "Bastogne", coord: bastogne, type: .city),
-                Objective(id: "st_vith", name: "St. Vith", coord: stVith, type: .city),
-                Objective(id: "bastogne_fortress", name: "Bastogne Fortress", coord: bastogneFortress, type: .fortress)
+                Objective(id: "bastogne", name: "白马津", coord: bastogne, type: .city),
+                Objective(id: "st_vith", name: "延津", coord: stVith, type: .city),
+                Objective(id: "bastogne_fortress", name: "乌巢粮屯", coord: bastogneFortress, type: .fortress)
             ]
         )
     }

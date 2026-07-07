@@ -7158,6 +7158,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 历史 prompt、旧记录和测试样例中的旧二战将领名称仍作为历史资料或兼容测试语境保留，不纳入本轮清理。
 - 并发只读 Swift 残留扫描另标出 `MapState.ardennesV0()` 中 Bastogne / St. Vith / Bastogne Fortress 旧 fallback 地图名，建议后续作为独立静态 fallback 地图展示名切片处理。
 
+## v2.5 - 静态 fallback 地图展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 玩家可见文案收口，把代码内置 fallback `MapState.ardennesV0()` 中的 Bastogne / St. Vith / Houffalize / Bastogne Fortress 展示名改为三国语义，并保持旧 fallback 胜利判定兼容。
+
+完成内容：
+
+- 静态 fallback 城池/关隘展示名改为“白马津”“延津”“官渡”“乌巢粮屯”。
+- 静态 fallback objectives 的 `name` 同步改为中文展示名。
+- 新增 `MapState.controllerOfObjective(id:)`，让旧 fallback 胜利判定可通过稳定 objective id 读取相同坐标控制权。
+- `VictoryRules` 的 Bastogne / St. Vith fallback 胜利条件改为读取 `bastogne` / `st_vith` id，不再依赖英文展示名。
+- 本轮不改变 objective id、faction rawValue、旧胜利 reason rawValue、默认官渡 JSON、旧阿登 JSON、Region fallback、规则数值、AI 或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Core/MapState.swift`
+- `WWIIHexV0/Rules/VictoryRules.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_static_fallback_map_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Core/MapState.swift WWIIHexV0/Rules/VictoryRules.swift` 通过。
+- `MapState.swift` / `VictoryRules.swift` 中旧英文展示字符串定向扫描无命中：`"Bastogne"`、`"St. Vith"`、`"Bastogne Fortress"`、`"Houffalize"`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读 diff reviewer 确认 objective id 保持 `bastogne` / `st_vith` / `bastogne_fortress`，旧 fallback 胜利仍指向原坐标；`RegionVictoryRules` 旧 region city name 属于本轮非目标，现有 region 测试/fixture 仍依赖旧 fallback 名。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 fallback 加载 UI 检查；只有默认官渡数据缺失并落入静态 fallback 时，才能在运行时看到这些展示名。
+- `ardennes_v0_scenario.json` / `ardennes_v02_regions.json` 的顶层展示名和 City / Supply 占位名仍保留旧兼容口径，后续应按 JSON 数据展示名独立切片处理，并同步相关测试断言。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

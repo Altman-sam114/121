@@ -10,8 +10,8 @@ struct VictoryRules {
             return
         }
 
-        let bastogneController = state.map.controllerOfObjective(named: "Bastogne")
-        let stVithController = state.map.controllerOfObjective(named: "St. Vith")
+        let bastogneController = state.map.controllerOfObjective(id: "bastogne")
+        let stVithController = state.map.controllerOfObjective(id: "st_vith")
 
         if bastogneController == .germany {
             if let heldSince = state.victoryState.germanBastogneHeldSinceTurn,
