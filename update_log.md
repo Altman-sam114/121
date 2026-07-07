@@ -7074,6 +7074,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时加载失败 UI 检查；真实错误弹出位置和调试日志中的可见路径仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 - 旧 fallback `WWIIHexV0/Data/unit_templates.json` 的 displayName 仍有 Panzer / Division 英文展示名，已由并发只读子 Agent 标出，后续应作为独立 JSON display-only 切片处理。
 
+## v2.5 - fallback 军队模板展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 玩家/编辑器可见文案收口，把旧 fallback `unit_templates.json` 中的 Panzer / Division 英文模板展示名改为中文三国语义。
+
+完成内容：
+
+- `panzer_division` 的展示名改为“甲骑军”。
+- `motorized_division` 的展示名改为“疾行军”。
+- `infantry_division` 的展示名改为“步卒营”。
+- `artillery_division` 的展示名改为“器械营”。
+- `anti_tank_division` 的展示名改为“破甲营”。
+- `garrison_division` 的展示名改为“守备营”。
+- 本轮只改旧 fallback 模板 `displayName`，不改变模板 `id`、`maxHP`、`components`、权重、默认三国模板、DataLoader 加载顺序、规则、AI、MapEditor 导出结构或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Data/unit_templates.json`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_fallback_unit_template_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `jq empty WWIIHexV0/Data/unit_templates.json` 通过。
+- `unit_templates.json` 中旧英文展示名定向扫描无命中：`Panzer Division`、`Motorized Division`、`Infantry Division`、`Artillery Division`、`Anti-Tank Division`、`Garrison Division`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认旧 fallback 模板展示名没有代码/测试断言依赖；`DataLoader.makeDivisions()` 建军队只使用模板 `components/maxHP`，军队实例名来自剧本 unit `name`。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 fallback 加载 UI 检查；只有当 `sanguo_unit_templates.json` 缺失并回退到旧模板时，才能在运行时看到这些展示名。
+- 历史 prompt、旧记录和测试样例中的 Panzer / Division 文本仍作为历史资料或兼容测试实例名保留，不纳入本轮清理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

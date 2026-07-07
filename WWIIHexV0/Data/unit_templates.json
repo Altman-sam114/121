@@ -3,7 +3,7 @@
   "templates": [
     {
       "id": "panzer_division",
-      "displayName": "Panzer Division",
+      "displayName": "甲骑军",
       "maxHP": 10,
       "components": [
         {
@@ -26,7 +26,7 @@
     },
     {
       "id": "motorized_division",
-      "displayName": "Motorized Division",
+      "displayName": "疾行军",
       "maxHP": 10,
       "components": [
         {
@@ -49,7 +49,7 @@
     },
     {
       "id": "infantry_division",
-      "displayName": "Infantry Division",
+      "displayName": "步卒营",
       "maxHP": 10,
       "components": [
         {
@@ -72,7 +72,7 @@
     },
     {
       "id": "artillery_division",
-      "displayName": "Artillery Division",
+      "displayName": "器械营",
       "maxHP": 8,
       "components": [
         {
@@ -95,7 +95,7 @@
     },
     {
       "id": "anti_tank_division",
-      "displayName": "Anti-Tank Division",
+      "displayName": "破甲营",
       "maxHP": 8,
       "components": [
         {
@@ -118,7 +118,7 @@
     },
     {
       "id": "garrison_division",
-      "displayName": "Garrison Division",
+      "displayName": "守备营",
       "maxHP": 9,
       "components": [
         {

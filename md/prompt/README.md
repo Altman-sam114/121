@@ -188,3 +188,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.5_mapeditor_faction_label_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.5_dataloader_validation_error_localization.md`
 - `md/prompt/v2.0-三国迁移/v2.5_missing_resource_error_display_safety.md`
+- `md/prompt/v2.0-三国迁移/v2.5_fallback_unit_template_display_names.md`
