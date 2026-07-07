@@ -191,3 +191,4 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.5_fallback_unit_template_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.5_fallback_general_registry_display_names.md`
 - `md/prompt/v2.0-三国迁移/v2.5_static_fallback_map_display_names.md`
+- `md/prompt/v2.0-三国迁移/v2.5_general_combat_audit_factors.md`

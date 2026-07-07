@@ -189,6 +189,10 @@ struct CombatRules {
         return Double(strengthDamage) / Double(defender.strength)
     }
 
+    private func signedBonus(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : "\(value)"
+    }
+
     private func attackProfile(attacker: Division, defender: Division, in state: GameState) -> AttackProfile {
         guard let defenderTile = state.map.tile(at: defender.coord) else {
             return AttackProfile(baseAttack: attacker.attack, effectiveAttack: attacker.attack, factors: [])
@@ -209,8 +213,12 @@ struct CombatRules {
             factors.append("攻方器械攻城 +25%")
         }
 
-        let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) +
-            generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
+        let generalAttackBonus = generalInfluence.attackBonus(attacker: attacker, defender: defender, in: state)
+        if generalAttackBonus != 0 {
+            factors.append("攻方武将 \(signedBonus(generalAttackBonus))")
+        }
+
+        let modifiedAttack = Int((Double(attacker.attack) * multiplier).rounded()) + generalAttackBonus
         return AttackProfile(
             baseAttack: attacker.attack,
             effectiveAttack: max(1, modifiedAttack),
@@ -234,7 +242,11 @@ struct CombatRules {
                 factors.append("守方隔河 +2")
             }
 
-            effectiveDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            let generalDefenseBonus = generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            if generalDefenseBonus != 0 {
+                factors.append("守方武将 \(signedBonus(generalDefenseBonus))")
+            }
+            effectiveDefense += generalDefenseBonus
 
             if defender.isInfantryHeavy,
                defenderTile.baseTerrain.supportsInfantryDefenseBonus {
@@ -242,7 +254,11 @@ struct CombatRules {
                 factors.append("守方步卒据险 x1.3")
             }
         } else {
-            effectiveDefense += generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            let generalDefenseBonus = generalInfluence.defenseBonus(defender: defender, attackedBy: attacker, in: state)
+            if generalDefenseBonus != 0 {
+                factors.append("守方武将 \(signedBonus(generalDefenseBonus))")
+            }
+            effectiveDefense += generalDefenseBonus
         }
 
         if supplyRules.isBesieged(defender, in: state) {

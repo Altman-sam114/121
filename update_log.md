@@ -7198,6 +7198,45 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 fallback 加载 UI 检查；只有默认官渡数据缺失并落入静态 fallback 时，才能在运行时看到这些展示名。
 - `ardennes_v0_scenario.json` / `ardennes_v02_regions.json` 的顶层展示名和 City / Supply 占位名仍保留旧兼容口径，后续应按 JSON 数据展示名独立切片处理，并同步相关测试断言。
 
+## v2.5 - 武将交战审计因子
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把已参与攻防计算的武将修正写入交战审计因素，让玩家能在军队详情、接战预判和攻击/反击日志中直接看到武将对交战的影响来源。
+
+完成内容：
+
+- `CombatRules.attackProfile` 将武将攻击修正存为 `generalAttackBonus`，非 0 时向审计因素追加“攻方武将 +N / -N”。
+- `CombatRules.defenseProfile` 将武将防御修正存为 `generalDefenseBonus`，非 0 时向审计因素追加“守方武将 +N / -N”。
+- 新增 `CombatRules.signedBonus(_:)` 小 helper，用于统一审计符号格式。
+- 本轮只补充 `CombatAuditSummary` 的解释性 factors，不改变 `GeneralInfluence` 数值规则、有效攻防公式、伤害、反击、撤退、围城、道路、命令管线、UI 布局或 JSON schema。
+
+关键文件：
+
+- `WWIIHexV0/Rules/CombatRules.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_general_combat_audit_factors.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/CombatRules.swift` 通过。
+- 定向文案扫描确认 `CombatRules.swift` 已包含“攻方武将”“守方武将”，现有 `AppContainer.swift` 仍保留“武将修正”预览文本。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片只改 `CombatRules` 审计 factors，规则层武将 attack/defense bonus 已存在；建议不在本轮改 `AppContainer` 或删除“武将修正”预览，以免扩大冲突面。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；交战审计文案需要在有武将非零攻防修正的接战场景中才能可见。
+- 军队详情接战候选行可能同时显示“武将修正”和交战审计中的“攻方/守方武将”，属于解释性重复，后续如做 UI 文案压缩可单独处理。
+- 并发只读数据侦查确认 `ardennes_v0_scenario.json` / `ardennes_v02_regions.json` 顶层 `displayName` 可作为后续独立低风险 JSON 展示名切片；本轮不混入。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
