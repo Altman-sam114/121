@@ -6920,6 +6920,43 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮不做本机运行时 UI 检查；武将军令面板窄宽度下的真实换行仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - 防区指令审计展示安全补丁
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进武将、道路和交战可见审计闭环，让军机面板防区指令卡片按中文命令类别展示成功/拒绝摘要，并继续压制旧二战/阿登调试词进入玩家可见面板。
+
+完成内容：
+
+- `AgentPanelView` 的防区指令卡片新增命令类别聚合摘要，复用 `CommandResultSummary.commandDisplayNameForDisplay`，显示进军、交战、固守、修路、外交等安全类别的成功/拒绝数量。
+- 面板底部审计摘要纳入 `directiveRecords` 条数，便于 Agent C 和玩家快速确认本轮防区指令规模。
+- 扩展 `isRawDebugText(...)` 旧题材过滤，覆盖 `Bastogne`、`St. Vith`、`Ardennes`、`German`、`Allied`、`Guderian`、`Heinz`。
+- 本轮只改 AI 审计 UI 展示，不改变 `WarDirectiveRecord`、`CommandResultSummary`、`Command.displayName`、`TurnManager`、`WarCommandExecutor`、`RuleEngine`、道路、交战、外交、JSON 或命令执行规则。
+
+关键文件：
+
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_agent_panel_directive_audit_safety.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/AgentPanelView.swift` 通过。
+- 旧题材过滤词定向扫描只命中 `AgentPanelView.isRawDebugText(...)` 的过滤词表：`Bastogne`、`St. Vith`、`Ardennes`、`German`、`Allied`、`Guderian`、`Heinz`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认该切片复用 `CommandResultSummary.commandDisplayNameForDisplay`，不需要修改 `TurnManager`、`WarCommandExecutor` 或执行链；另一个子 Agent 建议后续独立处理 MapEditor 旧势力标签，本轮不混入。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；防区指令卡片窄宽度下的真实换行和长类别摘要仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

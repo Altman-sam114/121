@@ -223,6 +223,13 @@ struct AgentPanelView: View {
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
+
+                            let commandBreakdown = directiveCommandBreakdown(directive.commandResults)
+                            if !commandBreakdown.isEmpty {
+                                Text(commandBreakdown)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(6)
@@ -272,6 +279,23 @@ struct AgentPanelView: View {
         let targets = regionDisplayList(directive.targetRegionIds)
         let targetText = targets.isEmpty ? "无目标" : targets
         return "\(type) / \(tactic) / \(executed) 成功, \(rejected) 拒绝 / \(targetText)"
+    }
+
+    private func directiveCommandBreakdown(_ results: [CommandResultSummary]) -> String {
+        guard !results.isEmpty else {
+            return ""
+        }
+
+        let grouped = Dictionary(grouping: results, by: \.commandDisplayNameForDisplay)
+        return grouped.keys.sorted().compactMap { commandName in
+            guard let commandResults = grouped[commandName] else {
+                return nil
+            }
+            let executed = commandResults.filter(\.executed).count
+            let rejected = commandResults.count - executed
+            return "\(commandName) \(executed) 成功 / \(rejected) 拒绝"
+        }
+        .joined(separator: "；")
     }
 
     private func generalRecordSummary(_ record: GeneralDecisionRecord) -> String {
@@ -363,7 +387,9 @@ struct AgentPanelView: View {
             "targetDivisionId", "toRegionId", "schemaVersion",
             "JSON", "UTF-8", "decoder", "DecodingError",
             "NorthWest", "NorthEast", "SouthWest", "SouthEast",
-            "germany", "allies", "panzer", "division"
+            "germany", "allies", "German", "Allied",
+            "panzer", "division", "Ardennes", "Bastogne", "St. Vith",
+            "Guderian", "Heinz"
         ]
         if rawMarkers.contains(where: { text.localizedCaseInsensitiveContains($0) }) {
             return true
@@ -380,11 +406,15 @@ struct AgentPanelView: View {
 
     private func auditSummary(for record: AgentDecisionRecord?) -> String {
         guard let record else {
-            return "暂无军机审计记录。"
+            if directiveRecords.isEmpty {
+                return "暂无军机审计记录。"
+            }
+            return "暂无军机审计记录。防区指令已记录：\(directiveRecords.count) 条。"
         }
         let executed = record.commandResults.filter(\.executed).count
         let rejected = record.commandResults.count - executed
         let errors = record.errors.count
-        return "军机审计已记录：\(record.commandResults.count) 条命令，\(executed) 条执行，\(rejected) 条拒绝，\(errors) 条错误。原始记录保留在兼容审计字段中。"
+        let directiveText = directiveRecords.isEmpty ? "" : "防区指令 \(directiveRecords.count) 条，"
+        return "军机审计已记录：\(directiveText)\(record.commandResults.count) 条命令，\(executed) 条执行，\(rejected) 条拒绝，\(errors) 条错误。原始记录保留在兼容审计字段中。"
     }
 }
