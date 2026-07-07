@@ -7571,6 +7571,46 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；道路审计文案更长，需要在 AI 回合或玩家武将宏观军令实际生成道路诊断后确认 Agent 面板观感。
 - 源/目标受压使用真实 `MovementRules.isEnemyZoneOfControl`，可能包含当前玩家视角不可见 hostile 军队；这是执行器审计口径，不是只读 UI 预览过滤口径，后续如做情报隐藏可再结构化区分。
 
+## v2.5 - 宏观道路路径超限审计
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把宏观道路审计里的不可达原因从泛化“目标不可达”细化为路径成本、路径超限、无通路和常见边界原因，方便 AI 防区指令和玩家武将宏观军令复盘道路、地形、敌控区、占位和机动上限的影响。
+
+完成内容：
+
+- `WarCommandExecutor.roadSelectionDiagnostic` 改为通过私有 `roadSelectionPathText` 生成移动目标路径诊断。
+- 本回合可达时显示 `路径 cost/effectiveMovement`；忽略机动上限后可通时显示 `路径超限 cost/effectiveMovement，转入后备命令`；仍无可用路径时显示 `无通路，转入后备命令`。
+- 诊断顺序补齐原地、越界、不可通行和被其他军队占据的短文案，避免把占位或边界问题误写成单纯无路。
+- 本轮只改变道路审计文案，不改变 `MovementRules`、移动合法性、宏观选兵、落点排序、fallback、攻击筛选、命令执行、占领推进、JSON schema 或 UI 布局。
+- 两个并发只读子 Agent 分别复核了路径诊断边界与军机面板/文档同步；主线程采纳“按校验器边界顺序避免误导”的建议，并确认 `AgentPanelView` 仍可按“道路审计”marker 分类。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_path_limit_diagnostics.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 包含 `roadSelectionPathText`、`路径超限`、`无通路`、`目标被占`、`目标原地`、`目标越界` 和 `shortestPathIgnoringMovement`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；更细的道路审计文案需要在 AI 回合或玩家武将宏观军令实际生成移动命令后确认面板观感。
+- `shortestPathIgnoringMovement` 仍复用通行、敌控区和占位规则；“无通路”表示在当前规则下无可用路径，不单独承诺具体阻断来源。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

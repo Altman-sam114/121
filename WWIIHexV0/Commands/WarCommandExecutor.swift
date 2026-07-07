@@ -928,15 +928,39 @@ struct WarCommandExecutor {
             parts.append("目标 \(regionDisplayName(targetRegionId, in: state.map))")
         }
         if let destination {
-            if let path = movementRules.shortestPath(for: division, to: destination, in: state) {
-                parts.append("路径 \(path.cost)/\(summary.effectiveMovement)")
-            } else {
-                parts.append("目标不可达，转入后备命令")
-            }
+            parts.append(roadSelectionPathText(for: division, destination: destination, movementLimit: summary.effectiveMovement, in: state))
         } else {
             parts.append("\(commandLogName(command))")
         }
         return "道路审计：\(parts.joined(separator: "，"))"
+    }
+
+    private func roadSelectionPathText(
+        for division: Division,
+        destination: HexCoord,
+        movementLimit: Int,
+        in state: GameState
+    ) -> String {
+        if destination == division.coord {
+            return "目标原地，转入后备命令"
+        }
+        guard state.map.contains(destination) else {
+            return "目标越界，转入后备命令"
+        }
+        guard state.map.tile(at: destination)?.isPassable == true else {
+            return "无通路，转入后备命令"
+        }
+        if let occupyingDivision = state.division(at: destination),
+           occupyingDivision.id != division.id {
+            return "目标被占，转入后备命令"
+        }
+        if let path = movementRules.shortestPath(for: division, to: destination, in: state) {
+            return "路径 \(path.cost)/\(movementLimit)"
+        }
+        if let path = movementRules.shortestPathIgnoringMovement(for: division, to: destination, in: state) {
+            return "路径超限 \(path.cost)/\(movementLimit)，转入后备命令"
+        }
+        return "无通路，转入后备命令"
     }
 
     private func roadSelectionSituationText(
