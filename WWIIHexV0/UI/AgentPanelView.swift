@@ -217,11 +217,30 @@ struct AgentPanelView: View {
                                     .minimumScaleFactor(0.75)
                             }
 
-                            let diagnostics = displaySafeDiagnostics(directive.diagnostics)
-                            if !diagnostics.isEmpty {
-                                Text(diagnostics.joined(separator: "；"))
+                            let tacticalDiagnostics = tacticalDirectiveDiagnostics(directive.diagnostics)
+                            if !tacticalDiagnostics.isEmpty {
+                                Text("战术审计")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    ForEach(Array(tacticalDiagnostics.enumerated()), id: \.offset) { _, diagnostic in
+                                        Label(diagnostic.text, systemImage: diagnostic.iconName)
+                                            .font(.caption)
+                                            .foregroundStyle(.orange)
+                                            .lineLimit(nil)
+                                            .multilineTextAlignment(.leading)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                            }
+
+                            let generalDiagnostics = generalDirectiveDiagnostics(directive.diagnostics)
+                            if !generalDiagnostics.isEmpty {
+                                Text(generalDiagnostics.joined(separator: "；"))
                                     .font(.caption)
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
 
                             let commandBreakdown = directiveCommandBreakdown(directive.commandResults)
@@ -359,10 +378,35 @@ struct AgentPanelView: View {
         return displaySafePanelText(result.message, fallback: "命令未能执行，详情已写入审计记录")
     }
 
-    private func displaySafeDiagnostics(_ diagnostics: [String]) -> [String] {
-        diagnostics.map {
-            displaySafePanelText($0, fallback: "军令诊断已记录")
+    private func tacticalDirectiveDiagnostics(_ diagnostics: [String]) -> [(text: String, iconName: String)] {
+        diagnostics.compactMap { diagnostic in
+            guard let type = tacticalDirectiveDiagnosticType(for: diagnostic) else {
+                return nil
+            }
+            return (
+                displaySafePanelText(diagnostic, fallback: type.fallback),
+                type.iconName
+            )
         }
+    }
+
+    private func generalDirectiveDiagnostics(_ diagnostics: [String]) -> [String] {
+        diagnostics.compactMap { diagnostic in
+            guard tacticalDirectiveDiagnosticType(for: diagnostic) == nil else {
+                return nil
+            }
+            return displaySafePanelText(diagnostic, fallback: "军令诊断已记录")
+        }
+    }
+
+    private func tacticalDirectiveDiagnosticType(for diagnostic: String) -> TacticalDirectiveDiagnosticType? {
+        if diagnostic.contains("道路审计") {
+            return .road
+        }
+        if diagnostic.contains("交战审计") {
+            return .combat
+        }
+        return nil
     }
 
     private func displaySafeError(_ error: String) -> String {
@@ -416,5 +460,28 @@ struct AgentPanelView: View {
         let errors = record.errors.count
         let directiveText = directiveRecords.isEmpty ? "" : "防区指令 \(directiveRecords.count) 条，"
         return "军机审计已记录：\(directiveText)\(record.commandResults.count) 条命令，\(executed) 条执行，\(rejected) 条拒绝，\(errors) 条错误。原始记录保留在兼容审计字段中。"
+    }
+
+    private enum TacticalDirectiveDiagnosticType {
+        case road
+        case combat
+
+        var fallback: String {
+            switch self {
+            case .road:
+                return "道路审计已记录"
+            case .combat:
+                return "交战审计已记录"
+            }
+        }
+
+        var iconName: String {
+            switch self {
+            case .road:
+                return "arrow.up.right.circle"
+            case .combat:
+                return "scope"
+            }
+        }
     }
 }

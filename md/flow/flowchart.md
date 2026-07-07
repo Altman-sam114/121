@@ -496,7 +496,7 @@ flowchart TD
     STATE["运行时状态<br/>GameState + EventLog + WarDirectiveRecord"]:::state
     ROOT["主界面<br/>RootGameView<br/>HUD + Info tabs"]:::ui
     LOG["日志面板<br/>EventLogView<br/>最近 60 条 LogDisplayEntry"]:::ui
-    AIUI["军机面板<br/>AgentPanelView<br/>执行者/国家/郡县/防区展示名 + 审计摘要 + 命令结果 + 防区指令"]:::ui
+    AIUI["军机面板<br/>AgentPanelView<br/>执行者/国家/郡县/防区展示名 + 审计摘要 + 命令结果 + 防区指令 + 道路/交战战术审计分组"]:::ui
     BOARD["地图场景<br/>BoardScene<br/>缓存 unit display hex 后排序绘制"]:::ui
     MARSHAL["模拟元帅 / MockAI<br/>MarshalAgent + SimulatedMarshalLLMClient"]:::ai
     ZD["战区指令<br/>ZoneDirective<br/>tactic / focus / intensity"]:::command
@@ -547,7 +547,7 @@ flowchart TD
     GENA["武将战术塑形<br/>GeneralAgent.plan<br/>按防区武将生成最终 tactic"]:::ai
     WCE["执行器<br/>WarCommandExecutor.execute(excluding lockedIds)<br/>跳过已微操单位<br/>返回道路/交战审计 diagnostics"]:::command
     RE["规则权威<br/>RuleEngine<br/>校验并修改 GameState"]:::rules
-    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation(tactic)<br/>AI 面板、日志、道路/交战审计和计划线共用"]:::ui
+    RECORD["记录<br/>WarDirectiveRecord + PlayerPlannedOperation(tactic)<br/>AI 面板战术审计分组、日志、道路/交战审计和计划线共用"]:::ui
     BOARD["视觉反馈<br/>BoardScene 地图短标签 + GeneralCommandPanelView 面板摘要<br/>进攻箭头、防御圆环、武将战术/官道受压短标签、面板近敌对象距离、微操单位金色圈"]:::ui
     PROFILE["武将档案<br/>GeneralProfileView<br/>履历、技能、忠诚、满意度、辖下部队"]:::ui
 

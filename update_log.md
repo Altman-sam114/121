@@ -7446,6 +7446,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；交战审计需要在 AI 回合或玩家武将宏观军令实际生成攻击命令后才能在 Agent 面板中确认观感。
 - 本轮不跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；功能正确性等待云端 CI artifact、后续 Agent C 复判或人工授权专项检查。
 
+## v2.5 - 军机面板战术审计分组
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把已经写入 `WarDirectiveRecord.diagnostics` 的道路审计和交战审计，从普通防区诊断中拆出来，在军机面板中作为独立“战术审计”展示。
+- 小步优化玩家武将计划军令列表的官道摘要，让玩家能直接看到源点/目标据道、离道和受压状态。
+
+完成内容：
+
+- `AgentPanelView` 在防区指令卡片中新增“战术审计”小标题，按“道路审计 / 交战审计”原始 marker 先分组，再做玩家可见安全过滤。
+- 道路审计使用官道图标，交战审计使用瞄准图标；若某条战术诊断被 raw/debug 安全过滤命中，会保留在战术审计分组中并显示“道路审计已记录”或“交战审计已记录”，避免掉回普通诊断。
+- 非战术诊断继续使用原有安全过滤和普通诊断展示。
+- `AppContainer.plannedOperationRoadPressureText` 的计划军令官道摘要从“官道 双道/源道/目道/无道，源受压”改为“官道：源据道/受压，目离道”这类源目分明的中文状态。
+- 本轮只改变玩家可见 UI 摘要和诊断分组，不改变道路、交战、武将影响、宏观选兵、命令执行、`WarDirectiveRecord`、`PlayerPlannedOperation`、JSON schema 或 SpriteKit 绘制。
+
+关键文件：
+
+- `WWIIHexV0/UI/AgentPanelView.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_agent_panel_tactical_audit_display.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/UI/AgentPanelView.swift WWIIHexV0/App/AppContainer.swift` 通过。
+- 定向扫描确认 `AgentPanelView.swift` 包含“战术审计”、“道路审计已记录”、“交战审计已记录”，`AppContainer.swift` 包含 `plannedOperationRoadStatus` 和“官道：源”摘要。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 两个并发只读子 Agent 分别复核了军机面板诊断流向和武将/军队计划军令摘要，主线程根据复核结果修正为“原始 marker 先分组、组内再安全过滤”的显示顺序，并采纳计划军令官道摘要优化。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；战术审计分组需要在 AI 回合或玩家武将宏观军令实际生成道路/交战诊断后，才能确认窄屏、长军队名和长审计文本下的真实观感。
+- 该分组仍依赖执行器诊断保留“道路审计 / 交战审计”中文 marker；若后续执行器改文案，需要同步更新 `AgentPanelView` 分类 helper 或改为结构化诊断。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

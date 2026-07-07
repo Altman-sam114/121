@@ -1426,29 +1426,24 @@ final class AppContainer: ObservableObject {
             plannedOperationHexIsPressured($0, faction: operation.faction)
         } ?? false
 
-        let roadLabel: String
         if targetHex == nil {
-            roadLabel = sourceHasRoad ? "据道" : "离道"
-        } else if sourceHasRoad && targetHasRoad {
-            roadLabel = "双道"
-        } else if sourceHasRoad {
-            roadLabel = "源道"
-        } else if targetHasRoad {
-            roadLabel = "目道"
-        } else {
-            roadLabel = "无道"
+            return "官道：\(plannedOperationRoadStatus(hasRoad: sourceHasRoad, isPressured: sourceIsPressured))"
         }
 
-        var fragments = ["官道 \(roadLabel)"]
-        let pressureText = plannedOperationPressureText(
-            hasTarget: targetHex != nil,
-            sourceIsPressured: sourceIsPressured,
-            targetIsPressured: targetIsPressured
+        let sourceText = plannedOperationRoadStatus(
+            hasRoad: sourceHasRoad,
+            isPressured: sourceIsPressured
         )
-        if let pressureText {
-            fragments.append(pressureText)
-        }
-        return fragments.joined(separator: "，")
+        let targetText = plannedOperationRoadStatus(
+            hasRoad: targetHasRoad,
+            isPressured: targetIsPressured
+        )
+        return "官道：源\(sourceText)，目\(targetText)"
+    }
+
+    private func plannedOperationRoadStatus(hasRoad: Bool, isPressured: Bool) -> String {
+        let roadText = hasRoad ? "据道" : "离道"
+        return isPressured ? "\(roadText)/受压" : roadText
     }
 
     private func plannedOperationHex(regionId: RegionId?, zoneId: FrontZoneId) -> HexCoord? {
@@ -1492,26 +1487,6 @@ final class AppContainer: ObservableObject {
                 mapDisplayAdapter.isDivisionVisible(division, viewerFaction: playerFaction)
         }
         return previewState
-    }
-
-    private func plannedOperationPressureText(
-        hasTarget: Bool,
-        sourceIsPressured: Bool,
-        targetIsPressured: Bool
-    ) -> String? {
-        if hasTarget {
-            if sourceIsPressured && targetIsPressured {
-                return "源目受压"
-            }
-            if sourceIsPressured {
-                return "源受压"
-            }
-            if targetIsPressured {
-                return "目受压"
-            }
-            return nil
-        }
-        return sourceIsPressured ? "据点受压" : nil
     }
 
     private func combatTargetPreviewLine(
