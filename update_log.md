@@ -7319,6 +7319,48 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；交战审计姓名需要在有非零武将攻防修正的接战场景中才能可见。
 - 目前军队详情仍可能同时显示“交战武将”“武将影响”和带姓名的交战审计 factors，属于解释性重复，后续如压缩面板文案可单独切片处理。
 
+## v2.5 - 武将道路无加成原因同源化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把道路机动未触发原因从 `AppContainer` 的 UI 复制判断收回到 `GeneralInfluence` 规则摘要，避免忠诚/满意阈值、道路技能表和郡县官道判断在 UI 层漂移。
+
+完成内容：
+
+- 新增 `GeneralRoadMobilityNoBonusReason`，表达未分配武将、忠诚/满意不足、缺道路技能、所在郡县无可借官道等只读原因。
+- `GeneralMovementInfluenceSummary` 新增 `noBonusReason` 和中文 `noBonusFragment`。
+- `GeneralInfluence.movementSummary` 在道路机动加成为 0 时生成结构化原因；`roadMobilityBonus` 复用同一判断，保证加成数值和解释同源。
+- `AppContainer.selectedUnitMobilityPreviewNotes` 改为消费 `summary.noBonusFragment`。
+- `AppContainer.selectedGeneralInfluenceNotes` 的道路受益无加成原因改为从 movement summaries 聚合，不再本地复制道路技能 raw id 列表、忠诚/满意阈值或郡县官道判断。
+- 本轮不改变道路机动加成数值、道路技能列表、移动范围、宏观军令落点、命令执行、交战、粮道、JSON schema 或 SwiftUI View 结构。
+
+关键文件：
+
+- `WWIIHexV0/Rules/GeneralInfluence.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `md/flow/flow.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_general_road_no_bonus_reason.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Rules/GeneralInfluence.swift WWIIHexV0/App/AppContainer.swift` 通过。
+- `AppContainer.swift` 定向扫描确认 `generalRoadNetworkAvailable`、`hasGeneralRoadNetworkSkill`、本地 `Set(["logistics"...])` 和本地 `commandQuality = (assignment.loyalty...)` 复制判断均无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 两个并发只读子 Agent 确认 `AppContainer` 原先复制了 `GeneralInfluence` 的道路技能表、忠诚/满意阈值和郡县官道判断；本轮保留 `MovementRules`、`WarCommandExecutor`、`CommandExecutor`、`CombatRules` 和 SwiftUI View 不变。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；单位详情和武将面板的道路无加成文案仍需在不同武将分配、忠诚/满意、技能和官道布局组合下由后续运行时检查确认观感。
+- 宏观军令选兵/落点仍只记录命令结果，不记录“因有效机动/官道可达性选择该单位或落点”的专项诊断，可作为后续小切片。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

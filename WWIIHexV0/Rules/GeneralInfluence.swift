@@ -44,18 +44,42 @@ struct GeneralCombatInfluenceSummary: Equatable {
     }
 }
 
+enum GeneralRoadMobilityNoBonusReason: Hashable {
+    case noAssignedGeneral
+    case commandQualityTooLow
+    case noRoadNetworkSkill
+    case noRoadInRegion
+}
+
 struct GeneralMovementInfluenceSummary: Equatable {
     let generalId: String?
     let generalName: String?
     let baseMovement: Int
     let effectiveMovement: Int
     let roadBonus: Int
+    let noBonusReason: GeneralRoadMobilityNoBonusReason?
 
     var logFragment: String? {
         guard roadBonus != 0 else {
             return nil
         }
         return "武将道路：\(assignedGeneralDisplayName ?? "未命名武将") 机动 \(signed(roadBonus))，上限由 \(baseMovement) 提至 \(effectiveMovement)"
+    }
+
+    var noBonusFragment: String? {
+        guard roadBonus == 0, let noBonusReason else {
+            return nil
+        }
+        switch noBonusReason {
+        case .noAssignedGeneral:
+            return "道路：未分配武将，按基础机动行军"
+        case .commandQualityTooLow:
+            return "道路：\(assignedGeneralDisplayName ?? "未命名武将") 忠诚/满意不足，官道机动暂未触发"
+        case .noRoadNetworkSkill:
+            return "道路：\(assignedGeneralDisplayName ?? "未命名武将") 需进驻官道，或凭粮道/疾行/骑战技能借郡县官道"
+        case .noRoadInRegion:
+            return "道路：\(assignedGeneralDisplayName ?? "未命名武将") 所在郡县暂无可借官道"
+        }
     }
 
     var assignedGeneralDisplayName: String? {
@@ -96,12 +120,21 @@ struct GeneralInfluence {
         let roadBonus = assignment.map {
             roadMobilityBonus(for: division, assignment: $0, in: state)
         } ?? 0
+        let noBonusReason: GeneralRoadMobilityNoBonusReason?
+        if roadBonus == 0 {
+            noBonusReason = assignment.map {
+                roadMobilityNoBonusReason(for: division, assignment: $0, in: state)
+            } ?? .noAssignedGeneral
+        } else {
+            noBonusReason = nil
+        }
         return GeneralMovementInfluenceSummary(
             generalId: assignment?.generalId,
             generalName: assignment?.generalDisplayName,
             baseMovement: division.movement,
             effectiveMovement: division.movement + roadBonus,
-            roadBonus: roadBonus
+            roadBonus: roadBonus,
+            noBonusReason: noBonusReason
         )
     }
 
@@ -110,8 +143,7 @@ struct GeneralInfluence {
         assignment: GeneralAssignment,
         in state: GameState
     ) -> Int {
-        guard usesRoadNetwork(division: division, assignment: assignment, in: state),
-              commandQuality(assignment) >= 45 else {
+        guard roadMobilityNoBonusReason(for: division, assignment: assignment, in: state) == nil else {
             return 0
         }
         var bonus = 1
@@ -198,20 +230,26 @@ struct GeneralInfluence {
         return zone.generalAssignment
     }
 
-    private func usesRoadNetwork(
-        division: Division,
+    private func roadMobilityNoBonusReason(
+        for division: Division,
         assignment: GeneralAssignment,
         in state: GameState
-    ) -> Bool {
+    ) -> GeneralRoadMobilityNoBonusReason? {
+        guard commandQuality(assignment) >= 45 else {
+            return .commandQualityTooLow
+        }
         if state.map.tile(at: division.coord)?.hasRoad == true {
-            return true
+            return nil
         }
-        if hasAnySkill(Self.roadNetworkSkills, in: assignment),
-           let regionId = state.map.region(for: division.coord),
-           let region = state.map.region(id: regionId) {
-            return region.displayHexes.contains { state.map.tile(at: $0)?.hasRoad == true }
+        guard hasAnySkill(Self.roadNetworkSkills, in: assignment) else {
+            return .noRoadNetworkSkill
         }
-        return false
+        guard let regionId = state.map.region(for: division.coord),
+              let region = state.map.region(id: regionId),
+              region.displayHexes.contains(where: { state.map.tile(at: $0)?.hasRoad == true }) else {
+            return .noRoadInRegion
+        }
+        return nil
     }
 
     private func commandQuality(_ assignment: GeneralAssignment) -> Int {
