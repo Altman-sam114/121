@@ -2,7 +2,7 @@ import Foundation
 
 // DEPRECATED as of v0.352 - kept for regression reference, not invoked by default. See WarPipelineMode.
 // Legacy Agent D MockAI. Heuristic: skip acted; low/encircled supply -> resupply;
-// in-range vulnerable enemy -> attack; else advance toward the legacy objective on roads; else hold.
+// in-range vulnerable enemy -> attack; else advance toward the current scenario objective on roads; else hold.
 
 struct MockAIClient: DecisionProvider {
     func decide(context: AgentContext) async throws -> AgentDecisionEnvelope {
@@ -13,7 +13,7 @@ struct MockAIClient: DecisionProvider {
 
         var orders: [AgentOrder] = []
         var reservedDestinations = Set(context.friendlyDivisions.compactMap(\.regionId) + context.enemyDivisions.compactMap(\.regionId))
-        let objective = context.objectives.first { $0.name == "Bastogne" } ?? context.objectives.first
+        let objective = primaryObjective(context: context)
 
         for division in context.friendlyDivisions.sorted(by: orderPriority) {
             guard !division.hasActed else {
@@ -272,6 +272,14 @@ struct MockAIClient: DecisionProvider {
             return lhs.isArmor
         }
         return lhs.id < rhs.id
+    }
+
+    private func primaryObjective(context: AgentContext) -> ObjectiveSummary? {
+        let reachableObjectives = context.objectives.filter { $0.regionId != nil }
+        if let uncontrolled = reachableObjectives.first(where: { $0.controller != context.faction }) {
+            return uncontrolled
+        }
+        return reachableObjectives.first ?? context.objectives.first
     }
 
     private func bestAttackTarget(

@@ -6803,6 +6803,48 @@ guerrillaWarfare 额外参考 infrastructure
 
 - 本轮不做运行时 UI 截图或点击烟测；HUD 和地图标题的真实布局仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
 
+## v2.4 - Legacy MockAI 目标选择去阿登硬编码
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进三国迁移，把 Legacy Agent D `MockAIClient` 的进军目标选择从硬编码旧阿登城市改为读取当前剧本 objective，减少 AI 记录理由里的旧题材泄露。
+
+完成内容：
+
+- `MockAIClient.decide(context:)` 不再用 `objective.name == "Bastogne"` 选择目标，改为调用 `primaryObjective(context:)`。
+- `primaryObjective(context:)` 优先选择有 `regionId` 且不由当前 faction 控制的 objective，其次选择有 `regionId` 的 objective，最后才 fallback 到第一个 objective。
+- 保留 Legacy Agent D provider、`AgentContext` / `AgentOrder` schema、`move/attack/hold/resupply` rawValue、parser、mapper、命令执行链、stance 字符串、排序和攻击评分兼容行为。
+- 不修改 `DataLoader` 阿登 fallback、`GameState.initial()`、`MapState.ardennesV0()`、胜负规则、旧数据或旧测试；旧阿登 objective 名称仍可能来自 fallback 地图或历史记录，本轮只移除 MockAI 自身的硬编码目标选择。
+- 同步 README、核心流程文档、流程图和阶段 prompt 索引。
+
+关键文件：
+
+- `WWIIHexV0/Agents/MockAIClient.swift`
+- `README.md`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.4_mockai_objective_selection_localization.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Agents/MockAIClient.swift` 通过。
+- `rg -n "Bastogne" WWIIHexV0/Agents/MockAIClient.swift` 无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认 `MockAIClient.swift` 已不再硬编码旧阿登目标选择；旧阿登可见路径仍来自地图 / `GameState.initial()` fallback 或历史文档记录，本轮不扩大范围。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；若默认官渡加载失败并落入旧阿登 fallback，`AgentContext.objectives` 仍可能携带旧城市名。
+- `MockAIClient` 的 stance、旧兵种排序和攻击评分仍是兼容算法，后续若迁移行为需单独切片。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

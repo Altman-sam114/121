@@ -611,11 +611,11 @@ AppContainer.bootstrap()
   -> AppContainer(...)
 ```
 
-`GameAgent.guderian(...)` 是 Legacy Agent D 的兼容入口：方法名、agent id、`.germany` rawValue 和旧单位分配校验保持不变；默认 `general_agents.json` 和 fallback 显示名已改为张辽，personality 文案使用骑军突击、官道机动、快速合围和攻城支援语义。MockAI 启发式仍按旧回归路径另行迁移，不在这里改变决策算法。
+`GameAgent.guderian(...)` 是 Legacy Agent D 的兼容入口：方法名、agent id、`.germany` rawValue 和旧单位分配校验保持不变；默认 `general_agents.json` 和 fallback 显示名已改为张辽，personality 文案使用骑军突击、官道机动、快速合围和攻城支援语义。MockAI 仍是旧回归参考 provider，后续行为迁移继续按小切片推进。
 
 `AgentDecisionRecord` 继续存储 raw `agentId`、`provider`、`rawJSON` 和 `debugJSONDisplay` 供 parser、Codable 和回归审计使用；展示边界通过 `agentDisplayName`、`providerDisplayName` 和面板级安全过滤映射为张辽、兼容武将 AI、君主/外交/太守/军师/武将等中文文案。`TurnManager.contextSummary`、`AgentPanelView` 主字段和 `AppContainer` 交互日志读取展示名，不把 `guderian` / `MockAI` 作为玩家主 UI 文案。`AgentPanelView` 的外交对象、君主重点防区、外交/太守/军师目标郡县、武将摘要和防区指令摘要从 `RootGameView` 接收只读展示名映射：国家优先使用 `CountryProfile.name`，郡县优先使用 `RegionNode.name`，防区优先使用 `FrontZone.name`，防区名缺失或仍等于 raw id 时用势力简称和前 1-2 个郡县名生成 `曹军防区：官渡、许昌` 这类 fallback；意图、摘要、命令结果、错误和诊断遇到 raw JSON、英文兼容 id、旧二战词、`NorthWest` 这类内部方面 rawValue 或明显机器字段时显示中文兜底，面板底部显示中文审计摘要而不默认展开原始 JSON；记录、schema、调试 JSON 原始字段和规则行为不变。
 
-`MockAIClient` 仍是 Legacy Agent D 兼容 provider；本轮只把 intent / reason 文案改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。Bastogne fallback 目标选择、`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分保持旧兼容算法，不在可见文本切片里迁移行为。
+`MockAIClient` 仍是 Legacy Agent D 兼容 provider；intent / reason 文案已改为三国官道、粮草、器械、防区、前线、纵深预备队和守备军语义。进军目标选择已从硬编码旧阿登城市改为读取当前 `AgentContext.objectives`：优先选择有 `regionId` 且不由当前 faction 控制的目标，其次选择可落到 region 的目标，最后才回退到第一个 objective。`stance` 字符串、`isArmor` / `isArtillery` 排序和攻击评分仍保持旧兼容算法；阿登 objective 名称只可能来自旧地图/`GameState.initial()` fallback 或历史记录，不再来自 MockAI 自身的目标选择硬编码。
 
 `LocalLLMDecisionProvider` 仍是默认不启用的 Legacy / 可插拔 LLM 入口，但 `AgentPromptBuilder` 的 system/user prompt 已从二战原型语义改为三国棋策、武将、军队、郡县、官道、粮草、围城压力和可见交战机会；`AgentDecisionEnvelope` / `AgentOrder` 的 JSON key、`schemaVersion`、`move/attack/hold/resupply` rawValue、parser、mapper 和命令执行链保持不变。
 
