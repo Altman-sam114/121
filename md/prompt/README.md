@@ -198,4 +198,5 @@ Agent A 写提示词时必须明确：
 - `md/prompt/v2.0-三国迁移/v2.5_war_executor_combat_diagnostics.md`
 - `md/prompt/v2.0-三国迁移/v2.5_agent_panel_tactical_audit_display.md`
 - `md/prompt/v2.0-三国迁移/v2.5_war_executor_combat_target_situation.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_situation_diagnostics.md`
 - `md/prompt/v2.0-三国迁移/v2.5_fallback_json_display_names.md`

@@ -7529,6 +7529,47 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；更长的交战审计文案需要在实际 AI 回合或玩家武将宏观军令生成攻击命令后确认 Agent 面板观感。
 - 目标态势使用短码“粮足/缺/断、令退/守”，与军队详情预判保持紧凑口径；后续如做发布级文案压缩或结构化诊断，可再统一调整。
 
+## v2.5 - 宏观道路态势审计
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把宏观道路审计从机动值、官道加成和可达成本扩展到源点/目标点道路态势，让 AI 防区指令和玩家武将宏观军令能显示源点、行军目标或攻击目标是否据道、离道、接敌或受 hostile 敌控区压迫。
+
+完成内容：
+
+- `WarCommandExecutor.roadSelectionDiagnostic` 追加源点、移动目标点和攻击目标点的短态势。
+- 新增私有 `roadSelectionSituationText(for:target:in:)`、`roadSelectionPositionText(_:coord:faction:in:)` 与 `roadAuditTargetCoord(for:in:)`，只读 `HexTile.hasRoad`、目标格 hostile 军队和 `MovementRules.isEnemyZoneOfControl`，输出 `源据道`、`目离道/接敌`、`目离道/受压` 等短码。
+- 移动命令的道路审计路径成本文案从 `可达 cost/effectiveMovement` 调整为 `路径 cost/effectiveMovement`，便于和源/目标道路态势区分。
+- `.hold` / `.allowRetreat` / `.attack` 等无移动目标命令仍至少显示源点道路态势。
+- 本轮只改变诊断文案，不改变移动、道路加成、敌控区、外交 hostile 判断、宏观选兵、落点排序、攻击、反击、占领、战略同步、JSON schema 或 SwiftUI 布局。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_situation_diagnostics.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 包含 `roadSelectionSituationText`、`roadSelectionPositionText`、`roadAuditTargetCoord`、`路径`、`受压` 和 `接敌`。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核指出 `.attack` 道路审计只显示源点的问题；主线程已补充攻击目标点和 `/接敌` 短码。另一个 UI/文档只读子 Agent 在本轮提交前未返回，不作为已完成复核。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；道路审计文案更长，需要在 AI 回合或玩家武将宏观军令实际生成道路诊断后确认 Agent 面板观感。
+- 源/目标受压使用真实 `MovementRules.isEnemyZoneOfControl`，可能包含当前玩家视角不可见 hostile 军队；这是执行器审计口径，不是只读 UI 预览过滤口径，后续如做情报隐藏可再结构化区分。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04

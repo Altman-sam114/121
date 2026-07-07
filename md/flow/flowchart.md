@@ -108,7 +108,7 @@ flowchart TD
     RRP["郡县态势摘要<br/>RegionInspectorState / RegionInspectorView<br/>官道覆盖/受压/近敌来源 + 本郡武将 + 敌军距离/射程/兵力/敌将 + 非敌对关系"]:::ui
     POM["计划军令反馈<br/>BoardScene 地图短标签 + GeneralCommandPanelView 面板摘要<br/>源/目标点 + 箭头/固守环 + 官道可见受压 + 地图/面板近敌对象距离"]:::ui
     ZD["战争指令<br/>ZoneDirective<br/>战区级 attack/defend 意图"]:::command
-    WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令<br/>生成道路/交战审计诊断<br/>交战审计含目标兵力/地形/官道/粮草/姿态"]:::command
+    WCE["指令翻译器<br/>WarCommandExecutor<br/>把战区意图翻成具体单位命令<br/>生成道路/交战审计诊断<br/>道路审计含源目官道/接敌/受压/路径成本<br/>交战审计含目标兵力/地形/官道/粮草/姿态"]:::command
     CMD["底层命令<br/>Command<br/>move / attack / hold / resupply / queueProduction / proposeDiplomacy / endTurn"]:::command
     RE["规则引擎<br/>RuleEngine<br/>先校验，再真正修改 GameState"]:::rules
     SYNC["战略同步器<br/>StrategicStateSynchronizer<br/>占领后刷新省份、战区、前线、部署"]:::rules

@@ -921,12 +921,15 @@ struct WarCommandExecutor {
         } else if let noBonus = summary.noBonusFragment {
             parts.append(noBonus.replacingOccurrences(of: "道路：", with: ""))
         }
+        let destination = moveDestination(for: command)
+        let tacticalTarget = roadAuditTargetCoord(for: command, in: state)
+        parts.append(roadSelectionSituationText(for: division, target: tacticalTarget, in: state))
         if let targetRegionId {
             parts.append("目标 \(regionDisplayName(targetRegionId, in: state.map))")
         }
-        if let destination = moveDestination(for: command) {
+        if let destination {
             if let path = movementRules.shortestPath(for: division, to: destination, in: state) {
-                parts.append("可达 \(path.cost)/\(summary.effectiveMovement)")
+                parts.append("路径 \(path.cost)/\(summary.effectiveMovement)")
             } else {
                 parts.append("目标不可达，转入后备命令")
             }
@@ -934,6 +937,50 @@ struct WarCommandExecutor {
             parts.append("\(commandLogName(command))")
         }
         return "道路审计：\(parts.joined(separator: "，"))"
+    }
+
+    private func roadSelectionSituationText(
+        for division: Division,
+        target: HexCoord?,
+        in state: GameState
+    ) -> String {
+        let source = roadSelectionPositionText(
+            "源",
+            coord: division.coord,
+            faction: division.faction,
+            in: state
+        )
+        guard let target else {
+            return source
+        }
+        let target = roadSelectionPositionText(
+            "目",
+            coord: target,
+            faction: division.faction,
+            in: state
+        )
+        return "\(source)，\(target)"
+    }
+
+    private func roadSelectionPositionText(
+        _ label: String,
+        coord: HexCoord,
+        faction: Faction,
+        in state: GameState
+    ) -> String {
+        let hasRoad = state.map.tile(at: coord)?.hasRoad == true
+        let roadText = hasRoad ? "据道" : "离道"
+        let contactText: String
+        if let occupying = state.division(at: coord),
+           occupying.faction != faction,
+           state.diplomacyState.isHostile(between: occupying.faction, and: faction) {
+            contactText = "/接敌"
+        } else if movementRules.isEnemyZoneOfControl(coord, for: faction, in: state) {
+            contactText = "/受压"
+        } else {
+            contactText = ""
+        }
+        return "\(label)\(roadText)\(contactText)"
     }
 
     private func compactRoadDiagnostics(_ diagnostics: [String]) -> [String] {
@@ -1467,6 +1514,17 @@ struct WarCommandExecutor {
             return destination
         }
         return nil
+    }
+
+    private func roadAuditTargetCoord(for command: Command, in state: GameState) -> HexCoord? {
+        switch command {
+        case .move(_, let destination):
+            return destination
+        case .attack(_, let targetId):
+            return state.division(id: targetId)?.coord
+        default:
+            return nil
+        }
     }
 
     private func occupiableMoveRegionIds(for command: Command, state: GameState) -> [RegionId] {
