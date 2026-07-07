@@ -612,7 +612,7 @@ struct TurnManager {
             let execution = warCommandExecutor.execute(directive, in: nextState)
             nextState = execution.finalState
             var perDirectiveResults: [CommandResultSummary] = []
-            var perDirectiveDiagnostics: [String] = []
+            var perDirectiveDiagnostics = execution.diagnostics
 
             if execution.generatedCommands.isEmpty {
                 let diagnostic = "第 \(directiveIndex) 条防区指令未生成可执行命令。"

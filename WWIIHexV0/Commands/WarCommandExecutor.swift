@@ -4,6 +4,7 @@ struct WarCommandExecutionResult: Equatable {
     let directive: ZoneDirective
     let generatedCommands: [Command]
     let commandResults: [CommandResult]
+    let diagnostics: [String]
     let finalState: GameState
 
     var succeeded: Bool {
@@ -182,6 +183,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: [],
             commandResults: [],
+            diagnostics: [],
             finalState: state
         )
     }
@@ -199,6 +201,7 @@ struct WarCommandExecutor {
                 directive: directive,
                 generatedCommands: [],
                 commandResults: [],
+                diagnostics: [],
                 finalState: state
             )
         }
@@ -216,6 +219,7 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
+        var diagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
         var segmentLoads = Dictionary(
             uniqueKeysWithValues: zone.frontSegments.map {
@@ -260,6 +264,7 @@ struct WarCommandExecutor {
                     : .allowRetreat(divisionId: division.id)
             }
 
+            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
             run(
                 command,
                 fallback: .hold(divisionId: division.id),
@@ -275,6 +280,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
+            diagnostics: compactRoadDiagnostics(diagnostics),
             finalState: nextState
         )
     }
@@ -291,6 +297,7 @@ struct WarCommandExecutor {
                 directive: directive,
                 generatedCommands: [],
                 commandResults: [],
+                diagnostics: [],
                 finalState: state
             )
         }
@@ -315,6 +322,7 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
+        var diagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
 
         for unitId in attackingUnitIds {
@@ -358,6 +366,7 @@ struct WarCommandExecutor {
                 command = .hold(divisionId: division.id)
             }
 
+            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: targetRegionId, in: nextState))
             run(
                 command,
                 fallback: .hold(divisionId: division.id),
@@ -378,8 +387,10 @@ struct WarCommandExecutor {
                       division.canAct else {
                     continue
                 }
+                let command = Command.hold(divisionId: division.id)
+                diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
                 run(
-                    .hold(divisionId: division.id),
+                    command,
                     fallback: .hold(divisionId: division.id),
                     commands: &commands,
                     results: &results,
@@ -393,6 +404,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
+            diagnostics: compactRoadDiagnostics(diagnostics),
             finalState: nextState
         )
     }
@@ -407,6 +419,7 @@ struct WarCommandExecutor {
         var nextState = state
         var commands: [Command] = []
         var results: [CommandResult] = []
+        var diagnostics: [String] = []
         let relatedRecordId = "war_directive_\(directive.zoneId.rawValue)_\(directive.type.rawValue)"
         let frontUnitIds = limitedFrontUnits(
             zone.unitsFront.filter { !excludedDivisionIds.contains($0) },
@@ -453,6 +466,7 @@ struct WarCommandExecutor {
                 command = .hold(divisionId: division.id)
             }
 
+            diagnostics.append(roadSelectionDiagnostic(for: command, targetRegionId: nil, in: nextState))
             run(
                 command,
                 fallback: .allowRetreat(divisionId: division.id),
@@ -467,6 +481,7 @@ struct WarCommandExecutor {
             directive: directive,
             generatedCommands: commands,
             commandResults: results,
+            diagnostics: compactRoadDiagnostics(diagnostics),
             finalState: nextState
         )
     }
@@ -868,6 +883,49 @@ struct WarCommandExecutor {
         division.isArmor
             || division.movement >= 5
             || division.components.contains { $0.type == .motorizedInfantry && $0.weight >= 0.25 }
+    }
+
+    private func roadSelectionDiagnostic(
+        for command: Command,
+        targetRegionId: RegionId?,
+        in state: GameState
+    ) -> String {
+        guard let divisionId = actingDivisionId(for: command),
+              let division = state.division(id: divisionId) else {
+            return "道路审计：本条军令不涉及军队行军。"
+        }
+
+        let summary = movementRules.generalInfluenceSummary(for: division, in: state)
+        var parts = [
+            "\(division.thematicDisplayName) 基础 \(summary.baseMovement)",
+            "有效 \(summary.effectiveMovement)"
+        ]
+        if summary.roadBonus > 0 {
+            parts.append("官道机动 +\(summary.roadBonus)")
+        } else if let noBonus = summary.noBonusFragment {
+            parts.append(noBonus.replacingOccurrences(of: "道路：", with: ""))
+        }
+        if let targetRegionId {
+            parts.append("目标 \(regionDisplayName(targetRegionId, in: state.map))")
+        }
+        if let destination = moveDestination(for: command) {
+            if let path = movementRules.shortestPath(for: division, to: destination, in: state) {
+                parts.append("可达 \(path.cost)/\(summary.effectiveMovement)")
+            } else {
+                parts.append("目标不可达，转入后备命令")
+            }
+        } else {
+            parts.append("\(commandLogName(command))")
+        }
+        return "道路审计：\(parts.joined(separator: "，"))"
+    }
+
+    private func compactRoadDiagnostics(_ diagnostics: [String]) -> [String] {
+        let limit = 3
+        guard diagnostics.count > limit else {
+            return diagnostics
+        }
+        return Array(diagnostics.prefix(limit)) + ["另 \(diagnostics.count - limit) 条道路审计已记录。"]
     }
 
     private func enemyRegions(

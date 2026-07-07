@@ -2116,7 +2116,7 @@ final class AppContainer: ObservableObject {
                 result: result
             )
         }
-        var diagnostics: [String] = []
+        var diagnostics = execution.diagnostics
         if execution.generatedCommands.isEmpty {
             diagnostics.append("玩家军令未生成可执行命令。")
         }

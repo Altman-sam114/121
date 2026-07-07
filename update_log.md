@@ -7361,6 +7361,50 @@ guerrillaWarfare 额外参考 infrastructure
 - 本轮不做本机运行时 UI 检查；单位详情和武将面板的道路无加成文案仍需在不同武将分配、忠诚/满意、技能和官道布局组合下由后续运行时检查确认观感。
 - 宏观军令选兵/落点仍只记录命令结果，不记录“因有效机动/官道可达性选择该单位或落点”的专项诊断，可作为后续小切片。
 
+## v2.5 - 宏观军令道路审计
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进用户强调的“武将、道路、交战”体验，把宏观防区军令中已经参与选兵、落点和可达判断的有效机动、官道加成与可达成本写入战争指令审计，让 AI 防区指令和玩家武将宏观军令都能解释道路影响。
+
+完成内容：
+
+- `WarCommandExecutionResult` 新增非 Codable `diagnostics`，不改变 `WarDirectiveRecord` schema。
+- `WarCommandExecutor` 在防守、进攻和纵深防御宏观命令执行前生成中文道路审计，包含军队展示名、基础/有效机动、官道加成或无加成原因、目标郡县、移动可达成本或后备命令说明。
+- 单条防区指令最多保留前三条道路审计，更多命令以汇总文案收束，避免 Agent 面板过长。
+- `TurnManager.executeDirectiveEnvelope` 将执行器道路审计合并进 AI `WarDirectiveRecord.diagnostics`。
+- `AppContainer.submitPlayerDirective` 将执行器道路审计合并进玩家武将宏观军令 `WarDirectiveRecord.diagnostics`。
+- `md/flow/flow.md` 和 `md/flow/flowchart.md` 同步记录道路审计从 `WarCommandExecutor` 流向 `WarDirectiveRecord` / 日志面板的链路。
+- 本轮只增加审计解释，不改变移动、道路加成、敌控区、宏观选兵排序、落点排序、攻击、反击、占领、战略同步、JSON schema 或 SwiftUI 布局。
+
+关键文件：
+
+- `WWIIHexV0/Commands/WarCommandExecutor.swift`
+- `WWIIHexV0/Turn/TurnManager.swift`
+- `WWIIHexV0/App/AppContainer.swift`
+- `md/flow/flow.md`
+- `md/flow/flowchart.md`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_war_executor_road_diagnostics.md`
+- `update_log.md`
+
+验证记录：
+
+- `swiftc -parse WWIIHexV0/Commands/WarCommandExecutor.swift WWIIHexV0/Turn/TurnManager.swift WWIIHexV0/App/AppContainer.swift` 通过。
+- 定向扫描确认 `WarCommandExecutor.swift` 已生成“道路审计”、`compactRoadDiagnostics`，`TurnManager.swift` 与 `AppContainer.swift` 均合并 `execution.diagnostics`，`md/flow/flow.md` 与 `md/flow/flowchart.md` 均记录道路审计流向。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- `git diff --check` 通过，无输出。
+- 并发只读子 Agent 复核确认所有 `WarCommandExecutionResult` initializer 均已携带 `diagnostics`，AI 和玩家路径均写入 `WarDirectiveRecord.diagnostics`；文档子 Agent 复核提示后已补齐 `md/flow/flowchart.md`、`update_log.md` 和阶段 prompt 的 main / CI / Agent C 交接要求。
+
+遗留风险：
+
+- 本轮不做本机运行时 UI 检查；道路审计需要在 AI 回合或玩家武将宏观军令生成具体命令后才能在 Agent 面板中确认观感。
+- 本轮不跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；功能正确性等待云端 CI artifact、后续 Agent C 复判或人工授权专项检查。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
