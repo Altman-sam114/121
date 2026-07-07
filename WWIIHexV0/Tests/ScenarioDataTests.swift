@@ -18,7 +18,7 @@ final class ScenarioDataTests: XCTestCase {
         let coords = scenario.map.tiles.map(\.coord)
 
         XCTAssertEqual(scenario.id, "mapeditor_scenario")
-        XCTAssertEqual(scenario.displayName, "MapEditor Scenario")
+        XCTAssertEqual(scenario.displayName, "兼容测试剧本")
         XCTAssertEqual(scenario.map.width, 15)
         XCTAssertEqual(scenario.map.height, 9)
         XCTAssertTrue(scenario.map.isSparse)

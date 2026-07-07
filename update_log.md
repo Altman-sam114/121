@@ -7237,6 +7237,49 @@ guerrillaWarfare 额外参考 infrastructure
 - 军队详情接战候选行可能同时显示“武将修正”和交战审计中的“攻方/守方武将”，属于解释性重复，后续如做 UI 文案压缩可单独处理。
 - 并发只读数据侦查确认 `ardennes_v0_scenario.json` / `ardennes_v02_regions.json` 顶层 `displayName` 可作为后续独立低风险 JSON 展示名切片；本轮不混入。
 
+## v2.5 - fallback JSON 顶层展示名三国化
+
+完成日期：2026-07-07
+
+目标：
+
+- 继续推进 v2.5 玩家/编辑器可见文案收口，把旧 fallback JSON 顶层 `displayName` 从 MapEditor 英文默认名改为中文兼容数据展示名，减少 fallback 加载日志和数据检查路径中的旧编辑器文案。
+
+完成内容：
+
+- `ardennes_v0_scenario.json` 顶层 `displayName` 改为“兼容测试剧本”。
+- `ardennes_v02_regions.json` 顶层 `displayName` 改为“兼容测试郡县数据”。
+- `ScenarioDataTests` 中 scenario 顶层展示名 exact 断言同步为“兼容测试剧本”。
+- 本轮只改顶层展示字段和必要断言，不改变 `id`、faction rawValue、unit id、objective id、region id、template id、City/Supply 名称、region name、默认官渡数据、DataLoader 加载顺序、规则、AI、UI 布局或命令管线。
+
+关键文件：
+
+- `WWIIHexV0/Data/ardennes_v0_scenario.json`
+- `WWIIHexV0/Data/ardennes_v02_regions.json`
+- `WWIIHexV0/Tests/ScenarioDataTests.swift`
+- `md/prompt/README.md`
+- `md/prompt/v2.0-三国迁移/v2.5_fallback_json_display_names.md`
+- `update_log.md`
+
+验证记录：
+
+- `jq empty WWIIHexV0/Data/ardennes_v0_scenario.json` 通过。
+- `jq empty WWIIHexV0/Data/ardennes_v02_regions.json` 通过。
+- `jq -r '.displayName' WWIIHexV0/Data/ardennes_v0_scenario.json` 输出“兼容测试剧本”。
+- `jq -r '.displayName' WWIIHexV0/Data/ardennes_v02_regions.json` 输出“兼容测试郡县数据”。
+- `MapEditor Scenario` / `MapEditor Scenario Regions` 在本轮数据文件与 `WWIIHexV0/Tests` 定向扫描无命中。
+- 本轮改动文件尾随空白扫描无命中。
+- 本轮改动文件行首冲突标记扫描无命中。
+- `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
+- 并发只读子 Agent 复核确认 `ScenarioDataTests` 只有一处 scenario 顶层 `displayName` exact 断言需要同步；`ardennes_v02_regions.json` 顶层 `displayName` 没有 exact 断言。
+- 并发只读子 Agent 复核确认 scenario 顶层名只进入 fallback 加载日志，region 顶层名当前只是 Codable 必填字段，不进入规则、地图派生或 UI 展示。
+- 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
+
+遗留风险：
+
+- 本轮不做本机 XCTest 或运行时 fallback 加载 UI 检查；真实 fallback 加载日志显示仍待云端 CI、后续 Agent C artifact 复判或人工授权运行检查。
+- `City ...`、`Supply ...`、region name、keyLocations、tile cityName、objectives name 和 supply source 名称仍保留旧兼容口径，涉及更多数据消费面，后续应单独切片处理。
+
 ## 协作流程云端化制度升级 - main 直推与 Agent C 结果包验收
 
 完成日期：2026-07-04
