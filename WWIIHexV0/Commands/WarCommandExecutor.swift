@@ -953,13 +953,13 @@ struct WarCommandExecutor {
         guard let target else {
             return source
         }
-        let target = roadSelectionPositionText(
+        let targetText = roadSelectionPositionText(
             "目",
             coord: target,
             faction: division.faction,
             in: state
         )
-        return "\(source)，\(target)"
+        return "\(source)，\(targetText)"
     }
 
     private func roadSelectionPositionText(

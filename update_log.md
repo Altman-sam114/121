@@ -7563,6 +7563,7 @@ guerrillaWarfare 额外参考 infrastructure
 - `md/prompt/v2.0-三国迁移` 目录 md 文件与 `md/prompt/README.md` 索引差集为空。
 - `git diff --check` 通过，无输出。
 - 并发只读子 Agent 复核指出 `.attack` 道路审计只显示源点的问题；主线程已补充攻击目标点和 `/接敌` 短码。另一个 UI/文档只读子 Agent 在本轮提交前未返回，不作为已完成复核。
+- 首次云端 CI run `28862333446` 对提交 `3b08c566df99cb97ba678d17e99eaf33256390ee` 的结果包已下载到 `/private/tmp/three-kingdoms-agent-c-review-28862333446/`；manifest 核对 branch、commitSha、runId、runAttempt 均一致，static checks success，build failure，失败原因为 `WarCommandExecutor.swift` 中 `roadSelectionSituationText` 内部 `target` 局部变量与 guard 绑定重名；后续追加修复 commit。
 - 未跑 Xcode / XCTest / 模拟器 / Probe / Smoke / Stage Regression / Dynamic Theater Regression / Full；原因是当前规范禁止默认执行本机重测试。
 
 遗留风险：
